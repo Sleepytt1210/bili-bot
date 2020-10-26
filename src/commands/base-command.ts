@@ -1,31 +1,55 @@
 import {Logger, getLogger} from "../utils/logger";
-import {Message} from "discord.js";
+import {Message, MessageEmbed} from "discord.js";
 import {GuildManager} from "../app/guild";
 import {CommandType} from "./command-type";
 
 export interface Command {
-    type(): CommandType;
+    alias: string[];
+    name(): CommandType;
     run(message: Message, guild: GuildManager, args?: string[]): Promise<void>;
-    helpMessage(): string;
+
+    helpMessage(guild: GuildManager, message?: Message): MessageEmbed;
 }
 
 export class BaseCommand implements Command {
-    protected readonly logger: Logger;
+    public alias: string[];
+    public readonly logger: Logger;
 
     public constructor() {
-        this.logger = getLogger(`Command - ${this.type()}`);
+        this.logger = getLogger(`Command - ${this.name()}`);
     }
 
-    public type(): CommandType {
+    public name(): CommandType{
         return CommandType.INVALID;
     }
 
-    public async run(_message: Message, _guild: GuildManager, _args?: string[]): Promise<void> {
-        // Noop
+    public run(_message: Message, _guild: GuildManager, _args?: string[]): Promise<void>{
         return;
     }
 
-    public helpMessage(): string {
+    public helpMessage(guild: GuildManager, message?: Message): MessageEmbed{
+        throw new Error('helpMessage() requires override');
+    }
+}
+
+export class SubCommand extends BaseCommand {
+
+    public parent: string;
+    public alias: string[];
+
+    public constructor() {
+        super();
+    }
+
+    public name(): CommandType{
+        return super.name();
+    }
+
+    public run(_message: Message, _guild: GuildManager, _args?: string[]): Promise<void>{
+        return;
+    }
+
+    public helpMessage(guild: GuildManager, message?: Message): MessageEmbed{
         throw new Error('helpMessage() requires override');
     }
 }
@@ -41,6 +65,10 @@ export class CommandException {
 
     public static UserPresentable(message: string): CommandException {
         return new CommandException(true, message);
+    }
+
+    public static OutOfBound(listLength: number): CommandException {
+        return new CommandException(true, `Index out of bound! Please enter a number between \`${1}\` and \`${listLength}\`<:midfing:758322051085500446>`)
     }
 
     public static Internal(error: Error): CommandException {

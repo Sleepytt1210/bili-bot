@@ -8,8 +8,12 @@
 *.mp3
 tmp
 
+# Environment
+*.env
+
 # Cache
-cache/
+src/data/cache/
+src/data/vidcache/
 
 # Credential
 cred/

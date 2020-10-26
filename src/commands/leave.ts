@@ -1,10 +1,19 @@
 import {BaseCommand} from "./base-command";
 import {CommandType} from "./command-type";
 import {GuildManager} from "../app/guild";
-import {Message} from "discord.js";
+import {Message, MessageEmbed} from "discord.js";
+import {helpTemplate} from "../utils/utils";
 
 export class LeaveCommand extends BaseCommand {
-    public type(): CommandType {
+
+    public alias: string[];
+
+    public constructor() {
+        super();
+        this.alias = ['quit', 'fuckoff', 'off', 'sayonara', 'bye', 'goaway', 'disconnect', 'dc'];
+    }
+
+    public name(): CommandType {
         return CommandType.LEAVE;
     }
 
@@ -12,11 +21,12 @@ export class LeaveCommand extends BaseCommand {
         guild.checkMemberInChannel(message.member);
         if (!guild.queueManager.activeConnection) return;
         guild.queueManager.stop();
-        guild.queueManager.activeConnection.disconnect();
-        guild.queueManager.activeConnection = null;
+        await guild.queueManager.activeConnection.voice.setChannel(null);
     }
 
-    public helpMessage(): string {
-        return 'Usage: leave';
+    public helpMessage(guild: GuildManager): MessageEmbed {
+        const res = helpTemplate(this.name());
+        res.addField('Usage: ', `${guild.commandPrefix}${this.name()}`);
+        return res;
     }
 }

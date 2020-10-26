@@ -2,6 +2,8 @@ import {getLogger, Logger} from "../../utils/logger";
 import {PlaylistDoc} from "../db/schemas/playlist";
 import {SongDoc} from "../db/schemas/song";
 import MongoDB from "../db/service";
+import {User} from "discord.js";
+import {CommandException} from "../../commands/base-command";
 
 export class PlaylistDataSource {
     private static instance: PlaylistDataSource;
@@ -21,34 +23,71 @@ export class PlaylistDataSource {
         this.logger = getLogger('PlaylistDataSource');
     }
 
-    public async get(name: string, guildId: string): Promise<PlaylistDoc> {
-        this.logger.verbose(`Querying playlist ${name} in ${guildId}`);
-        return MongoDB.Playlist.findOne({name, guildId});
+    public async get(creator: User, name?: string): Promise<PlaylistDoc> {
+        this.logger.verbose(`Querying playlist ${name} by ${creator.username}`);
+        return name ? MongoDB.Playlist.findOne({name: name, creator: creator.id}) : this.getDefault(creator);
     }
 
-    private async create(name: string, guildId: string, creator: string): Promise<PlaylistDoc> {
-        this.logger.verbose(`Playlist ${name} created in ${guildId}`);
-        const result = await new MongoDB.Playlist({
-            name,
-            creator,
+    private async getDefault(creator: User): Promise<PlaylistDoc> {
+        this.logger.verbose(`Querying default playlist of ${creator.username}`);
+        return MongoDB.Playlist.findOne(MongoDB.Playlist.findOne({creator: creator.id, default: true}));
+    }
+
+    public async getAll(creator: User): Promise<PlaylistDoc[]>{
+        this.logger.verbose(`Querying all playlists by ${creator.username}`);
+        return MongoDB.Playlist.find({creator: creator.id});
+    }
+
+    public async create(name: string, guildId: string, creator: User): Promise<PlaylistDoc> {
+        this.logger.verbose(`Playlist ${name} created by ${creator.username}`);
+        const count = (await this.getAll(creator)).length;
+        return new MongoDB.Playlist({
+            name: name,
+            creator: creator.id,
             songs: [],
-            guildId
+            guildId,
+            default: (count < 1)
         }).save();
-        return result;
     }
 
-    public async getOrCreate(name: string, guildId: string, creator: string): Promise<PlaylistDoc> {
-        let playlist = await this.get(name, guildId);
-        if (!playlist) {
-            playlist = await this.create(name, guildId, creator);
-        }
-        return playlist;
+    public async setDefault(creator: User, name: string): Promise<void> {
+        this.logger.verbose(`Setting ${creator.username}'s default playlist to ${name}`);
+        await MongoDB.Playlist.updateOne({creator: creator.id, default: true}, {default: false});
+        await MongoDB.Playlist.updateOne({creator: creator.id, name: name}, {default: true});
     }
 
-    public async save(song: SongDoc, playlist: PlaylistDoc): Promise<void> {
-        this.logger.verbose(`Saving song ${song.title} to playlist ${playlist.name}`);
-        await playlist.updateOne({
-            $addToSet: {'songs': song.id}
+    public async delete(creator: User, name: string): Promise<void> {
+        this.logger.verbose(`Deleting playlist ${name} by ${creator.username}`);
+        await MongoDB.Playlist.deleteOne({name: name, creator: creator.id}).then((res) => {
+            if(res.n == 0 || res.ok != 1) throw CommandException.UserPresentable(`Playlist ${name} is not found!`)
         });
+    }
+
+    public async save(song: SongDoc, playlist: PlaylistDoc, creator: User): Promise<PlaylistDoc> {
+        this.logger.verbose(`Saving song ${song.title} to playlist ${playlist.name}`);
+        await MongoDB.Playlist.updateOne(
+            {
+                name: playlist.name,
+                creator: creator.id
+            },
+            {
+                $addToSet: {'songs': song.id}
+            });
+        // returns the modified playlist
+        return this.get(creator, playlist.name);
+    }
+
+    public async pull(song: SongDoc, playlist: PlaylistDoc, creator: User): Promise<PlaylistDoc> {
+        this.logger.verbose(`Deleting song ${song.title} from playlist ${playlist.name}`);
+        await MongoDB.Playlist.updateOne(
+            {
+                name: playlist.name,
+                creator: creator.id
+            },
+            {
+                $pull: {'songs': song.id}
+            });
+        // returns the modified playlist
+        return this.get(creator, playlist.name);
     }
 }

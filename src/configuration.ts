@@ -1,5 +1,6 @@
-import * as config from "../botconfig.json";
 import {getLogger, Logger} from "./utils/logger";
+import * as dotenv from "dotenv";
+dotenv.config();
 
 class Configuration {
     private static instance: Configuration;
@@ -15,43 +16,35 @@ class Configuration {
     // Required
     private discordToken: string;
     private mongoUri: string;
-    private googleCloudBucketName: string;
-
-    // Optional
     private mongoDatabaseName?: string;
-    private googleCloudAccountKeyFile?: string;
-    private localCacheDirectory: string;
+    private ytApiKey: string;
 
     private constructor() {
         this.logger = getLogger('Configuration');
     }
 
     public parse(): boolean {
-        if (!config) {
-            this.logger.error('Missing botconfig.json');
+        if (!process.env.DiscordToken){
+            this.logger.error('Missing "DiscordToken" in env');
+        }
+        if (!process.env.MONGO_URI) {
+            this.logger.error('Missing "MONGO_URI" in env');
             return false;
         }
-        if (!config['discordToken']) {
-            this.logger.error('Missing "discordToken" in botconfig.json');
-            return false;
-        }
-        if (!config['mongoUri']) {
-            this.logger.error('Missing "mongoUri" in botconfig.json');
-            return false;
-        }
-        if (!config['gcloudCacheBucket']) {
-            this.logger.error('Missing "cacheBucket" in botconfig.json');
+        if (!process.env.DB_NAME) {
+            this.logger.error('Missing "DB_NAME" in env');
             return false;
         }
 
-        this.discordToken = config['discordToken'];
-        this.mongoUri = config['mongoUri'];
-        this.googleCloudBucketName = config['gcloudCacheBucket'];
+        if (!process.env.YTApiKey) {
+            this.logger.error('Missing "YTApiKey" in env');
+            return false;
+        }
 
-        // Optionals
-        this.mongoDatabaseName = config['databaseName'] || null;
-        this.googleCloudAccountKeyFile = config['gcloudKeyFile'] || null;
-        this.localCacheDirectory = config['localCacheDirectory'] || 'cache';
+        this.discordToken = process.env.DiscordToken;
+        this.mongoUri = process.env.MONGO_URI;
+        this.mongoDatabaseName = process.env.DB_NAME;
+        this.ytApiKey = process.env.YTApiKey;
 
         return true;
     }
@@ -64,20 +57,12 @@ class Configuration {
         return this.mongoUri;
     }
 
-    public getCacheBucketName(): string {
-        return this.googleCloudBucketName;
-    }
-
     public getMongoDatabaseName(): string | null {
         return this.mongoDatabaseName;
     }
 
-    public getGoogleKeyFile(): string | null {
-        return this.googleCloudAccountKeyFile;
-    }
-
-    public getLocalCacheDirectory(): string {
-        return this.localCacheDirectory;
+    public getYTApiKey(): string {
+        return this.ytApiKey;
     }
 }
 

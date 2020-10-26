@@ -36,11 +36,12 @@ export class GuildDataSource {
         }).save();
     }
 
-    public async updatePrefix(guildManager: GuildManager): Promise<void> {
-        this.logger.verbose(`Updating command prefix for guild ${guildManager.id}`);
+    public async updatePrefix(guildManager: GuildManager, prefix: string): Promise<void> {
+        this.logger.verbose(`Setting command prefix for guild ${guildManager.id} to ${prefix}`);
+        guildManager.setPrefix(prefix);
         await MongoDB.Guild.updateOne(
             {
-                uid: guildManager
+                uid: guildManager.id
             }, {
                 $set: {"commandPrefix": guildManager.commandPrefix}
             }

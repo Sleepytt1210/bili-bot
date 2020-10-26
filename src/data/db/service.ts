@@ -1,6 +1,7 @@
 import {Logger, getLogger} from "../../utils/logger";
 import Config from "../../configuration";
-import {connect, Model, Mongoose} from "mongoose";
+import {Model, Mongoose} from "mongoose";
+import * as mongoose from "mongoose";
 import {SongDoc, SongSchema} from "./schemas/song";
 import {GuildDoc, GuildSchema} from "./schemas/guild";
 import {PlaylistDoc, PlaylistSchema} from "./schemas/playlist";
@@ -24,8 +25,13 @@ class MongoDBService {
     public async start(): Promise<boolean> {
         try {
             this.uri = Config.getMongoUri();
-            this.dbName = Config.getMongoDatabaseName() || 'bili-bot';
-            this.client = await connect(`${this.uri}/${this.dbName}`, {useNewUrlParser: true});
+            this.dbName = Config.getMongoDatabaseName();
+            const options = {
+                useUnifiedTopology: true,
+                useNewUrlParser: true,
+                useCreateIndex: true
+            }
+            this.client = await mongoose.connect(this.uri, options);
             this.logger.info('Connected to default');
 
             this.Guild = this.client.model('Guild', GuildSchema);

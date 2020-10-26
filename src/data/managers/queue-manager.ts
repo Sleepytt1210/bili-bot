@@ -4,104 +4,88 @@ import {getLogger, Logger} from "../../utils/logger";
 import {StreamDispatcher, VoiceConnection} from "discord.js";
 import {CommandException} from "../../commands/base-command";
 import {shuffle} from "../../utils/utils";
-import {StreamerState} from "../streamer";
+import * as stream from "../bilidl";
+import * as ytdl from 'ytdl-core';
 
 export class QueueManager {
     protected readonly logger: Logger;
     private readonly guild: GuildManager;
     private readonly threshold: number;
     public isPlaying: boolean;
-    public readonly playlist: BilibiliSong[];
-    private readonly waitingList: BilibiliSong[];
-    private readonly loadingList: Set<BilibiliSong>;
+    public readonly queue: BilibiliSong[];
+    public volume: number;
     public currentSong?: BilibiliSong;
     public activeConnection: VoiceConnection;
     public activeDispatcher: StreamDispatcher;
+    private readonly stream: stream.Streamer;
+    private _isLoop: boolean;
+
+    // eslint-disable-next-line @typescript-eslint/explicit-member-accessibility
+    get isLoop(): boolean {
+        return this._isLoop;
+    }
+
+    // eslint-disable-next-line @typescript-eslint/explicit-member-accessibility
+    set isLoop(value: boolean) {
+        this._isLoop = value;
+    }
 
     public constructor(guild: GuildManager, threshold: number = 3) {
         this.logger = getLogger(`QueueManager-${guild.id}`);
         this.guild = guild;
-        this.playlist = [];
-        this.waitingList = [];
-        this.loadingList = new Set<BilibiliSong>();
+        this.queue = [];
         this.isPlaying = false;
         this.threshold = threshold;
+        this._isLoop = false;
+        this.stream = new stream.Streamer();
+        this.volume = 0.5;
     }
 
     public isListEmpty(): boolean {
-        return this.playlist.length === 0;
+        return this.queue.length === 0;
+    }
+
+    public setVol(vol: number): void {
+        this.volume = vol;
+        if(this.activeDispatcher) this.activeDispatcher.setVolume(this.volume);
     }
 
     public pushSong(song: BilibiliSong): void {
-        this.playlist.push(song);
-        this.logger.info(`Song ${song.title} added to the queue`);
-        if (song.streamer.state === StreamerState.UNLOADED) {
-            if (this.loadingList.size < this.threshold) {
-                this.startLoading(song);
-            } else {
-                this.waitingList.push(song);
-            }
-        }
+        this.queue.push(song);
         if (!this.isPlaying) {
-            this.playNext();
+            this.playSong(this.queue.shift());
         } else {
-            this.guild.printAddToQueue(song, this.playlist.length);
+            this.guild.activeTextChannel.send(this.guild.printAddToQueue(song, this.queue.length));
         }
     }
 
-    public pushSongs(songs: BilibiliSong[]): void {
-        this.logger.info(`${songs.length} songs added to the queue`);
-        for (const song of songs) {
-            this.playlist.push(song);
-            if (song.streamer.state === StreamerState.UNLOADED) {
-                if (this.loadingList.size < this.threshold) {
-                    this.startLoading(song);
-                } else {
-                    this.waitingList.push(song);
-                }
-            }
-        }
-        if (!this.isPlaying) {
-            this.playNext();
-        }
+    public removeSong(index: number): BilibiliSong {
+        const removed = this.queue[index];
+        this.queue.splice(index, 1);
+        return removed;
     }
 
     public clear(): void {
-        while (this.playlist.length !== 0) this.playlist.pop();
-        while (this.waitingList.length !== 0) this.waitingList.pop();
-        this.loadingList.forEach((song: BilibiliSong): void => {
-            song.streamer.stop();
-        });
-        this.loadingList.clear();
+        while (this.queue.length !== 0) this.queue.pop();
     }
 
     public promoteSong(index: number): BilibiliSong {
-        if (index < 0 || index >= this.playlist.length) {
-            throw CommandException.UserPresentable(`The index you entered is out of bounds, please enter a number between ${1} and ${this.playlist.length}`);
+        if (index < 0 || index >= this.queue.length) {
+            throw CommandException.OutOfBound(this.queue.length);
         }
 
-        const song = this.playlist.splice(index, 1)[0];
-        this.playlist.unshift(song);
-
-        if (song.streamer.state === StreamerState.UNLOADED) {
-            this.startLoading(song);
-        }
+        const song = this.queue.splice(index, 1)[0];
+        this.queue.unshift(song);
 
         return song;
     }
 
     public doShuffle(): void {
-        shuffle(this.playlist);
-        while (this.waitingList.length !== 0) this.waitingList.pop();
-        for (const song of this.playlist) {
-            if (song.streamer.state === StreamerState.UNLOADED) {
-                this.waitingList.push(song);
-            }
-        }
+        shuffle(this.queue);
     }
 
     public pause(): boolean {
-        if (this.activeDispatcher) {
+        if (this.isPlaying) {
             this.activeDispatcher.pause();
             return true;
         }
@@ -109,7 +93,7 @@ export class QueueManager {
     }
 
     public resume(): boolean {
-        if (this.activeDispatcher) {
+        if (this.activeDispatcher.paused) {
             this.activeDispatcher.resume();
             return true;
         }
@@ -119,6 +103,7 @@ export class QueueManager {
     public stop(): void {
         this.isPlaying = false;
         if (this.activeDispatcher) {
+            this.activeDispatcher.end();
             this.activeDispatcher.destroy();
             this.activeDispatcher = null;
         }
@@ -126,47 +111,27 @@ export class QueueManager {
     }
 
     public next(): void {
-        const current = this.currentSong;
-        if (this.loadingList.has(current)) {
-            current.streamer.stop();
-            this.loadingList.delete(current);
-            if (this.loadingList.size < this.threshold && this.waitingList.length !== 0) {
-                const song = this.waitingList.shift();
-                this.startLoading(song);
-            }
-        }
-        current.streamer.destroy();
-        this.playNext();
-    }
-
-    private startLoading(song: BilibiliSong): void {
-        this.logger.info(`Start loading ${song.title}`);
-        song.streamer.start();
-        song.streamer.on('finish', (): void => {
-            this.finishLoading(song);
-        });
-        this.loadingList.add(song);
-    }
-
-    private finishLoading(song: BilibiliSong): void {
-        this.logger.info(`Finished loading ${song.title}`);
-        this.loadingList.delete(song);
-        if (this.loadingList.size < this.threshold && this.waitingList.length !== 0) {
-            const nextSong = this.waitingList.shift();
-            this.startLoading(nextSong);
-        }
+        const self = this;
+        setTimeout(function (): void {
+            self.playNext();
+        }, 500);
     }
 
     private playSong(song: BilibiliSong): void {
         this.isPlaying = true;
         this.currentSong = song;
-        this.guild.printPlaying(song);
-        this.activeDispatcher = this.activeConnection.play(song.streamer.getOutputStream());
-        this.activeDispatcher.setVolume(0.2);
+        if(!this._isLoop){
+            this.guild.printPlaying(song);
+        }
+        this.activeDispatcher = (song.type === "y") ?
+            this.activeConnection.play(ytdl(song.url, {quality: "highestaudio", highWaterMark: 1 << 25}), {volume: this.volume}) :
+            this.activeConnection.play(this.stream.ytbdl(song.url), {volume: 0.5});
+        this.logger.info(`Playing: ${song.title}`);
         this.activeDispatcher.on('finish', (): void => {
-            this.loadingList.delete(song);
-            song.streamer.destroy();
             this.playNext();
+        }).on('error', (err): void => {
+            this.logger.error(err);
+            this.guild.printEvent(`<@${song.initiator.id}> An error occurred! Please request again`);
         });
     }
 
@@ -175,11 +140,16 @@ export class QueueManager {
             this.activeDispatcher.destroy();
             this.activeDispatcher = null;
         }
-        if (this.playlist.length === 0) {
-            this.isPlaying = false;
-            this.guild.printOutOfSongs();
-        } else {
-            this.playSong(this.playlist.shift());
+        if(this._isLoop === true) {
+            this.playSong(this.currentSong);
+        }else {
+            if (this.queue.length === 0) {
+                this.isPlaying = false;
+                this.currentSong = null;
+                this.guild.printOutOfSongs();
+            } else {
+                this.playSong(this.queue.shift());
+            }
         }
     }
 }

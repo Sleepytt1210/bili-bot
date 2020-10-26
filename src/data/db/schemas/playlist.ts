@@ -9,7 +9,14 @@ const playlistSchema = new Schema({
         ],
         required: true
     },
-    guildId: {type: String, required: true, ref: 'Guild'}
+    guildId: {type: String, required: true, ref: 'Guild'},
+    default: {type: Boolean, required: true}
+}, {
+    writeConcern: {
+        w: 'majority',
+        j: true,
+        wtimeout: 1000
+    }
 });
 
 playlistSchema.index({name: 1, guildId: 1}, {unique: true});
@@ -20,5 +27,6 @@ export interface PlaylistDoc extends Document {
     creator: string;
     songs: Schema.Types.ObjectId[];
     guildId: string;
+    default: boolean;
 }
 export const PlaylistSchema = playlistSchema;

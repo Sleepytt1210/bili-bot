@@ -1,41 +1,48 @@
-import {BaseCommand} from "./base-command";
+import {BaseCommand, CommandException} from "./base-command";
 import {CommandType} from "./command-type";
 import {GuildManager} from "../app/guild";
 import {Message, MessageEmbed, User} from "discord.js";
+import {helpTemplate} from "../utils/utils";
+import {BilibiliSong} from "../data/model/bilibili-song";
+import {PlaylistDoc} from "../data/db/schemas/playlist";
 
-export class SaveCommand extends BaseCommand {
-    public type(): CommandType {
+export class SaveCommand extends BaseCommand{
+
+    public alias: string[];
+
+    public constructor() {
+        super();
+        this.alias = ['add'];
+    }
+
+    public name(): CommandType {
         return CommandType.SAVE;
     }
 
     public async run(message: Message, guild: GuildManager, args?: string[]): Promise<void> {
-        guild.checkMemberInChannel(message.member);
-        if (args.length === 0) {
-            this.logger.info('Saving to default list');
-            await this.save(guild, message.author);
-        } else if (args.length === 1) {
-            this.logger.info(`Saving to ${args[0]}`);
-            await this.save(guild, message.author, args[0]);
-        } else if (args[0] == '-d') {
-            this.logger.info(`Saving to ${args[0]} and Default playlist`);
-            await this.save(guild, message.author);
-            await this.save(guild, message.author, args[1]);
+        if (args.length === 1) {
+            const song = await BilibiliSong.withUrl(args.shift(), message.author);
+            const cur = guild.currentPlaylist.get(message.author.id)
+            if(!cur){
+                throw CommandException.UserPresentable(`No playlist selected! Please do \`${guild.commandPrefix}playlist\` or \`${guild.commandPrefix}showlist <name>/<index>\` first`);
+            }
+            await this.save(guild, message.author, song, cur);
+        } else{
+            throw CommandException.UserPresentable(`Invalid argument! Please enter a url!`);
         }
     }
 
-    public helpMessage(): string {
-        return 'Usage: save <list-name>';
+    private async save(guild: GuildManager, user: User, song: BilibiliSong, cur: PlaylistDoc): Promise<void> {
+        if (!song) {
+            throw CommandException.UserPresentable('Invalid url!');
+        }
+        await guild.dataManager.saveToPlaylist(song, user, cur);
+        guild.printEvent(`${song.title} saved to ${cur.name}`);
     }
 
-    private async save(guild: GuildManager, user: User, collection?: string): Promise<void> {
-        if (!guild.queueManager.currentSong) {
-            this.logger.warn('No song is playing');
-            return;
-        }
-
-        await guild.dataManager.saveToPlaylist(guild.queueManager.currentSong, user, collection);
-
-        const playlistDescription = collection ? `playlist "${collection}"` : `default playlist`;
-        guild.activeTextChannel.send(new MessageEmbed().setDescription(`${guild.queueManager.currentSong.title} saved to ${playlistDescription}`));
+    public helpMessage(guild: GuildManager): MessageEmbed {
+        const res = helpTemplate(this.name());
+        res.addField('Usage: ', `${guild.commandPrefix}${this.name()} <url>\n`)
+        return res;
     }
 }

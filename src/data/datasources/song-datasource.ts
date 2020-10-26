@@ -3,6 +3,8 @@ import {SongDoc} from "../db/schemas/song";
 import {PlaylistDoc} from "../db/schemas/playlist";
 import {BilibiliSong} from "../model/bilibili-song";
 import MongoDB from "../db/service";
+import {SearchSongEntity} from "./bilibili-api";
+import {Schema} from "mongoose";
 
 export class SongDataSource {
     private static instance: SongDataSource;
@@ -22,15 +24,9 @@ export class SongDataSource {
         this.logger = getLogger('SongDataSource');
     }
 
-    public async exist(uid: string): Promise<boolean> {
-        this.logger.verbose(`Checking existance of id=${uid}`);
-        const result = await MongoDB.Song.findOne({uid: uid});
-        return result !== null && result !== undefined;
-    }
-
-    public async getOne(uid: string): Promise<SongDoc> {
+    public async getOne(uid?: string, _id?: Schema.Types.ObjectId): Promise<SongDoc> {
         this.logger.verbose(`Querying song with id=${uid}`);
-        return MongoDB.Song.findOne({uid: uid});
+        return (uid) ? MongoDB.Song.findOne({uid: uid}) : MongoDB.Song.findOne({_id: _id});
     }
 
     public async getFromPlaylist(playlist: PlaylistDoc): Promise<SongDoc[]> {
@@ -45,9 +41,9 @@ export class SongDataSource {
         return result;
     }
 
-    public async insert(song: BilibiliSong | SongDoc): Promise<SongDoc> {
+    public async insert(song: BilibiliSong | SongDoc | SearchSongEntity): Promise<SongDoc> {
         this.logger.verbose(`Saving song ${song.uid}`);
-        if (song instanceof BilibiliSong) {
+        if (song instanceof BilibiliSong || song instanceof SearchSongEntity) {
             return new MongoDB.Song({
                 uid: song.uid,
                 url: song.url,
@@ -56,9 +52,13 @@ export class SongDataSource {
                 hmsDuration: song.hmsDuration,
                 rawDuration: song.rawDuration,
                 description: song.description,
-                thumbnail: song.thumbnail
+                ext: song.format,
+                thumbnail: song.thumbnail,
+                cached: song.cached,
+                dlurl: song.dlurl,
+                type: song.type
             }).save();
-        } else {
+        } else{
             return song.save();
         }
     }
@@ -77,6 +77,7 @@ export class SongDataSource {
     public async isCached(uid: string): Promise<boolean> {
         this.logger.verbose(`Checking cache state of song ${uid}`);
         const songDoc = await MongoDB.Song.findOne({uid});
-        return songDoc.cached || false;
+        if (songDoc == null) return false;
+        return songDoc.cached;
     }
 }

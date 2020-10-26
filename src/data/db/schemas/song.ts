@@ -11,11 +11,15 @@ const songSchema = new Schema({
     rawDuration: {type: Number, required: true},
     description: String,
     thumbnail: String,
-    cached: Boolean
-});
-
-songSchema.method('toSong', function (initiator: User): BilibiliSong {
-    return BilibiliSong.withRecord(this, initiator)
+    cached: Boolean,
+    dlurl: {type: String, required: true},
+    type: {type: String, required: true}
+}, {
+    writeConcern: {
+        w: 'majority',
+        j: true,
+        wtimeout: 1000
+    }
 });
 
 export interface SongDoc extends Document {
@@ -27,7 +31,10 @@ export interface SongDoc extends Document {
     rawDuration: number;
     description: string|null;
     thumbnail: string|null;
+    ext: string;
     cached: boolean|null;
+    dlurl: string;
+    type: 'y' | 'b';
     toSong(initiator: User): BilibiliSong;
 }
 export const SongSchema = songSchema;

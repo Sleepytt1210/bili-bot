@@ -5,6 +5,12 @@ const guildSchema = new Schema({
     serverName: {type: String, required: true},
     joinedAt: {type: Schema.Types.Date, required: true},
     commandPrefix: {type: String, required: true}
+}, {
+    writeConcern: {
+        w: 'majority',
+        j: true,
+        wtimeout: 1000
+    }
 });
 
 export interface GuildDoc extends Document {
