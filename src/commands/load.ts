@@ -18,7 +18,7 @@ export class LoadCommand extends BaseCommand {
         guild.checkMemberInChannel(message.member);
         let name = args.join(" ");
         const query = args.shift();
-        const opt = ytPlIdExtract(query) ? '-y' : bvidExtract(query) ? '-b' : null;
+        const opt = (query) ? ytPlIdExtract(query) ? '-y' : bvidExtract(query) ? '-b' : null : null;
         if (opt) {
             name = args.join(" ");
             LoadCommand.checkArg(name);
@@ -41,8 +41,9 @@ export class LoadCommand extends BaseCommand {
             if(index < 1 || index > lists.length)
                 throw CommandException.OutOfBound(lists.length);
             name = lists[index-1].name;
-        } else if (name || !name) {
+        } else if (name) {
             LoadCommand.checkArg(name);
+            await this.load(message, guild, name);
         } else {
             message.channel.send(this.helpMessage(guild));
             return;
@@ -138,9 +139,9 @@ export class LoadCommand extends BaseCommand {
             for (const song of result) {
                 this.logger.info(`Now loading song: ${song.title}`);
                 const url = `https://www.youtube.com/watch?v=${song.id}`;
-                const entity = await BilibiliSong.withUrl(url, message.author);
-                if (!song.url) continue;
                 try {
+                    const entity = await BilibiliSong.withUrl(url, message.author);
+                    if (!song.url) continue;
                     await guild.dataManager.saveToPlaylist(entity, entity.initiator, playlist);
                 } catch (err) {
                     // Skip duplicated error on batch load
