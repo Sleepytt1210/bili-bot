@@ -41,7 +41,7 @@ export class Streamer extends EventEmitter{
             return;
         }
 
-        let format;
+        let format: SearchSongEntity;
         try {
             format = info;
         } catch (e) {
@@ -83,32 +83,40 @@ export class Streamer extends EventEmitter{
         });
 
         // Manual req
+        let i = 0;
         let start = 0;
         let end = start + dlChunkSize;
-        const rangeEnd = options.range && options.range.end;
-
+        const parts = format.dlurls.length;
         contentLength = format.contentLength;
 
         const getNextChunk = () => {
-            if (!rangeEnd && end >= contentLength) end = 0;
-            if (rangeEnd && end > rangeEnd) end = rangeEnd;
-            shouldEnd = !end || end === rangeEnd;
+            const partEnd = Number(format.dlurls[i]["size"]);
+            const nextPart = end >= partEnd && i < parts;
+            if (end >= contentLength) end = 0;
+            if (nextPart) end = partEnd;
+            shouldEnd = !end || end === contentLength;
 
             requestOptions.headers = Object.assign({}, requestOptions.headers, {
                 Range: `bytes=${start}-${end || ''}`,
             });
 
             requestOptions.headers = Object.assign({}, requestOptions.headers, {
-                Host: format.dlurl.match(/.*:\/\/(\S+)\/[a-zA-Z]+\/\d+\/\d+\/\d+\/(\S+)\?/)[1],
+                Host: format.dlurls[i]["url"].match(/.*:\/\/(\S+)\/[a-zA-Z]+\/\d+\/\d+\/\d+\/(\S+)\?/)[1],
             });
 
-            req = miniget(format.dlurl, requestOptions);
+            req = miniget(format.dlurls[i]["url"], requestOptions);
             req.on('data', ondata);
             req.on('end', () => {
                 if (stream['_isDestroyed']) { return; }
-                if (end && end !== rangeEnd) {
-                    start = end + 1;
-                    end += dlChunkSize;
+                if (end !== contentLength) {
+                    if(nextPart) {
+                        i++;
+                        start = 0;
+                        end = dlChunkSize;
+                    }else {
+                        start = end + 1;
+                        end += dlChunkSize;
+                    }
                     getNextChunk();
                 }
             });

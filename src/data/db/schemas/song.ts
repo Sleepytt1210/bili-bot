@@ -12,7 +12,7 @@ const songSchema = new Schema({
     description: String,
     thumbnail: String,
     cached: Boolean,
-    dlurl: {type: String, required: true},
+    dlurls: {type: Array, required: true},
     type: {type: String, required: true}
 }, {
     writeConcern: {
@@ -33,7 +33,7 @@ export interface SongDoc extends Document {
     thumbnail: string|null;
     ext: string;
     cached: boolean|null;
-    dlurl: string;
+    dlurls: object[];
     type: 'y' | 'b';
     toSong(initiator: User): BilibiliSong;
 }

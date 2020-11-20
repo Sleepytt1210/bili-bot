@@ -8,7 +8,7 @@ import {CommandException} from "../../commands/base-command";
 
 export class BilibiliSong {
     public readonly url: string;
-    public readonly dlurl: string;
+    public readonly dlurls: object[];
     public readonly title: string;
     public readonly author: string;
     public readonly description: string;
@@ -23,7 +23,7 @@ export class BilibiliSong {
 
     private constructor(
         url: string,
-        dlurl: string,
+        dlurls: object[],
         title: string,
         author: string,
         description: string,
@@ -36,7 +36,7 @@ export class BilibiliSong {
         cached: boolean,
         type: 'y' | 'b') {
         this.url = url;
-        this.dlurl = dlurl;
+        this.dlurls = dlurls;
         this.title = title;
         this.author = author;
         this.description = description;
@@ -60,7 +60,7 @@ export class BilibiliSong {
         const url = details.video_url;
         const title = details.title;
         const thumbnailUrl = tmbarr[tmbarr.length-1].url;
-        const dlurl = format.url;
+        const dlurl = [{url: format.url}];
         const author = details.author.name;
         const description = info.videoDetails.shortDescription;
         const uid = details.videoId;
@@ -91,7 +91,7 @@ export class BilibiliSong {
         const uid = songEntity.uid;
         return new BilibiliSong(
             url,
-            songEntity.dlurl,
+            songEntity.dlurls,
             title,
             songEntity.author,
             songEntity.description,
@@ -109,7 +109,7 @@ export class BilibiliSong {
     public static withRecord(record: SongDoc, initiator: User): BilibiliSong {
         return new BilibiliSong(
             record.url,
-            record.dlurl,
+            record.dlurls,
             record.title,
             record.author,
             record.description,

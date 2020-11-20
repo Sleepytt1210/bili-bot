@@ -9,7 +9,7 @@ import configuration from "../../configuration";
 
 
 const logger = getLogger('BilibiliApi');
-// const apiBaseUrl = "https://api.imjad.cn/bilibili/v2/";
+
 const api = {
     liveApi: (rid): string => {
         return `https://api.live.bilibili.com/xlive/web-room/v1/record/getLiveRecordUrl?rid=${rid}&platform=html5`
@@ -43,7 +43,7 @@ export class SearchSongEntity {
     public play: number;
     public contentLength: number;
     public url: string;
-    public dlurl: string;
+    public dlurls: object[];
     public cached: boolean;
     public format: string;
     public rawDuration: number;
@@ -110,8 +110,8 @@ export class SearchSongEntity {
         return this;
     }
 
-    public setDlurl(dlurl: string): this {
-        this.dlurl = dlurl;
+    public setDlurl(dlurls: object[]): this {
+        this.dlurls = dlurls;
         return this;
     }
 
@@ -174,12 +174,13 @@ export async function getExtraInfo(info: SearchSongEntity): Promise<SearchSongEn
     });
     const data = await re.json();
     //console.log(apiJson);
-    const dllink = data['durl']['0']['url'];
+    const dllink = data['durl'] as object[];
     const format = formatToValue(data['format'] as string);
+    const contentLength = dllink.reduce(( sum, { size }: {size: number}) => sum + size , 0);
     return info
         .setDlurl(dllink)
         .setFormat(format)
-        .setContentLength(data['durl']['0']['size']);
+        .setContentLength(contentLength);
 }
 
 export function bvidExtract(url: string): string[] {
