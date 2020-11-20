@@ -39,7 +39,7 @@
     "typescript": "^4.0.5",
     "winston": "^3.3.3",
     "youtube-dl": "^3.0.2",
-    "ytdl-core": "^3.4.2"
+    "ytdl-core": "^4.0.5"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^1.13.0",
