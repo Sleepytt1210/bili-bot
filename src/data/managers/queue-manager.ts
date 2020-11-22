@@ -131,7 +131,8 @@ export class QueueManager {
             this.playNext();
         }).on('error', (err): void => {
             this.logger.error(err);
-            this.guild.printEvent(`<@${song.initiator.id}> An error occurred! Please request again`);
+            this.guild.printEvent(`<@${song.initiator.id}> An error occurred playing ${this.currentSong.title}! Please request again`);
+            this.playNext();
         });
     }
 
