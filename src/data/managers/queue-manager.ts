@@ -4,8 +4,8 @@ import {getLogger, Logger} from "../../utils/logger";
 import {MessageEmbed} from "discord.js";
 import {CommandException} from "../../commands/base-command";
 import {shuffle} from "../../utils/utils";
-import * as stream from "../bilidl";
-import * as ytdl from 'ytdl-core';
+import * as stream from "../../utils/bilidl";
+import ytdl from 'ytdl-core';
 import {
     AudioPlayer, AudioPlayerStatus,
     AudioResource,
@@ -155,7 +155,7 @@ export class QueueManager {
     private playSong(song: SongInfo): void {
         this.audioResource = createAudioResource((song.type === "y") ?
             ytdl(song.url, {quality: "highestaudio", highWaterMark: 1 << 25}) :
-            this.stream.ytbdl(song.url), {metadata: song});
+            this.stream.ytbdl(song), {metadata: song});
 
         this.audioPlayer.play(this.audioResource);
         this.logger.info(`Playing: ${song.title}`);
