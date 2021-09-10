@@ -74,6 +74,10 @@ export class QueueManager {
         return this.audioPlayer.state.status === AudioPlayerStatus.Playing;
     }
 
+    public isPaused(): boolean {
+        return this.audioPlayer.state.status === AudioPlayerStatus.AutoPaused || this.audioPlayer.state.status === AudioPlayerStatus.Paused
+    }
+
     public isListEmpty(): boolean {
         return this.queue.length === 0;
     }
@@ -126,8 +130,8 @@ export class QueueManager {
     }
 
     public resume(): boolean {
-        if (this.audioPlayer.paused) {
-            this.audioPlayer.resume();
+        if (this.isPaused()) {
+            this.audioPlayer.unpause();
             return true;
         }
         return false;
@@ -135,11 +139,10 @@ export class QueueManager {
 
     public stop(): void {
         if (this.audioPlayer) {
-            this.audioPlayer.end();
-            this.audioPlayer.destroy();
-            this.audioPlayer = null;
+            this.audioPlayer.stop(true);
         }
         this.clear();
+        this.guild.printEvent('Player stopped and the queue is cleared!')
     }
 
     public next(): void {
