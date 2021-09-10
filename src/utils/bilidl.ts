@@ -1,7 +1,8 @@
-import {PassThrough} from 'stream';
+import {PassThrough, Readable} from 'stream';
 import {EventEmitter} from "events";
-import {getBasicInfo, SearchSongEntity} from './datasources/bilibili-api';
 import miniget = require('miniget');
+import {SongInfo} from "../data/model/song-info";
+import {Durl} from "../data/model/bilibili-api-types";
 
 export class Streamer extends EventEmitter{
 
@@ -10,27 +11,23 @@ export class Streamer extends EventEmitter{
 
     }
 
-    private createStream (){
+    private createStream (): PassThrough {
         const stream = new PassThrough({
             highWaterMark: 1 << 25
         });
-        stream.destroy = () => {
-            stream['_isDestroyed'] = true;
+        stream._destroy = (): void => {
+            stream.destroyed = true;
         };
         return stream;
     }
 
-    public ytbdl = url => {
+    public ytbdl = (info: SongInfo): Readable => {
         const stream = this.createStream();
-        getBasicInfo(url).then((info) => {
-            this.downloadFromInfoCallback(stream, info);
-        }).catch((error) => {
-            console.error(error);
-        });
+        this.downloadFromInfoCallback(stream, info);
         return stream;
     };
 
-    private downloadFromInfoCallback = (stream: PassThrough, info: SearchSongEntity) => {
+    private downloadFromInfoCallback = (stream: PassThrough, info: SongInfo): void => {
         const options ={
             range: undefined,
             requestOptions: undefined
@@ -41,7 +38,7 @@ export class Streamer extends EventEmitter{
             return;
         }
 
-        let format: SearchSongEntity;
+        let format: SongInfo;
         try {
             format = info;
         } catch (e) {
@@ -49,12 +46,13 @@ export class Streamer extends EventEmitter{
             return;
         }
         stream.emit('info', info, format);
-        if (stream['_isDestroyed']) {
+        if (stream.destroyed) {
             return;
         }
 
+        // eslint-disable-next-line prefer-const
         let contentLength, downloaded = 0;
-        const ondata = chunk => {
+        const ondata = (chunk): void => {
             downloaded += chunk.length;
             stream.emit('progress', chunk.length, downloaded, contentLength);
         };
@@ -64,16 +62,16 @@ export class Streamer extends EventEmitter{
         const dlChunkSize = 1024 * 1024;
         let req;
         let shouldEnd = true;
-        const pipeAndSetEvents = () => {
+        const pipeAndSetEvents = (req, stream, end): void => {
             // Forward events from the request to the stream.
             [
                 'abort', 'request', 'response', 'error', 'redirect', 'retry', 'reconnect',
-            ].forEach(event => {
-                req.prependListener(event, arg => {
+            ].forEach((event): void => {
+                req.prependListener(event, (arg): void => {
                     stream.emit(event, arg);
                 });
             });
-            req.pipe(stream, { end: shouldEnd });
+            req.pipe(stream, { end: end });
         };
 
         const requestOptions = Object.assign({}, options.requestOptions, {
@@ -86,12 +84,13 @@ export class Streamer extends EventEmitter{
         let i = 0;
         let start = 0;
         let end = start + dlChunkSize;
-        const parts = format.dlurls.length;
-        contentLength = format.contentLength;
+        const dlurls = format.dlurls as Durl[];
+        const parts = dlurls.length;
+        contentLength = format.size;
 
-        const getNextChunk = () => {
-            const partEnd = Number(format.dlurls[i]["size"]);
-            const nextPart = end >= partEnd && i < parts;
+        const getNextChunk = (): void => {
+            const partEnd = Number(dlurls[i].size);
+            const nextPart = (end >= partEnd && i < (parts-1) );
             if (end >= contentLength) end = 0;
             if (nextPart) end = partEnd;
             shouldEnd = !end || end === contentLength;
@@ -106,9 +105,9 @@ export class Streamer extends EventEmitter{
 
             req = miniget(format.dlurls[i]["url"], requestOptions);
             req.on('data', ondata);
-            req.on('end', () => {
-                if (stream['_isDestroyed']) { return; }
-                if (end !== contentLength) {
+            req.on('end', (): void => {
+                if (stream.destroyed) return;
+                if (end <= contentLength) {
                     if(nextPart) {
                         i++;
                         start = 0;
@@ -120,7 +119,7 @@ export class Streamer extends EventEmitter{
                     getNextChunk();
                 }
             });
-            pipeAndSetEvents();
+            pipeAndSetEvents(req, stream, shouldEnd);
         };
         getNextChunk();
 
@@ -136,12 +135,10 @@ export class Streamer extends EventEmitter{
         // req.on('data', ondata);
         // pipeAndSetEvents();
 
-        stream.destroy = () => {
-            stream['_isDestroyed'] = true;
-            if (req.abort) req.abort();
-            req.end();
-            req.removeListener('data', ondata);
-            req.unpipe();
+        stream._destroy = (): void => {
+            stream.destroyed = true;
+            req.destroy();
+            req.end()
         };
     };
 }
