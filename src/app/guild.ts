@@ -143,10 +143,10 @@ export class GuildManager {
         });
     }
 
-    public checkMemberInChannel(member: GuildMember): void {
+    public checkMemberInChannel(member: GuildMember, requireSameChannel: boolean = true): void {
         if (!member.voice || !member.voice.channel) {
             throw CommandException.UserPresentable('You are not in a voice channel');
-        } else if (this.queueManager.activeConnection && member.voice.channel.id != this.queueManager.activeConnection.channel.id) {
+        } else if (requireSameChannel && this.guild.me.voice.channel && member.voice.channelId != this.guild.me.voice.channelId) {
             throw CommandException.UserPresentable("You cannot use this command if you are not in the channel I'm playing");
         } else {
             return;

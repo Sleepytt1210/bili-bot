@@ -18,7 +18,7 @@ export class SummonCommand extends BaseCommand {
     }
 
     public async run(msg: Message, guild: GuildManager, args?: string[]): Promise<void> {
-        guild.checkMemberInChannel(msg.member);
+        guild.checkMemberInChannel(msg.member, false);
         if (!guild.queueManager.activeConnection) {
             await guild.joinChannel(msg);
         } else{
