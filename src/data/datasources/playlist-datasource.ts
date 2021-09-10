@@ -30,7 +30,7 @@ export class PlaylistDataSource {
 
     private async getDefault(creator: User): Promise<PlaylistDoc> {
         this.logger.verbose(`Querying default playlist of ${creator.username}`);
-        return MongoDB.Playlist.findOne(MongoDB.Playlist.findOne({creator: creator.id, default: true}));
+        return MongoDB.Playlist.findOne({creator: creator.id, default: true});
     }
 
     public async getAll(creator: User): Promise<PlaylistDoc[]>{
@@ -59,7 +59,7 @@ export class PlaylistDataSource {
     public async delete(creator: User, name: string): Promise<void> {
         this.logger.verbose(`Deleting playlist ${name} by ${creator.username}`);
         await MongoDB.Playlist.deleteOne({name: name, creator: creator.id}).then((res) => {
-            if(res.n == 0 || res.ok != 1) throw CommandException.UserPresentable(`Playlist ${name} is not found!`)
+            if(!res.acknowledged || res.deletedCount == 0) throw CommandException.UserPresentable(`Playlist ${name} is not found!`)
         });
     }
 
