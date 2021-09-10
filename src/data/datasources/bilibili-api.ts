@@ -1,12 +1,10 @@
-import * as request from "request-promise";
-import RandomMapping from '../../const/random-mapping';
 import {SongDataSource} from "./song-datasource";
 import {getLogger} from "../../utils/logger";
-import fetch from "node-fetch"
+import got, {CancelableRequest, Response} from "got"
 import {CommandException} from "../../commands/base-command";
-import crypto = require("crypto");
 import configuration from "../../configuration";
-
+import crypto = require("crypto");
+import {Durl, Pages, PlayUrlData, WebInterface} from "../model/bilibili-api-types";
 
 const logger = getLogger('BilibiliApi');
 
@@ -14,14 +12,17 @@ const api = {
     liveApi: (rid): string => {
         return `https://api.live.bilibili.com/xlive/web-room/v1/record/getLiveRecordUrl?rid=${rid}&platform=html5`
     },
-    dlApi: (payload, sign): string => {
-        return `http://interface.bilibili.com/v2/playurl?${payload}&sign=${sign}`
+    dlApi: (payload, sign, bvid): string => {
+        return `https://api.bilibili.com/x/player/playurl?${payload}&sign=${sign}&bvid=${bvid}`
     },
     webIntApi: (path): string => {
         return `https://api.bilibili.com/x/web-interface/view?${path}`
     },
     loginApi: (): string => {
         return `https://account.bilibili.com/api/login/v2`
+    },
+    pagelistApi: (bvid): string => {
+        return `https://api.bilibili.com/x/player/pagelist?bvid=${bvid}&jsonp=jsonp`
     },
     searchApi: (keyword, limit): string => {
         return `https://api.bilibili.com/x/web-interface/search/all/v2?keyword=${keyword}&page=1&order=totalrank&pagesize=${limit}&search_type=video`
@@ -36,14 +37,14 @@ export class SearchSongEntity {
     public aid: string;
     public bvId: string;
     public uid: string;
-    public cidList: string[];
+    public cidList: Pages[];
     public thumbnail: string;
     public description: string;
     public author: string;
     public play: number;
-    public contentLength: number;
+    public size: number;
     public url: string;
-    public dlurls: object[];
+    public dlurls: Durl[];
     public cached: boolean;
     public format: string;
     public rawDuration: number;
@@ -61,7 +62,7 @@ export class SearchSongEntity {
     }
 
     public setContentLength(value: number): this {
-        this.contentLength = value;
+        this.size = value;
         return this;
     }
 
@@ -80,7 +81,7 @@ export class SearchSongEntity {
         return this;
     }
 
-    public setCidList(list: string[]): this {
+    public setCidList(list: Pages[]): this {
         this.cidList = list;
         return this;
     }
@@ -110,7 +111,7 @@ export class SearchSongEntity {
         return this;
     }
 
-    public setDlurl(dlurls: object[]): this {
+    public setDlurl(dlurls: Durl[]): this {
         this.dlurls = dlurls;
         return this;
     }
@@ -145,6 +146,34 @@ export class SearchSongEntity {
     }
 }
 
+const headers = {
+    'Accept-Language': 'en-us,en;q=0.5',
+    Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+    'Accept-Charset': 'ISO-8859-1,utf-8;q=0.7,*;q=0.7',
+    Referer: 'https://www.bilibili.com/',
+    'Accept-Encoding': 'gzip, deflate',
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.111 Safari/537.36'
+}
+
+const baseRequest = (url: string, referrer?: string): CancelableRequest<Response<string>> => {
+    if(referrer) headers.Referer = referrer;
+    const opt = {
+        headers: headers,
+        timeout: 1100,
+        retry: {limit: 3}
+    }
+    try{
+        return got(url, opt);
+    }catch (e) {
+        logger.error(e.toString());
+        throw e;
+    }
+}
+
+const jsonRequest = (url: string, referrer?: string): CancelableRequest => {
+    return baseRequest(url, referrer).json()
+}
+
 export function formatToValue(format): string {
     if (format == 'does_not_exist') throw `formatToValue: cannot lookup does_not_exist`;
     const dict = {
@@ -161,26 +190,6 @@ export function formatToValue(format): string {
         'mp4': '16',
     }
     return dict[format] || null;
-}
-
-export async function getExtraInfo(info: SearchSongEntity): Promise<SearchSongEntity> {
-    const payload = `appkey=${api._APP_KEY}&cid=${info.uid}&otype=json&qn=80`
-    const sign = crypto.createHash('md5').update(Buffer.from(payload + api._BILIBILI_KEY).toString('utf-8')).digest('hex');
-    const dlapi = api.dlApi(payload, sign);
-    const re = await fetch(dlapi, {
-        headers: {
-            'Referer': info.url,
-        }
-    });
-    const data = await re.json();
-    //console.log(apiJson);
-    const dllink = data['durl'] as object[];
-    const format = formatToValue(data['format'] as string);
-    const contentLength = dllink.reduce(( sum, { size }: {size: number}) => sum + size , 0);
-    return info
-        .setDlurl(dllink)
-        .setFormat(format)
-        .setContentLength(contentLength);
 }
 
 export function bvidExtract(url: string): string[] {
@@ -201,17 +210,28 @@ export function toHms(seconds: number): string {
     return res;
 }
 
+export async function getExtraInfo(info: SearchSongEntity): Promise<SearchSongEntity> {
+    const payload = `appkey=${api._APP_KEY}&cid=${info.uid}&otype=json&qn=80`
+    const sign = crypto.createHash('md5').update(Buffer.from(payload + api._BILIBILI_KEY).toString('utf-8')).digest('hex');
+    const dlapi = api.dlApi(payload, sign, info.bvId);
+    const data = (await jsonRequest(dlapi))['data'] as PlayUrlData;
+    const dllink = data.durl;
+    const format = formatToValue(data.format);
+    const contentLength = dllink.reduce(( sum: number, { size }: {size: number}): number => sum + size , 0);
+    return info
+        .setDlurl(dllink)
+        .setFormat(format)
+        .setContentLength(contentLength);
+}
+
 export async function getBasicInfo(url: string): Promise<SearchSongEntity> {
     const fullId = await bvidExtract(url);
     let id;
     if (fullId[7]) {
         if (fullId[8] && fullId[8].match(/(BV\w+|av\d+)/)) id = fullId[0].match(/(BV\w+|av\d+)/)[1];
         else if (fullId[8]) {
-            const resp = await fetch(`https://${fullId[7]}`, {
-                method: "GET",
-                redirect: 'manual'
-            });
-            const newurl = await resp.headers.get('location');
+            const resp = await baseRequest(`https://${fullId[7]}`, null);
+            const newurl = resp.headers.location;
             if (newurl == null) throw CommandException.UserPresentable(`Invalid bilibili url!`);
             id = newurl.match(/(BV\w+|av\d+)/)[1];
         } else {
@@ -223,25 +243,24 @@ export async function getBasicInfo(url: string): Promise<SearchSongEntity> {
     const path = (id.startsWith("BV") ? `bvid=${id}` : `aid=${id.substr(2)}`);
     const pg = fullId[6] ? parseInt(fullId[6]) : 1;
     const cidapi = api.webIntApi(path);
-    const opt = {
-        url: cidapi,
-        json: true
+    const weburl = `https://www.bilibili.com/video/${id}?p=${pg}`;
+    const response = await jsonRequest(cidapi, weburl);
+    const rawData = response['data'] as WebInterface;
+    if(pg > rawData.pages.length) {
+        throw CommandException.UserPresentable(`URL parameter p=${pg} out of bound! Please check again!`)
     }
-    const weburl = `https://www.bilibili.com/video/${id}?p=${pg}`
-    const response = await request(opt);
-    const rawData = response['data'];
-    const rawCids = rawData['pages'] as string[];
-    const mainTitle = rawData['title'];
-    const desc = rawData['desc'];
-    const aid = rawData['aid'];
-    const bvid = rawData['bvid'];
-    const play = rawData['stat']['view'];
-    const thumbnail = rawData['pic'];
-    const cid = rawCids[pg - 1]['cid'];
-    const author = rawData['owner']['name'];
-    const duration = rawCids[pg - 1]['duration'];
+    const rawCids = rawData.pages;
+    const mainTitle = rawData.title;
+    const desc = rawData.desc;
+    const aid = rawData.aid;
+    const bvid = rawData.bvid;
+    const play = rawData.stat.view;
+    const thumbnail = rawData.pic;
+    const cid = rawCids[pg - 1].cid;
+    const author = rawData.owner.name;
+    const duration = rawCids[pg - 1].duration;
     const accHms = toHms(duration);
-    const title = (rawCids.length > 1) ? rawCids[pg - 1]['part'] : rawData['title'];
+    const title = (rawCids.length > 1) ? rawCids[pg - 1].part : rawData.title;
     const cached = await SongDataSource.getInstance().isCached(cid);
     return getExtraInfo(new SearchSongEntity()
         .setCid(cid)
@@ -266,8 +285,7 @@ export async function search(keyword: string, limit?: number): Promise<SearchSon
     if (!limit) limit = 20;
     const keyWExt = new RegExp(/<([A-Za-z][A-Za-z0-9]*)\b[^>]*>(.*?)<\/\1>/gm);
     const encoded = encodeURI(api.searchApi(keyword, limit));
-    const re = await fetch(encoded);
-    const response = await re.json();
+    const response = await jsonRequest(encoded);
     const rawSongs = response['data']['result'][8]['data'] as object[];
     if (!rawSongs) return [];
     return rawSongs.map((raw): SearchSongEntity => {
@@ -291,15 +309,17 @@ export async function search(keyword: string, limit?: number): Promise<SearchSon
 export const ytSearch = async (keyword: string): Promise<string> => {
     const api = `https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=5&order=relevance&q=${keyword}&type=video&key=${configuration.getYTApiKey()}`;
     const url = encodeURI(api);
-    const resp = await fetch(url, {
-        method: 'GET', headers: {
+    const resp = await got(url, {
+        method: 'GET',
+        headers: {
             'Accept': 'application/json',
             'User-Agent': 'Mozilla/5.0 (compatible; Discordbot/2.0; +https://discordapp.com)'
-        }
-    });
-    const js = await resp.json();
-    if(js['items'].length === 0) return null;
-    return `https://www.youtube.com/watch?v=${js['items'][0]['id']['videoId']}`;
+        },
+        timeout: 1100,
+        retry: {limit: 3}
+    }).json();
+    if(resp['items'].length === 0) return null;
+    return `https://www.youtube.com/watch?v=${resp['items'][0]['id']['videoId']}`;
 }
 
 // export async function randomRanking(
