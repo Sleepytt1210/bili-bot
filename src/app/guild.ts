@@ -1,6 +1,6 @@
 import {Logger, getLogger} from "../utils/logger";
 import {BilibiliSong} from "../data/model/bilibili-song";
-import {Guild, GuildMember, Message, MessageEmbed, MessageReaction, TextChannel} from "discord.js";
+import {Guild, GuildMember, Message, MessageEmbed, MessageReaction, StageChannel, TextChannel} from "discord.js";
 import {SearchSongEntity} from "../data/datasources/bilibili-api";
 import {CommandEngine} from "../commands/command-engine";
 import {CommandException} from "../commands/base-command";
@@ -8,6 +8,7 @@ import {PlaylistManager} from "../data/managers/playlist-manager";
 import {QueueManager} from "../data/managers/queue-manager";
 import {SongDoc} from "../data/db/schemas/song";
 import {PlaylistDoc} from "../data/db/schemas/playlist";
+import {createAudioPlayer, joinVoiceChannel, VoiceConnectionStatus} from "@discordjs/voice";
 
 export class GuildManager {
     protected readonly logger: Logger;
@@ -52,7 +53,24 @@ export class GuildManager {
     // HELPER FUNCTIONS
 
     public async joinChannel(message: Message): Promise<void> {
-        this.queueManager.activeConnection = await message.member.voice.channel.join();
+        const voiceId = message.member.voice.channelId;
+        if (!this.queueManager.activeConnection || this.queueManager.activeConnection.state.status === VoiceConnectionStatus.Disconnected) {
+            this.logger.info(`Joined channel '${message.member.voice.channel.name}'`)
+            this.queueManager.joinChannel(
+                joinVoiceChannel({
+                    channelId: voiceId,
+                    guildId: this.id,
+                    adapterCreator: this.guild.voiceAdapterCreator,
+                }), createAudioPlayer()
+            );
+        } else if (this.guild.me.voice.channelId !== voiceId) {
+            this.logger.info(`Rejoin channel ${message.member.voice.channel.name}`);
+            this.queueManager.activeConnection.rejoin({channelId: voiceId, selfMute: false, selfDeaf: true});
+        }
+        if (message.member.voice.channel instanceof StageChannel) {
+            this.guild.me.voice.setChannel(voiceId).then((me): Promise<void> => me.voice.setSuppressed(false));
+        }
+        this.queueManager.activeConnection.on('error', (error): void => console.warn(error));
     }
 
     public setPreviousCommand(command: null | "search" | "showlist" | "playlists"| "load"): void {

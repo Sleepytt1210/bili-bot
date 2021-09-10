@@ -1,11 +1,12 @@
 import {GuildManager} from "../../app/guild";
 import {BilibiliSong} from "../model/bilibili-song";
 import {getLogger, Logger} from "../../utils/logger";
-import {StreamDispatcher, VoiceConnection} from "discord.js";
+import {MessageEmbed, StreamDispatcher, VoiceConnection} from "discord.js";
 import {CommandException} from "../../commands/base-command";
 import {shuffle} from "../../utils/utils";
 import * as stream from "../bilidl";
 import * as ytdl from 'ytdl-core';
+import {AudioPlayer, entersState, VoiceConnectionStatus} from "@discordjs/voice";
 
 export class QueueManager {
     protected readonly logger: Logger;
@@ -19,6 +20,7 @@ export class QueueManager {
     public activeDispatcher: StreamDispatcher;
     private readonly stream: stream.Streamer;
     private _isLoop: boolean;
+    private audioPlayer: AudioPlayer;
 
     // eslint-disable-next-line @typescript-eslint/explicit-member-accessibility
     get isLoop(): boolean {
@@ -39,6 +41,28 @@ export class QueueManager {
         this._isLoop = false;
         this.stream = new stream.Streamer();
         this.volume = 0.5;
+    }
+
+    public joinChannel(voiceConnection: VoiceConnection, audioPlayer: AudioPlayer): void {
+        this.activeConnection = voiceConnection;
+        this.audioPlayer = audioPlayer;
+        this.activeConnection.on(VoiceConnectionStatus.Disconnected, async (): Promise<void> => {
+            try {
+                await Promise.race([
+                    entersState(this.activeConnection, VoiceConnectionStatus.Signalling, 5_000),
+                    entersState(this.activeConnection, VoiceConnectionStatus.Connecting, 5_000),
+                ]);
+                // Seems to be reconnecting to a new channel - ignore disconnect
+            } catch (error) {
+                const embed = new MessageEmbed()
+                    .setTitle(`${this.guild.guild.me.displayName}`)
+                    .setDescription(`has left the voice channel!`)
+                await this.guild.printEmbeds(embed);
+                // Seems to be disconnected - destroy
+                this.activeConnection.destroy();
+                this.activeConnection = null;
+            }
+        })
     }
 
     public isListEmpty(): boolean {
