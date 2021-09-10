@@ -1,14 +1,10 @@
-import * as Promise from 'bluebird';
-import * as youtubedl from "youtube-dl";
-import {Info} from "youtube-dl";
+import youtubedl, {YtResponse} from "youtube-dl-exec";
 import {MessageEmbed} from "discord.js";
-import * as ytdl from "ytdl-core";
+import ytdl from "ytdl-core";
 
 export const getInfo = ytdl.getInfo;
 
-export const getInfoWithArg = Promise.promisify(
-    (url: string, arg: string[], cb: (err: Error, info: Info) => void): void => youtubedl.getInfo(url, arg, cb)
-);
+export const getInfoWithArg = (url: string, args: object): Promise<YtResponse> => youtubedl(url, args);
 
 export const ytUidExtract = (url: string): string => {
     // youtube

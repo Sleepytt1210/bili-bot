@@ -3,12 +3,18 @@ import {CommandType} from "./command-type";
 import {GuildManager} from "../app/guild";
 import {Message, MessageEmbed} from "discord.js";
 import {getInfoWithArg, helpTemplate, isNum, ytPlIdExtract} from "../utils/utils";
-import {BilibiliSong} from "../data/model/bilibili-song";
+import {SongInfo} from "../data/model/song-info";
 import * as api from "../data/datasources/bilibili-api";
 import {PlaylistDataSource} from "../data/datasources/playlist-datasource";
 import {bvidExtract} from "../data/datasources/bilibili-api";
 
 export class LoadCommand extends BaseCommand {
+
+    private plArgs = {
+        dumpSingleJson: true,
+        noWarning: true,
+        flatPlaylist: true,
+    }
 
     public name(): CommandType {
         return CommandType.LOAD;
@@ -18,19 +24,22 @@ export class LoadCommand extends BaseCommand {
         guild.checkMemberInChannel(message.member);
         let name = args.join(" ");
         const query = args.shift();
-        const opt = (query) ? ytPlIdExtract(query) ? '-y' : bvidExtract(query) ? '-b' : null : null;
-        if (opt) {
+        // If query exists, check if it is a valid url and the type of URL it refers to
+        const type = (query) ? ytPlIdExtract(query) ? '-y' : bvidExtract(query) ? '-b' : null : null;
+        if (type) {
             name = args.join(" ");
             LoadCommand.checkArg(name);
+            // Read from existing playlist with URL
             if(!name){
-                await this.load(message, guild, name, opt, query);
+                await this.load(message, guild, null, type, query);
             }else{
-                if(opt === '-y'){
+                // Save as a new playlist
+                if(type === '-y'){
                     this.logger.info('Loading from YouTube playlist');
-                    await this.loadYoutubeList(message, guild, query, name);
-                }else if(opt === '-b'){
-                    this.logger.info('Loading from Bilibili playlist');
-                    await this.loadBilibiliList(message, guild, query, name);
+                    await this.loadYouTubeList(message, guild, query, name);
+                }else if(type === '-b'){
+                    this.logger.info('Loading from BiliBili playlist');
+                    await this.loadBiliBiliList(message, guild, query, name);
                 }
             }
             return;
@@ -42,10 +51,10 @@ export class LoadCommand extends BaseCommand {
                 throw CommandException.OutOfBound(lists.length);
             name = lists[index-1].name;
         } else if (name) {
+            // Read from existing playlist with name
             LoadCommand.checkArg(name);
-            await this.load(message, guild, name);
         } else {
-            guild.printEmbeds(this.helpMessage(guild));
+            message.channel.send({embeds: [this.helpMessage(guild)]});
             return;
         }
         this.logger.info(`Loading from ${name}`);
@@ -53,36 +62,20 @@ export class LoadCommand extends BaseCommand {
         guild.setPreviousCommand("load");
     }
 
-    private async load(message: Message, guild: GuildManager, collection?: string, arg?: string, url?: string): Promise<void> {
+    private async load(message: Message, guild: GuildManager, collection?: string, type?: string, url?: string): Promise<void> {
+        // Join Channel
         if (!guild.queueManager.activeConnection) {
             await guild.joinChannel(message);
         }
-        if(arg){
-            if(arg === '-y'){
-                const plId = ytPlIdExtract(url);
-                if(!plId) throw CommandException.UserPresentable(`Invalid YouTube playlist url!`);
-                const plurl = `https://www.youtube.com/playlist?list=${plId}`;
-                const result = await getInfoWithArg(plurl, ['--flat-playlist', '-i']);
-                if(!result) throw CommandException.UserPresentable(`Invalid YouTube playlist url!`);
-                if(Array.isArray(result)) {
-                    for (const song of result) {
-                        this.logger.info(`Now loading song: ${song.title}`);
-                        const url = `https://www.youtube.com/watch?v=${song.id}`;
-                        const entity = await BilibiliSong.withUrl(url, message.author);
-                        guild.queueManager.pushSong(entity);
-                    }
-                }
+
+        // If type exists it means a valid url is given.
+        if(type && url){
+            if(type === '-y'){
+                await this.loadYouTubeList(message, guild, url, collection, false)
             }else{
-                const result = (await api.getBasicInfo(url).catch((error) => {
-                    throw error;
-                }));
-                for (const song of result.cidList){
-                    this.logger.info(`Now loading song: ${song['part']}`);
-                    const url = `https://www.bilibili.com/video/${result.bvId}?p=${song['page']}`
-                    const entity = await BilibiliSong.withUrl(url, message.author);
-                    guild.queueManager.pushSong(entity);
-                }
+                await this.loadBiliBiliList(message, guild, url, collection, false)
             }
+            // A name could be given instead
         }else {
             const playlist = await PlaylistDataSource.getInstance().get(message.author, collection);
             if (!playlist) throw CommandException.UserPresentable(`Playlist ${collection} does not exist!`);
@@ -92,16 +85,11 @@ export class LoadCommand extends BaseCommand {
                 throw CommandException.UserPresentable('Playlist is empty');
             }
             for (const doc of songDocs) {
-                const song = await BilibiliSong.withRecord(doc, message.author);
+                const song = await SongInfo.withRecord(doc, message.author);
                 guild.queueManager.pushSong(song);
-                // await msg.edit(new MessageEmbed()
-                //     .setDescription(`${song.title} is added to queue, current number of songs in the list: ${guild.queueManager.queue.length}`)
-                //     .setColor(0x0ACDFF));
             }
             guild.printEvent(`<@${message.author.id}> Playlist ${collection} successfully loaded`);
         }
-
-
 
         //var songs = [];
         // const first = await BilibiliSong.withUrl(songDocs.shift().url, message.author);
@@ -114,84 +102,96 @@ export class LoadCommand extends BaseCommand {
         //guild.queueManager.pushSongs(songs);
     }
 
-    private async loadYoutubeList(
+    /**
+     * Load videos from youtube playlist
+     * @param message Discord message that called this command
+     * @param guild The guild manager the client is in
+     * @param url URL of the YouTube playlist
+     * @param collection Name of the Playlist to be saved
+     * @param save To save the playlist or not
+     * @private
+     */
+    private async loadYouTubeList(
         message: Message,
         guild: GuildManager,
         url: string,
         collection?: string,
-    ): Promise<void> {
-        const plId = ytPlIdExtract(url);
-        if(!plId) throw CommandException.UserPresentable(`Invalid YouTube playlist url!`);
-        const plurl = `https://www.youtube.com/playlist?list=${plId}`;
-        const result = await getInfoWithArg(plurl, ['--flat-playlist', '-i']);
-        if(!result) throw CommandException.UserPresentable(`Invalid YouTube playlist url!`);
+        save: boolean = true): Promise<void> {
+        // Collect playlist information
+        const result = await getInfoWithArg(url, this.plArgs);
+        if(!result) throw CommandException.UserPresentable(`Invalid YouTube playlist url!`)
+        const songs = result['entries'];
+        // Create PlaylistDatasource instance
         const pds = PlaylistDataSource.getInstance();
         let playlist = await pds.get(message.author, collection);
-        if(!playlist) {
+        if (!playlist && collection) {
             await pds.create(collection, guild.id, message.author).then((doc): void => {
                 playlist = doc;
                 guild.printEvent(`Playlist ${collection} created!`);
             });
         }
-        if (Array.isArray(result)) {
-            guild.printEvent("Start loading from youtube playlist, please be patient...");
-            // doing this sync'ly now, might change later
-            for (const song of result) {
-                this.logger.info(`Now loading song: ${song.title}`);
-                const url = `https://www.youtube.com/watch?v=${song.id}`;
+
+        // Start loading the song from playlist
+        if (Array.isArray(songs)) {
+            const plTitle = (result.title && result.title !== '') ? result.title : 'YouTube playlist'
+            guild.printEvent(`Start to load from ${plTitle}, please be patient...`);
+            for (const song of songs) {
                 try {
-                    const entity = await BilibiliSong.withUrl(url, message.author);
-                    if (!song.url) continue;
-                    await guild.dataManager.saveToPlaylist(entity, entity.initiator, playlist);
+                    this.logger.info(`Now loading song: ${song.title}`);
+                    const url = `https://www.youtube.com/watch?v=${song.id}`;
+                    const entity = await SongInfo.withUrl(url, message.author);
+                    if (save) await guild.dataManager.saveToPlaylist(entity, entity.initiator, playlist);
                 } catch (err) {
                     // Skip duplicated error on batch load
                     this.logger.warn(err.toString());
                 }
             }
-            guild.printEvent(`Successfully loaded youtube playlist ${collection}`);
+            guild.printEvent(`Successfully loaded YouTube playlist ${collection}`);
+            this.logger.info(`Successfully loaded YouTube playlist ${plTitle}`);
         } else {
-            throw CommandException.UserPresentable("Please use a valid youtube playlist");
+            throw CommandException.UserPresentable("Please use a valid YouTube playlist");
         }
     }
 
-    private async loadBilibiliList(
+    private async loadBiliBiliList(
         message: Message,
         guild: GuildManager,
-        listUrl: string,
-        listName: string
+        url: string,
+        collection?: string,
+        save: boolean = true
     ): Promise<void>{
-        try {
-            const info = await api.getBasicInfo(listUrl).catch((error) => {
-                throw error;
+        // Collect playlist information
+        const songs = await api.getBasicInfo(url).catch((error) => {
+            throw error;
+        });
+        if(!songs) throw CommandException.UserPresentable(`Invalid BiliBili playlist url!`)
+        // Create PlaylistDatasource instance
+        const pds = PlaylistDataSource.getInstance();
+        let playlist = await pds.get(message.author, collection);
+        if(!playlist && collection) {
+            await pds.create(collection, guild.id, message.author).then((doc): void => {
+                playlist = doc;
+                guild.printEvent(`Playlist ${collection} created!`);
             });
-            const pds = PlaylistDataSource.getInstance();
-            let playlist = await pds.get(message.author, listName);
-            if(!playlist) {
-                await pds.create(listName, guild.id, message.author).then((doc): void => {
-                    playlist = doc;
-                    guild.printEvent(`Playlist ${listName} created!`);
-                });
-            }
-            guild.printEvent(`Start to load from the playlist ${info.mainTitle}`);
-            for (const song of info.cidList){
-                this.logger.info(`Now loading song: ${song['part']}`);
-                try {
-                    const url = `https://www.bilibili.com/video/${info.bvId}?p=${song['page']}`
-                    const entity = await api.getBasicInfo(url).catch((error) => {
-                        throw error;
-                    });
-                    await guild.dataManager.saveToPlaylist(entity, message.author, playlist);
-                } catch (err) {
-                    // Skip duplicated error on batch load
-                    this.logger.warn(err.toString());
-                }
-            }
-            guild.printEvent(`Successfully loaded ${listName}`);
-            this.logger.info(`Successfully loaded Bilibili playlist ${info.mainTitle}`);
-        } catch(err){
-            this.logger.error(`Bilibili load: ${err}`);
-            throw CommandException.UserPresentable("Fail to load list!");
         }
+
+        // Start loading the song from playlist
+        guild.printEvent(`Start to load from playlist ${songs.mainTitle}`);
+        for (const song of songs.cidList){
+            this.logger.info(`Now loading song: ${song.part}`);
+            try {
+                const url = `https://www.bilibili.com/video/${songs.bvId}?p=${song.page}`
+                const entity = await api.getBasicInfo(url).catch((error) => {
+                    throw error;
+                });
+                if(save) await guild.dataManager.saveToPlaylist(entity, message.author, playlist);
+            } catch (err) {
+                // Skip duplicated error on batch load
+                this.logger.warn(err.toString());
+            }
+        }
+        guild.printEvent(`Successfully loaded ${collection}`);
+        this.logger.info(`Successfully loaded BiliBili playlist ${songs.mainTitle}`);
     }
 
     public static checkArg(name: string): void{
@@ -205,7 +205,7 @@ export class LoadCommand extends BaseCommand {
         const res = helpTemplate(this.name());
         const pref = `${guild.commandPrefix}${this.name()}`;
         res.addField('Usage: ', `${pref} <list-name> (To play the list)
-                ${pref} <list-url> <name> (To save as playlist)
+                ${pref} <list-url> <list-name>  (To save as playlist)
                 ${pref} <index> (To choose from playlists)`);
         return res;
     }
