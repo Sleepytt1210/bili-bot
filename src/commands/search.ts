@@ -41,9 +41,8 @@ export class SearchCommand extends BaseCommand {
             const embed = new MessageEmbed()
                 .setTitle('Search result:')
                 .setDescription(`${resultMessage.join("")}`)
-                .setFooter(`Use ${guild.commandPrefix}select [number] to play a song`)
-                .setColor(0x0ACDFF);
-            await guild.activeTextChannel.send(embed);
+                .setFooter(`Use ${guild.commandPrefix}select [number] to play a song`);
+            guild.printEmbeds(embed);
             guild.setPreviousCommand("search");
         }
     }

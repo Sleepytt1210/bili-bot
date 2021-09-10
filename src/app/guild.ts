@@ -78,35 +78,44 @@ export class GuildManager {
     public printEvent(desc: string): void{
         const embed = new MessageEmbed()
             .setDescription(desc)
-            .setColor(0x0ACDFF)
-        this.activeTextChannel.send(embed);
+            .setColor(0x0ACDFF);
+        this.printEmbeds(embed);
     }
 
     public printPlaying(song: BilibiliSong): void {
         const embed = new MessageEmbed()
             .setTitle(`Now playing: `)
             .setDescription(`**[${song.title}](${song.url})** --> *Requested by:* <@${song.initiator.id}>`)
-            .setFooter(`Duration: ${song.hmsDuration}`, song.initiator.avatarURL())
-            .setColor(0x0ACDFF);
-        this.activeTextChannel.send(embed);
+            .setFooter(`Duration: ${song.hmsDuration}`, song.initiator.avatarURL());
+        this.printEmbeds(embed);
     }
 
     public printOutOfSongs(): void {
-        this.activeTextChannel.send(new MessageEmbed().setDescription("Running out of songs")
-            .setColor(0x0ACDFF));
+        this.printEmbeds(new MessageEmbed().setDescription("Running out of songs"));
     }
 
-    public printAddToQueue(song: BilibiliSong, queueLength: number): MessageEmbed {
+    public printAddToQueue(song: BilibiliSong, queueLength: number): void {
         const embed = new MessageEmbed()
-            .setDescription(`**[${song.title}](${song.url})** is added to queue, current number of songs in the list: ${queueLength}`)
-            .setColor(0x0ACDFF);
-        return embed;
+            .setDescription(`**[${song.title}](${song.url})** is added to queue, current number of songs in the list: ${queueLength}`);
+        this.printEmbeds(embed);
+    }
+
+    public printEmbeds(embed: MessageEmbed | MessageEmbed[]): void {
+        if(Array.isArray(embed)){
+            for (const e of embed) {
+                e.setColor(0x0ACDFF);
+            }
+        }else{
+            embed.setColor(0x0ACDFF);
+        }
+        const embedMsg = Array.isArray(embed) ? embed : [embed]
+        this.activeTextChannel.send({embeds: embedMsg});
     }
 
     public printFlipPages(list: any[], embed: (n: number) => MessageEmbed, message: Message): void {
         let currentPage = 1;
 
-        message.channel.send(embed(0)).then(msg => {
+        message.channel.send({embeds: [embed(0)]}).then(msg => {
             if(list.length <= 10) return;
 
             msg.react('⬅').then(r => {
@@ -121,13 +130,13 @@ export class GuildManager {
                 prevCollector.on('collect', (r, u) => {
                     if(currentPage === 1) return r.users.remove(r.users.cache.filter(u => u === message.author).first());
                     currentPage--;
-                    msg.edit(embed((currentPage-1)*10));
+                    msg.edit({embeds: [embed((currentPage-1)*10)]});
                     r.users.remove(r.users.cache.filter(u => u === message.author).first());
                 });
                 nextCollector.on('collect', (r, u) => {
                     if(currentPage === Math.ceil((list.length/10))) return r.users.remove(r.users.cache.filter(u => u === message.author).first());
                     currentPage++;
-                    msg.edit(embed((currentPage-1)*10));
+                    msg.edit({embeds: [embed((currentPage-1)*10)]});
                     r.users.remove(r.users.cache.filter(u => u === message.author).first());
                 });
             });

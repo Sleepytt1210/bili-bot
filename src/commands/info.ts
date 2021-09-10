@@ -50,7 +50,7 @@ export class InfoCommand extends BaseCommand {
         }else {
             embed.addField('Duration: ', currentSong.hmsDuration);
         }
-        message.channel.send(embed);
+        guild.printEmbeds(embed);
     }
 
     private async urlInfo(message: Message, guild: GuildManager, song?: BilibiliSong): Promise<MessageEmbed> {

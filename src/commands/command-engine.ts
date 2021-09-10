@@ -23,7 +23,7 @@ export class CommandEngine {
             } catch (error) {
                 this.logger.error(error);
                 if (error instanceof CommandException && (error as CommandException).userPresentable) {
-                    msg.channel.send(new MessageEmbed().setDescription(`${error}`).setColor(0x0ACDFF));
+                    this.guild.printEvent(`${error}`);
                 }
             }
         } else if(command.length > 0 && command.charCodeAt(0) >= 97 && command.charCodeAt(0) <= 122){

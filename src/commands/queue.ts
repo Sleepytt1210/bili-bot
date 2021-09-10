@@ -20,10 +20,7 @@ export class QueueCommand extends BaseCommand {
     public async run(message: Message, guild: GuildManager, _args?: string[]): Promise<void> {
         guild.checkMemberInChannel(message.member);
         if (guild.queueManager.isListEmpty()) {
-            const embed = new MessageEmbed()
-                .setDescription(`Pending queue is empty`)
-                .setColor(0x0ACDFF);
-            await guild.activeTextChannel.send(embed);
+            guild.printEvent(`Pending queue is empty`);
         } else {
             const list = guild.queueManager.queue;
 
@@ -33,11 +30,11 @@ export class QueueCommand extends BaseCommand {
 
                 const embed = new MessageEmbed()
                     .setTitle('Queue:')
-                    .setColor(0x0ACDFF)
+                    .setColor(0x0ACDFF);
                 const result = current.map((song, index) => {
-                    return `${start + index + 1}.   ${song.title}`;
+                    return `${start + index + 1}.   ${song.title}\n`;
                 });
-                embed.setDescription(result);
+                embed.setDescription(result.toString());
                 return embed;
             }
 

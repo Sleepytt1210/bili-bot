@@ -55,7 +55,7 @@ export class QueueManager {
         if (!this.isPlaying) {
             this.playSong(this.queue.shift());
         } else {
-            this.guild.activeTextChannel.send(this.guild.printAddToQueue(song, this.queue.length));
+            this.guild.printAddToQueue(song, this.queue.length);
         }
     }
 

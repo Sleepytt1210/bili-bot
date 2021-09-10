@@ -31,13 +31,12 @@ export class ListCommand extends SubCommand {
 
             const embed = new MessageEmbed()
                 .setTitle(`Your playlists: `)
-                .setColor(0x0ACDFF)
                 .setFooter(`Use ${guild.commandPrefix}showlist <name> or <index> to check songs in list`);
             const result = current.map((list, index): string => {
                 const name = (list.default) ? list.name + " 【Default】" : list.name;
-                return `${start + index + 1}.   ${name}`;
+                return `${start + index + 1}.   ${name}\n`;
             });
-            embed.setDescription(result);
+            embed.setDescription(result.toString());
             return embed;
         }
 

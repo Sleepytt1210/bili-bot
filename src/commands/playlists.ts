@@ -32,11 +32,11 @@ export class PlaylistsCommand extends BaseCommand {
     public async run(message: Message, guild: GuildManager, args?: string[]): Promise<void> {
 
         if(args.length === 0) {
-            await message.reply(this.helpMessage(guild, message));
+            guild.printEmbeds(this.helpMessage(guild, message));
         }else{
             const subcommand = args.shift();
             if(!this.subcommands.has(subcommand)) {
-                await guild.activeTextChannel.send(this.helpMessage(guild, message));
+                guild.printEmbeds(this.helpMessage(guild, message));
             }else{
                 await this.subcommands.get(subcommand).run(message, guild, args);
             }

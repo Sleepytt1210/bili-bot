@@ -55,9 +55,9 @@ export class ShowlistCommand extends BaseCommand {
                 .setFooter(`Use ${guild.commandPrefix}select <index> to play a song`)
                 .setColor(0x0ACDFF);
             const resultMessage = current.map((song, index): string => {
-                return `${(start + index + 1)}. ${song.title}`;
+                return `${(start + index + 1)}. ${song.title}\n`;
             });
-            embed.setDescription(resultMessage);
+            embed.setDescription(resultMessage.toString());
             return embed;
         }
 

@@ -45,7 +45,7 @@ export class LoadCommand extends BaseCommand {
             LoadCommand.checkArg(name);
             await this.load(message, guild, name);
         } else {
-            message.channel.send(this.helpMessage(guild));
+            guild.printEmbeds(this.helpMessage(guild));
             return;
         }
         this.logger.info(`Loading from ${name}`);

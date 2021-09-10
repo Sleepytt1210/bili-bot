@@ -16,9 +16,8 @@ export class LoopCommand extends BaseCommand {
         guild.queueManager.isLoop = !guild.queueManager.isLoop;
         const onOff = (guild.queueManager.isLoop) ? "on" : "off";
         const embed = new MessageEmbed()
-            .setTitle(`Loop is turned ${onOff}!`)
-            .setColor(0x0ACDFF);
-        message.channel.send(embed);
+            .setTitle(`Loop is turned ${onOff}!`);
+        guild.printEmbeds(embed);
     }
 
     public helpMessage(guild: GuildManager): MessageEmbed {

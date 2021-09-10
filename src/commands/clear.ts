@@ -23,8 +23,7 @@ export class ClearCommand extends BaseCommand {
         guild.checkMemberInChannel(message.member);
         if (!guild.queueManager.isPlaying) return;
         guild.queueManager.clear();
-        message.channel.send(new MessageEmbed().setDescription('Queue cleared')
-            .setColor(0x0ACDFF));
+        guild.printEvent('Queue cleared!');
     }
 
     public helpMessage(guild: GuildManager): MessageEmbed {

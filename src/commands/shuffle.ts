@@ -21,8 +21,7 @@ export class ShuffleCommand extends BaseCommand {
         guild.checkMemberInChannel(message.member);
         if (!guild.queueManager.isPlaying) return;
         guild.queueManager.doShuffle();
-        message.channel.send(new MessageEmbed().setDescription('Queue shuffled')
-            .setColor(0x0ACDFF));
+        guild.printEvent('Queue shuffled');
     }
 
     public helpMessage(guild: GuildManager): MessageEmbed {

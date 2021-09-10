@@ -47,9 +47,8 @@ export class HelpCommand extends BaseCommand {
                     "\t``summon``: Summon the bot to your voice channel\n" +
                     "\t``stop``: Stop playing\n" +
                     "\t``volume``: Check and set volume\n" +
-                    "\t``leave``: Leave the channel\n")
-                .setColor(0x0ACDFF);
-            msg.channel.send(embed);
+                    "\t``leave``: Leave the channel\n");
+            guild.printEmbeds(embed);
             return;
         }
         const command = args[0];
@@ -57,7 +56,7 @@ export class HelpCommand extends BaseCommand {
         if (Commands.has(command)) {
             try {
                 const help = await Commands.get(command).helpMessage(guild);
-                msg.channel.send(help);
+                guild.printEmbeds(help);
             } catch (error) {
                 this.logger.error(error);
                 if (error instanceof CommandException && (error as CommandException).userPresentable) {
