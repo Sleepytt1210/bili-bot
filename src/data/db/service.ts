@@ -1,7 +1,7 @@
 import {Logger, getLogger} from "../../utils/logger";
 import Config from "../../configuration";
 import {Model, Mongoose} from "mongoose";
-import * as mongoose from "mongoose";
+import mongoose from "mongoose";
 import {SongDoc, SongSchema} from "./schemas/song";
 import {GuildDoc, GuildSchema} from "./schemas/guild";
 import {PlaylistDoc, PlaylistSchema} from "./schemas/playlist";
@@ -26,12 +26,7 @@ class MongoDBService {
         try {
             this.uri = Config.getMongoUri();
             this.dbName = Config.getMongoDatabaseName();
-            const options = {
-                useUnifiedTopology: true,
-                useNewUrlParser: true,
-                useCreateIndex: true
-            }
-            this.client = await mongoose.connect(this.uri, options);
+            this.client = await mongoose.connect(this.uri);
             this.logger.info('Connected to default');
 
             this.Guild = this.client.model('Guild', GuildSchema);

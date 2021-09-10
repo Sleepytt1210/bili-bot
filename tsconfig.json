@@ -2,10 +2,11 @@
   "compilerOptions": {
     "outDir": "./built/src",
     "module": "commonjs",
-    "target": "es6",
+    "target": "es2020",
     "allowJs": true,
     "sourceMap": true,
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "esModuleInterop": true
   },
   "include": [
     "./src/**/*"
