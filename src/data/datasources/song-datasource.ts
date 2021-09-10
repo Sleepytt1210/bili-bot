@@ -55,6 +55,7 @@ export class SongDataSource {
                 ext: song.format,
                 thumbnail: song.thumbnail,
                 cached: song.cached,
+                size: song.size,
                 dlurls: song.dlurls,
                 type: song.type
             }).save();

@@ -32,6 +32,7 @@ export interface SongDoc extends Document {
     description: string|null;
     thumbnail: string|null;
     ext: string;
+    size: number;
     cached: boolean|null;
     dlurls: object[];
     type: 'y' | 'b';

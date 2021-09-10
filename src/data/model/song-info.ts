@@ -3,7 +3,7 @@ import {getInfo, ytUidExtract} from "../../utils/utils";
 import {SongDataSource} from "../datasources/song-datasource";
 import {SongDoc} from "../db/schemas/song";
 import {SearchSongEntity, getBasicInfo, bvidExtract, toHms} from "../datasources/bilibili-api";
-import ytdl from "ytdl-core";
+import ytdl, {chooseFormat} from "ytdl-core";
 
 export class SongInfo {
     public readonly url: string;
@@ -17,6 +17,7 @@ export class SongInfo {
     public readonly initiator: User;
     public readonly uid: string;
     public readonly format: string;
+    public readonly size: number;
     public readonly cached: boolean;
     public readonly type: 'y' | 'b';
 
@@ -32,6 +33,7 @@ export class SongInfo {
         initator: User,
         uid: string,
         ext: string,
+        size: number,
         cached: boolean,
         type: 'y' | 'b') {
         this.url = url;
@@ -45,14 +47,20 @@ export class SongInfo {
         this.initiator = initator;
         this.uid = uid;
         this.format = ext;
+        this.size = size;
         this.cached = cached;
         this.type = type;
     }
 
+    /**
+     * Parse a YouTube song info entity into a song details record.
+     * @param info YouTube song info entity.
+     * @param initiator User who initiated the command.
+     */
     public static async withInfo(info: ytdl.videoInfo, initiator: User): Promise<SongInfo> {
         const details = info.videoDetails;
-        const format = ytdl.chooseFormat(info.formats, {filter: 'audioonly'});
-        const tmbarr = info.videoDetails.thumbnail.thumbnails;
+        const format = chooseFormat(info.formats, {filter: 'audioonly'});
+        const tmbarr = info.videoDetails.thumbnails;
         // tmbarr.sort((a, b) => {
         //     return (a.height + a.width) - (b.height - b.width);
         // });
@@ -61,11 +69,12 @@ export class SongInfo {
         const thumbnailUrl = tmbarr[tmbarr.length-1].url;
         const dlurl = [{url: format.url}];
         const author = details.author.name;
-        const description = info.videoDetails.shortDescription;
+        const description = SongInfo.trim(info.videoDetails.description);
         const uid = details.videoId;
         const ext = format.mimeType.substr(format.mimeType.indexOf("codecs=\"")+8, format.mimeType.length-1);
         const duration = Number(details.lengthSeconds)
         const hms = toHms(duration);
+        const size = Number(format.contentLength);
         const cached = await SongDataSource.getInstance().isCached(uid);
         return new SongInfo(
             url,
@@ -79,11 +88,18 @@ export class SongInfo {
             initiator,
             uid,
             ext,
+            size,
             cached,
             'y'
         );
     }
 
+
+    /**
+     * Parse a BiliBili song entity into a song details record.
+     * @param songEntity BiliBili song entity.
+     * @param initiator User who initiated the command.
+     */
     public static async withSongEntity(songEntity: SearchSongEntity, initiator: User): Promise<SongInfo>{
         const url = songEntity.url;
         const title = songEntity.title;
@@ -100,6 +116,7 @@ export class SongInfo {
             initiator,
             uid,
             songEntity.format,
+            songEntity.size,
             songEntity.cached,
             'b'
         );
@@ -118,6 +135,7 @@ export class SongInfo {
             initiator,
             record.uid,
             record.ext,
+            record.size,
             record.cached,
             record.type
         );
@@ -125,7 +143,7 @@ export class SongInfo {
 
     public static async withUrl(url: string, Initiator: User): Promise<SongInfo> {
         if(bvidExtract(url)){
-            const entity = await getBasicInfo(url).catch((error) => {
+            const entity = await getBasicInfo(url).catch((error): SearchSongEntity => {
                 throw error;
             });
             return SongInfo.withSongEntity(entity, Initiator);
@@ -135,5 +153,12 @@ export class SongInfo {
         }else{
             return null;
         }
+    }
+
+    private static trim(desc: string): string {
+        if(desc.length > 256) {
+            return desc.substr(0, 253) + '...';
+        }
+        return desc;
     }
 }
