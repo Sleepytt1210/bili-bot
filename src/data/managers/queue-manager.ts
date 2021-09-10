@@ -153,6 +153,12 @@ export class QueueManager {
     }
 
     private playSong(song: SongInfo): void {
+        this.currentSong = song;
+
+        if(!this._isLoop){
+            this.guild.printPlaying(song);
+        }
+
         this.audioResource = createAudioResource((song.type === "y") ?
             ytdl(song.url, {quality: "highestaudio", highWaterMark: 1 << 25}) :
             this.stream.ytbdl(song), {metadata: song});
