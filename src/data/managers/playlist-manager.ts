@@ -9,7 +9,7 @@ import {PlaylistDataSource} from "../datasources/playlist-datasource";
 import {PlaylistDoc} from "../db/schemas/playlist";
 import {SearchSongEntity} from "../datasources/bilibili-api";
 
-export class GuildDataManager {
+export class PlaylistManager {
     protected readonly logger: Logger;
     private readonly guild: GuildManager;
     private readonly songDataSource: SongDataSource;

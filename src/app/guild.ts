@@ -4,7 +4,7 @@ import {Guild, GuildMember, Message, MessageEmbed, TextChannel} from "discord.js
 import {SearchSongEntity} from "../data/datasources/bilibili-api";
 import {CommandEngine} from "../commands/command-engine";
 import {CommandException} from "../commands/base-command";
-import {GuildDataManager} from "../data/managers/guild-data-manager";
+import {PlaylistManager} from "../data/managers/playlist-manager";
 import {QueueManager} from "../data/managers/queue-manager";
 import {SongDoc} from "../data/db/schemas/song";
 import {PlaylistDoc} from "../data/db/schemas/playlist";
@@ -20,7 +20,7 @@ export class GuildManager {
     public currentPlaylist: Map<string, PlaylistDoc>;
     public commandPrefix: string;
     public readonly commandEngine: CommandEngine;
-    public readonly dataManager: GuildDataManager;
+    public readonly dataManager: PlaylistManager;
     public previousCommand: "search" | "showlist" | "playlists"| "load";
     public inorinBvid: string;
 
@@ -34,7 +34,7 @@ export class GuildManager {
         this.previousCommand = null;
         this.commandPrefix = prefix;
         this.commandEngine = new CommandEngine(this);
-        this.dataManager = new GuildDataManager(this);
+        this.dataManager = new PlaylistManager(this);
         this.inorinBvid = "BV1rx411j75n";
     }
 
