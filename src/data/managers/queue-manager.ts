@@ -1,26 +1,32 @@
 import {GuildManager} from "../../app/guild";
 import {BilibiliSong} from "../model/bilibili-song";
 import {getLogger, Logger} from "../../utils/logger";
-import {MessageEmbed, StreamDispatcher, VoiceConnection} from "discord.js";
+import {MessageEmbed} from "discord.js";
 import {CommandException} from "../../commands/base-command";
 import {shuffle} from "../../utils/utils";
 import * as stream from "../bilidl";
 import * as ytdl from 'ytdl-core';
-import {AudioPlayer, entersState, VoiceConnectionStatus} from "@discordjs/voice";
+import {
+    AudioPlayer, AudioPlayerStatus,
+    AudioResource,
+    createAudioResource,
+    entersState,
+    VoiceConnection,
+    VoiceConnectionStatus
+} from "@discordjs/voice";
 
 export class QueueManager {
     protected readonly logger: Logger;
     private readonly guild: GuildManager;
     private readonly threshold: number;
-    public isPlaying: boolean;
     public readonly queue: BilibiliSong[];
     public volume: number;
     public currentSong?: BilibiliSong;
     public activeConnection: VoiceConnection;
-    public activeDispatcher: StreamDispatcher;
+    public audioPlayer: AudioPlayer;
+    private audioResource: AudioResource;
     private readonly stream: stream.Streamer;
     private _isLoop: boolean;
-    private audioPlayer: AudioPlayer;
 
     // eslint-disable-next-line @typescript-eslint/explicit-member-accessibility
     get isLoop(): boolean {
@@ -36,7 +42,6 @@ export class QueueManager {
         this.logger = getLogger(`QueueManager-${guild.id}`);
         this.guild = guild;
         this.queue = [];
-        this.isPlaying = false;
         this.threshold = threshold;
         this._isLoop = false;
         this.stream = new stream.Streamer();
@@ -65,18 +70,22 @@ export class QueueManager {
         })
     }
 
+    public isPlaying(): boolean {
+        return this.audioPlayer.state.status === AudioPlayerStatus.Playing;
+    }
+
     public isListEmpty(): boolean {
         return this.queue.length === 0;
     }
 
     public setVol(vol: number): void {
         this.volume = vol;
-        if(this.activeDispatcher) this.activeDispatcher.setVolume(this.volume);
+        if(this.audioResource) this.audioResource.volume.setVolume(this.volume);
     }
 
     public pushSong(song: BilibiliSong): void {
         this.queue.push(song);
-        if (!this.isPlaying) {
+        if (!this.isPlaying()) {
             this.playSong(this.queue.shift());
         } else {
             this.guild.printAddToQueue(song, this.queue.length);
@@ -110,26 +119,25 @@ export class QueueManager {
 
     public pause(): boolean {
         if (this.isPlaying) {
-            this.activeDispatcher.pause();
+            this.audioPlayer.pause();
             return true;
         }
         return false;
     }
 
     public resume(): boolean {
-        if (this.activeDispatcher.paused) {
-            this.activeDispatcher.resume();
+        if (this.audioPlayer.paused) {
+            this.audioPlayer.resume();
             return true;
         }
         return false;
     }
 
     public stop(): void {
-        this.isPlaying = false;
-        if (this.activeDispatcher) {
-            this.activeDispatcher.end();
-            this.activeDispatcher.destroy();
-            this.activeDispatcher = null;
+        if (this.audioPlayer) {
+            this.audioPlayer.end();
+            this.audioPlayer.destroy();
+            this.audioPlayer = null;
         }
         this.clear();
     }
@@ -142,16 +150,14 @@ export class QueueManager {
     }
 
     private playSong(song: BilibiliSong): void {
-        this.isPlaying = true;
-        this.currentSong = song;
-        if(!this._isLoop){
-            this.guild.printPlaying(song);
-        }
-        this.activeDispatcher = (song.type === "y") ?
-            this.activeConnection.play(ytdl(song.url, {quality: "highestaudio", highWaterMark: 1 << 25}), {volume: this.volume}) :
-            this.activeConnection.play(this.stream.ytbdl(song.url), {volume: 0.5});
+        this.audioResource = createAudioResource((song.type === "y") ?
+            ytdl(song.url, {quality: "highestaudio", highWaterMark: 1 << 25}) :
+            this.stream.ytbdl(song.url), {metadata: song});
+
+        this.audioPlayer.play(this.audioResource);
         this.logger.info(`Playing: ${song.title}`);
-        this.activeDispatcher.on('finish', (): void => {
+        this.activeConnection.subscribe(this.audioPlayer)
+        this.audioResource.playStream.on('finish', (): void => {
             this.playNext();
         }).on('error', (err): void => {
             this.logger.error(err);
@@ -161,15 +167,10 @@ export class QueueManager {
     }
 
     private playNext(): void {
-        if (this.activeDispatcher) {
-            this.activeDispatcher.destroy();
-            this.activeDispatcher = null;
-        }
         if(this._isLoop === true) {
             this.playSong(this.currentSong);
         }else {
             if (this.queue.length === 0) {
-                this.isPlaying = false;
                 this.currentSong = null;
                 this.guild.printOutOfSongs();
             } else {

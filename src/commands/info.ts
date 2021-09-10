@@ -38,10 +38,10 @@ export class InfoCommand extends BaseCommand {
         this.logger.info(`Queried song: ${currentSong.title}`);
         const embed = await this.urlInfo(message, guild, currentSong);
         if(!url) {
-            const streamTime = Math.floor(guild.queueManager.activeDispatcher.streamTime / 1000);
+            const streamTime = Math.floor(guild.queueManager.audioPlayer.streamTime / 1000);
             const stHms = toHms(streamTime);
             const playTime = Math.floor((streamTime * 15) / (currentSong.rawDuration)) + 1;
-            const emoji = (guild.queueManager.activeDispatcher.paused) ? "<a:Zawarudo:757243016615559270>" : "<a:Rainbow_Weeb:640863491229614080>";
+            const emoji = (guild.queueManager.audioPlayer.paused) ? "<a:Zawarudo:757243016615559270>" : "<a:Rainbow_Weeb:640863491229614080>";
             const show = [emoji + "  ", "▬", "▬", "▬", "▬", "▬", "▬", "▬", "▬", "▬", "▬", "▬", "▬", "▬", "▬", "▬"];
             show[playTime] = "<a:WoopWoop:640863532866469888>";
             show.push(" " + stHms + "/" + currentSong.hmsDuration);
