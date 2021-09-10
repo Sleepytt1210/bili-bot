@@ -1,7 +1,7 @@
 import {getLogger, Logger} from "../../utils/logger";
 import {SongDoc} from "../db/schemas/song";
 import {PlaylistDoc} from "../db/schemas/playlist";
-import {BilibiliSong} from "../model/bilibili-song";
+import {SongInfo} from "../model/song-info";
 import MongoDB from "../db/service";
 import {SearchSongEntity} from "./bilibili-api";
 import {Schema} from "mongoose";
@@ -41,9 +41,9 @@ export class SongDataSource {
         return result;
     }
 
-    public async insert(song: BilibiliSong | SongDoc | SearchSongEntity): Promise<SongDoc> {
+    public async insert(song: SongInfo | SongDoc | SearchSongEntity): Promise<SongDoc> {
         this.logger.verbose(`Saving song ${song.uid}`);
-        if (song instanceof BilibiliSong || song instanceof SearchSongEntity) {
+        if (song instanceof SongInfo || song instanceof SearchSongEntity) {
             return new MongoDB.Song({
                 uid: song.uid,
                 url: song.url,

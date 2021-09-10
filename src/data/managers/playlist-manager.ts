@@ -1,6 +1,6 @@
 import {GuildManager} from "../../app/guild";
 import {getLogger, Logger} from "../../utils/logger";
-import {BilibiliSong} from "../model/bilibili-song";
+import {SongInfo} from "../model/song-info";
 import {CommandException} from "../../commands/base-command";
 import {User} from "discord.js";
 import {SongDoc} from "../db/schemas/song";
@@ -22,7 +22,7 @@ export class PlaylistManager {
         this.playlistDataSource = PlaylistDataSource.getInstance();
     }
 
-    public async saveToPlaylist(song: BilibiliSong | SearchSongEntity, initiator: User, listDoc: PlaylistDoc): Promise<void> {
+    public async saveToPlaylist(song: SongInfo | SearchSongEntity, initiator: User, listDoc: PlaylistDoc): Promise<void> {
 
         // Check if this song is already in playlist
         let songDoc = await this.songDataSource.getOne(song.uid);

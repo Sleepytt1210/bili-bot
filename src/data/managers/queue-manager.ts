@@ -1,5 +1,5 @@
 import {GuildManager} from "../../app/guild";
-import {BilibiliSong} from "../model/bilibili-song";
+import {SongInfo} from "../model/song-info";
 import {getLogger, Logger} from "../../utils/logger";
 import {MessageEmbed} from "discord.js";
 import {CommandException} from "../../commands/base-command";
@@ -19,9 +19,9 @@ export class QueueManager {
     protected readonly logger: Logger;
     private readonly guild: GuildManager;
     private readonly threshold: number;
-    public readonly queue: BilibiliSong[];
+    public readonly queue: SongInfo[];
     public volume: number;
-    public currentSong?: BilibiliSong;
+    public currentSong?: SongInfo;
     public activeConnection: VoiceConnection;
     public audioPlayer: AudioPlayer;
     private audioResource: AudioResource;
@@ -87,7 +87,7 @@ export class QueueManager {
         if(this.audioResource) this.audioResource.volume.setVolume(this.volume);
     }
 
-    public pushSong(song: BilibiliSong): void {
+    public pushSong(song: SongInfo): void {
         this.queue.push(song);
         if (!this.isPlaying()) {
             this.playSong(this.queue.shift());
@@ -96,7 +96,7 @@ export class QueueManager {
         }
     }
 
-    public removeSong(index: number): BilibiliSong {
+    public removeSong(index: number): SongInfo {
         const removed = this.queue[index];
         this.queue.splice(index, 1);
         return removed;
@@ -106,7 +106,7 @@ export class QueueManager {
         while (this.queue.length !== 0) this.queue.pop();
     }
 
-    public promoteSong(index: number): BilibiliSong {
+    public promoteSong(index: number): SongInfo {
         if (index < 0 || index >= this.queue.length) {
             throw CommandException.OutOfBound(this.queue.length);
         }
@@ -152,7 +152,7 @@ export class QueueManager {
         }, 500);
     }
 
-    private playSong(song: BilibiliSong): void {
+    private playSong(song: SongInfo): void {
         this.audioResource = createAudioResource((song.type === "y") ?
             ytdl(song.url, {quality: "highestaudio", highWaterMark: 1 << 25}) :
             this.stream.ytbdl(song.url), {metadata: song});

@@ -3,10 +3,9 @@ import {getInfo, ytUidExtract} from "../../utils/utils";
 import {SongDataSource} from "../datasources/song-datasource";
 import {SongDoc} from "../db/schemas/song";
 import {SearchSongEntity, getBasicInfo, bvidExtract, toHms} from "../datasources/bilibili-api";
-import * as ytdl from "ytdl-core";
-import {CommandException} from "../../commands/base-command";
+import ytdl from "ytdl-core";
 
-export class BilibiliSong {
+export class SongInfo {
     public readonly url: string;
     public readonly dlurls: object[];
     public readonly title: string;
@@ -50,7 +49,7 @@ export class BilibiliSong {
         this.type = type;
     }
 
-    public static async withInfo(info: ytdl.videoInfo, initiator: User): Promise<BilibiliSong> {
+    public static async withInfo(info: ytdl.videoInfo, initiator: User): Promise<SongInfo> {
         const details = info.videoDetails;
         const format = ytdl.chooseFormat(info.formats, {filter: 'audioonly'});
         const tmbarr = info.videoDetails.thumbnail.thumbnails;
@@ -68,7 +67,7 @@ export class BilibiliSong {
         const duration = Number(details.lengthSeconds)
         const hms = toHms(duration);
         const cached = await SongDataSource.getInstance().isCached(uid);
-        return new BilibiliSong(
+        return new SongInfo(
             url,
             dlurl,
             title,
@@ -85,11 +84,11 @@ export class BilibiliSong {
         );
     }
 
-    public static async withSongEntity(songEntity: SearchSongEntity, initiator: User): Promise<BilibiliSong>{
+    public static async withSongEntity(songEntity: SearchSongEntity, initiator: User): Promise<SongInfo>{
         const url = songEntity.url;
         const title = songEntity.title;
         const uid = songEntity.uid;
-        return new BilibiliSong(
+        return new SongInfo(
             url,
             songEntity.dlurls,
             title,
@@ -106,8 +105,8 @@ export class BilibiliSong {
         );
     }
 
-    public static withRecord(record: SongDoc, initiator: User): BilibiliSong {
-        return new BilibiliSong(
+    public static withRecord(record: SongDoc, initiator: User): SongInfo {
+        return new SongInfo(
             record.url,
             record.dlurls,
             record.title,
@@ -124,15 +123,15 @@ export class BilibiliSong {
         );
     }
 
-    public static async withUrl(url: string, Initiator: User): Promise<BilibiliSong> {
+    public static async withUrl(url: string, Initiator: User): Promise<SongInfo> {
         if(bvidExtract(url)){
             const entity = await getBasicInfo(url).catch((error) => {
                 throw error;
             });
-            return BilibiliSong.withSongEntity(entity, Initiator);
+            return SongInfo.withSongEntity(entity, Initiator);
         }else if(ytUidExtract(url)){
             const info = await getInfo(url, {});
-            return BilibiliSong.withInfo(info, Initiator);
+            return SongInfo.withInfo(info, Initiator);
         }else{
             return null;
         }

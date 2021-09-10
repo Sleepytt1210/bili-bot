@@ -2,7 +2,7 @@ import {BaseCommand, CommandException} from "./base-command";
 import {CommandType} from "./command-type";
 import {GuildManager} from "../app/guild";
 import {Message, MessageEmbed} from "discord.js";
-import {BilibiliSong} from "../data/model/bilibili-song";
+import {SongInfo} from "../data/model/song-info";
 import {SongDataSource} from "../data/datasources/song-datasource";
 import {helpTemplate, ytPlIdExtract} from "../utils/utils";
 import {ytSearch} from "../data/datasources/bilibili-api";
@@ -28,13 +28,13 @@ export class PlayCommand extends BaseCommand {
         const query = args.join(" ");
         const url = args.shift();
         const plid = ytPlIdExtract(url);
-        let song = await BilibiliSong.withUrl(url, message.author);
+        let song = await SongInfo.withUrl(url, message.author);
         if(!song) {
             if(plid) await guild.commandEngine.commands.get('load').run(message, guild, ['-y', url])
             else {
                 const url2 = await ytSearch(query);
                 if (!url2) throw CommandException.UserPresentable(`No result found for \`${query}\`!`);
-                song = await BilibiliSong.withUrl(url2, message.author);
+                song = await SongInfo.withUrl(url2, message.author);
             }
         }
         if(!song && !plid) throw CommandException.UserPresentable(`Failed to retrieve info from ${query}`);

@@ -3,7 +3,7 @@ import {CommandType} from "./command-type";
 import {GuildManager} from "../app/guild";
 import {Message, MessageEmbed, User} from "discord.js";
 import {helpTemplate} from "../utils/utils";
-import {BilibiliSong} from "../data/model/bilibili-song";
+import {SongInfo} from "../data/model/song-info";
 import {PlaylistDoc} from "../data/db/schemas/playlist";
 
 export class SaveCommand extends BaseCommand{
@@ -21,7 +21,7 @@ export class SaveCommand extends BaseCommand{
 
     public async run(message: Message, guild: GuildManager, args?: string[]): Promise<void> {
         if (args.length === 1) {
-            const song = await BilibiliSong.withUrl(args.shift(), message.author);
+            const song = await SongInfo.withUrl(args.shift(), message.author);
             const cur = guild.currentPlaylist.get(message.author.id)
             if(!cur){
                 throw CommandException.UserPresentable(`No playlist selected! Please do \`${guild.commandPrefix}playlist\` or \`${guild.commandPrefix}showlist <name>/<index>\` first`);
@@ -32,7 +32,7 @@ export class SaveCommand extends BaseCommand{
         }
     }
 
-    private async save(guild: GuildManager, user: User, song: BilibiliSong, cur: PlaylistDoc): Promise<void> {
+    private async save(guild: GuildManager, user: User, song: SongInfo, cur: PlaylistDoc): Promise<void> {
         if (!song) {
             throw CommandException.UserPresentable('Invalid url!');
         }

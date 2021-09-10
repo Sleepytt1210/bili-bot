@@ -1,5 +1,5 @@
 import {Logger, getLogger} from "../utils/logger";
-import {BilibiliSong} from "../data/model/bilibili-song";
+import {SongInfo} from "../data/model/song-info";
 import {Guild, GuildMember, Message, MessageEmbed, MessageReaction, StageChannel, TextChannel} from "discord.js";
 import {SearchSongEntity} from "../data/datasources/bilibili-api";
 import {CommandEngine} from "../commands/command-engine";
@@ -100,7 +100,7 @@ export class GuildManager {
         this.printEmbeds(embed);
     }
 
-    public printPlaying(song: BilibiliSong): void {
+    public printPlaying(song: SongInfo): void {
         const embed = new MessageEmbed()
             .setTitle(`Now playing: `)
             .setDescription(`**[${song.title}](${song.url})** --> *Requested by:* <@${song.initiator.id}>`)
@@ -112,7 +112,7 @@ export class GuildManager {
         this.printEmbeds(new MessageEmbed().setDescription("Running out of songs"));
     }
 
-    public printAddToQueue(song: BilibiliSong, queueLength: number): void {
+    public printAddToQueue(song: SongInfo, queueLength: number): void {
         const embed = new MessageEmbed()
             .setDescription(`**[${song.title}](${song.url})** is added to queue, current number of songs in the list: ${queueLength}`);
         this.printEmbeds(embed);

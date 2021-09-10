@@ -1,5 +1,5 @@
 import {Document, Schema} from "mongoose";
-import {BilibiliSong} from "../../model/bilibili-song";
+import {SongInfo} from "../../model/song-info";
 import {User} from "discord.js";
 
 const songSchema = new Schema({
@@ -35,6 +35,6 @@ export interface SongDoc extends Document {
     cached: boolean|null;
     dlurls: object[];
     type: 'y' | 'b';
-    toSong(initiator: User): BilibiliSong;
+    toSong(initiator: User): SongInfo;
 }
 export const SongSchema = songSchema;

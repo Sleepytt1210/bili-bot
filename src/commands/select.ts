@@ -2,7 +2,7 @@ import {BaseCommand, CommandException} from "./base-command";
 import {CommandType} from "./command-type";
 import {GuildManager} from "../app/guild";
 import {Message, MessageEmbed} from "discord.js";
-import {BilibiliSong} from "../data/model/bilibili-song";
+import {SongInfo} from "../data/model/song-info";
 import {helpTemplate} from "../utils/utils";
 import {SongDataSource} from "../data/datasources/song-datasource";
 
@@ -39,7 +39,7 @@ export class SelectCommand extends BaseCommand {
             throw CommandException.OutOfBound(searchBase.length);
         }
         const songdoc = searchBase[index];
-        const song = await BilibiliSong.withUrl(songdoc.url, message.author);
+        const song = await SongInfo.withUrl(songdoc.url, message.author);
         const sds = SongDataSource.getInstance();
         if(!(await sds.getOne(song.uid))) await sds.insert(song);
         await guild.joinChannel(message);

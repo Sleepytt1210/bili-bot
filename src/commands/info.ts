@@ -5,7 +5,7 @@ import {GuildManager} from "../app/guild";
 import {helpTemplate} from "../utils/utils";
 import {bvidExtract, toHms} from "../data/datasources/bilibili-api";
 import * as ytdl from "ytdl-core";
-import {BilibiliSong} from "../data/model/bilibili-song";
+import {SongInfo} from "../data/model/song-info";
 
 export class InfoCommand extends BaseCommand {
 
@@ -31,7 +31,7 @@ export class InfoCommand extends BaseCommand {
     }
 
     private async processResult(message: Message, guild: GuildManager, url?: string): Promise<void> {
-        const currentSong = (url) ? await BilibiliSong.withUrl(url, message.author) : guild.queueManager.currentSong;
+        const currentSong = (url) ? await SongInfo.withUrl(url, message.author) : guild.queueManager.currentSong;
         if (!currentSong && !guild.queueManager.currentSong) {
             throw CommandException.UserPresentable('No song is playing!');
         }
@@ -53,7 +53,7 @@ export class InfoCommand extends BaseCommand {
         guild.printEmbeds(embed);
     }
 
-    private async urlInfo(message: Message, guild: GuildManager, song?: BilibiliSong): Promise<MessageEmbed> {
+    private async urlInfo(message: Message, guild: GuildManager, song?: SongInfo): Promise<MessageEmbed> {
         return new MessageEmbed()
             .setTitle(song.title)
             .setTimestamp()
