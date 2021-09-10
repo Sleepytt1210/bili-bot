@@ -1,6 +1,6 @@
 import {Logger, getLogger} from "../utils/logger";
 import {BilibiliSong} from "../data/model/bilibili-song";
-import {Guild, GuildMember, Message, MessageEmbed, TextChannel} from "discord.js";
+import {Guild, GuildMember, Message, MessageEmbed, MessageReaction, TextChannel} from "discord.js";
 import {SearchSongEntity} from "../data/datasources/bilibili-api";
 import {CommandEngine} from "../commands/command-engine";
 import {CommandException} from "../commands/base-command";
@@ -115,29 +115,29 @@ export class GuildManager {
     public printFlipPages(list: any[], embed: (n: number) => MessageEmbed, message: Message): void {
         let currentPage = 1;
 
-        message.channel.send({embeds: [embed(0)]}).then(msg => {
-            if(list.length <= 10) return;
+        message.channel.send({embeds: [embed(0)]}).then((msg): Promise<void> => {
+            if (list.length <= 10) return;
 
-            msg.react('⬅').then(r => {
+            msg.react('⬅').then((_): void => {
                 msg.react('➡');
 
-                const prevFilter = (reaction, user) => reaction.emoji.name === '⬅' && user.id === message.author.id;
-                const nextFilter = (reaction, user) => reaction.emoji.name === '➡' && user.id === message.author.id;
+                const prevFilter = (reaction, user): boolean => reaction.emoji.name === '⬅' && user.id === message.author.id;
+                const nextFilter = (reaction, user): boolean => reaction.emoji.name === '➡' && user.id === message.author.id;
 
-                const prevCollector = msg.createReactionCollector(prevFilter, {time: 300000});
-                const nextCollector = msg.createReactionCollector(nextFilter, {time: 300000});
+                const prevCollector = msg.createReactionCollector({filter: prevFilter, time: 300000});
+                const nextCollector = msg.createReactionCollector({filter: nextFilter, time: 300000});
 
-                prevCollector.on('collect', (r, u) => {
-                    if(currentPage === 1) return r.users.remove(r.users.cache.filter(u => u === message.author).first());
+                prevCollector.on('collect', (r, u): Promise<MessageReaction> => {
+                    if (currentPage === 1) return r.users.remove(u);
                     currentPage--;
-                    msg.edit({embeds: [embed((currentPage-1)*10)]});
-                    r.users.remove(r.users.cache.filter(u => u === message.author).first());
+                    msg.edit({embeds: [embed((currentPage - 1) * 10)]});
+                    return r.users.remove(u);
                 });
-                nextCollector.on('collect', (r, u) => {
-                    if(currentPage === Math.ceil((list.length/10))) return r.users.remove(r.users.cache.filter(u => u === message.author).first());
+                nextCollector.on('collect', (r, u): Promise<MessageReaction> => {
+                    if (currentPage === Math.ceil((list.length / 10))) return r.users.remove(u);
                     currentPage++;
-                    msg.edit({embeds: [embed((currentPage-1)*10)]});
-                    r.users.remove(r.users.cache.filter(u => u === message.author).first());
+                    msg.edit({embeds: [embed((currentPage - 1) * 10)]});
+                    return r.users.remove(u);
                 });
             });
         });
