@@ -27,8 +27,8 @@ export class DiscordBot {
         this.client.login(this.token);
         this.client.once('ready', async (): Promise<void> => {
             await this.clientReady();
-            await this.client.user.setActivity("bilibili", {type: "WATCHING"});
-            this.client.on('message', async (msg): Promise<void> => {
+            await this.client.user.setActivity("BiliBili", {type: "WATCHING"});
+            this.client.on('messageCreate', async (msg): Promise<void> => {
                 await this.handleMessage(msg)
             });
         });
