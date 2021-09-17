@@ -161,14 +161,15 @@ export class QueueManager {
 
         this.audioResource = createAudioResource((song.type === "y") ?
             ytdl(song.url, {quality: "highestaudio", highWaterMark: 1 << 25}) :
-            this.stream.ytbdl(song), {metadata: song});
+            this.stream.ytbdl(song), {metadata: song, inlineVolume: true});
 
         this.audioPlayer.play(this.audioResource);
         this.logger.info(`Playing: ${song.title}`);
         this.activeConnection.subscribe(this.audioPlayer)
         this.audioResource.playStream.on('finish', (): void => {
             this.playNext();
-        }).on('error', (err): void => {
+        })
+        this.audioPlayer.on('error', (err): void => {
             this.logger.error(err);
             this.guild.printEvent(`<@${song.initiator.id}> An error occurred playing ${this.currentSong.title}! Please request again`);
             this.playNext();
