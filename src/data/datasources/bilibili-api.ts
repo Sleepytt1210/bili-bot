@@ -4,7 +4,7 @@ import got, {CancelableRequest, Response} from "got"
 import {CommandException} from "../../commands/base-command";
 import configuration from "../../configuration";
 import crypto = require("crypto");
-import {Durl, Pages, PlayUrlData, WebInterface} from "../model/bilibili-api-types";
+import {Durl, Pages, PlayUrlData, SearchResults, WebInterface} from "../model/bilibili-api-types";
 
 const logger = getLogger('BilibiliApi');
 
@@ -286,23 +286,22 @@ export async function search(keyword: string, limit?: number): Promise<SearchSon
     const keyWExt = new RegExp(/<([A-Za-z][A-Za-z0-9]*)\b[^>]*>(.*?)<\/\1>/gm);
     const encoded = encodeURI(api.searchApi(keyword, limit));
     const response = await jsonRequest(encoded);
-    const rawSongs = response['data']['result'][8]['data'] as object[];
+    const rawSongs = (response['data']['result'] as SearchResults[]).find((result) => result.result_type === 'video').data;
     if (!rawSongs) return [];
     return rawSongs.map((raw): SearchSongEntity => {
-        let title = raw['title'] as string;
+        let title = raw.title;
         title = title.replace(keyWExt, '$2');
         return new SearchSongEntity()
             .setTitle(title)
-            .setAuthor(raw['author'])
-            .setAid(raw['aid'])
-            .setCid(raw['param'])
-            .setPlay(raw['play'])
-            .setUrl(`https://www.bilibili.com/video/${raw['bvid']}`)
+            .setAuthor(raw.author)
+            .setAid(raw.aid)
+            .setPlay(raw.play)
+            .setUrl(`https://www.bilibili.com/video/${raw.bvid}`)
             .setCached(false)
-            .setDesc(raw[`description`])
-            .setThumbnail(raw[`pic`])
-            .setDurHms(raw[`duration`])
-            .setbvId(raw['bvId']);
+            .setDesc(raw.description)
+            .setThumbnail(raw.pic)
+            .setDurHms(raw.duration)
+            .setbvId(raw.bvid);
     });
 }
 

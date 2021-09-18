@@ -153,3 +153,45 @@ export interface Durl{
     url: string;
     backup_url: string;
 }
+
+export interface SearchResults {
+    result_type: string;
+    data: SearchResultData[];
+}
+
+export interface SearchResultData {
+    type: string;
+    id: string;
+    author: string;
+    mid: string;
+    typeid: string;
+    typename: string;
+    arcurl: string;
+    aid: string;
+    bvid: string;
+    title: string;
+    description: string;
+    arcrank: string;
+    pic: string;
+    play: number;
+    video_review: number;
+    favorites: number;
+    tag: string;
+    review: number;
+    pubdate: number;
+    senddate: number;
+    duration: string;
+    badgepay: false;
+    hit_columns: string[];
+    view_type: string;
+    is_pay: number;
+    is_union_video: number;
+    rec_tags: string[];
+    new_rec_tags: string[];
+    rank_score: number;
+    corner: string;
+    cover: string;
+    desc: string;
+    url: string;
+    rec_reason: string;
+}
