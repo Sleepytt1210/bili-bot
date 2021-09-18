@@ -123,7 +123,11 @@ export class LoadCommand extends BaseCommand {
         const songs = result['entries'];
         // Create PlaylistDatasource instance
         const pds = PlaylistDataSource.getInstance();
-        let playlist = await pds.get(message.author, collection);
+        let playlist;
+
+        // Only find a playlist if a name is given
+        if(collection) playlist = await pds.get(message.author, collection);
+
         if (!playlist && collection) {
             await pds.create(collection, guild.id, message.author).then((doc): void => {
                 playlist = doc;
@@ -140,7 +144,10 @@ export class LoadCommand extends BaseCommand {
                     this.logger.info(`Now loading song: ${song.title}`);
                     const url = `https://www.youtube.com/watch?v=${song.id}`;
                     const entity = await SongInfo.withUrl(url, message.author);
+
+                    // Either save or play the song
                     if (save) await guild.dataManager.saveToPlaylist(entity, entity.initiator, playlist);
+                    else guild.queueManager.pushSong(entity, true);
                 } catch (err) {
                     // Skip duplicated error on batch load
                     this.logger.warn(err.toString());
@@ -161,13 +168,15 @@ export class LoadCommand extends BaseCommand {
         save: boolean = true
     ): Promise<void>{
         // Collect playlist information
-        const songs = await api.getBasicInfo(url).catch((error) => {
-            throw error;
-        });
+        const songs = await api.getBasicInfo(url);
         if(!songs) throw CommandException.UserPresentable(`Invalid BiliBili playlist url!`)
         // Create PlaylistDatasource instance
         const pds = PlaylistDataSource.getInstance();
-        let playlist = await pds.get(message.author, collection);
+        let playlist;
+
+        // Only find a playlist if a name is given
+        if(collection) playlist = await pds.get(message.author, collection);
+
         if(!playlist && collection) {
             await pds.create(collection, guild.id, message.author).then((doc): void => {
                 playlist = doc;
@@ -181,10 +190,11 @@ export class LoadCommand extends BaseCommand {
             this.logger.info(`Now loading song: ${song.part}`);
             try {
                 const url = `https://www.bilibili.com/video/${songs.bvId}?p=${song.page}`
-                const entity = await api.getBasicInfo(url).catch((error) => {
-                    throw error;
-                });
+                const entity = await SongInfo.withUrl(url, message.author);
+
+                // Either save or play the song
                 if(save) await guild.dataManager.saveToPlaylist(entity, message.author, playlist);
+                else guild.queueManager.pushSong(entity, true)
             } catch (err) {
                 // Skip duplicated error on batch load
                 this.logger.warn(err.toString());
@@ -204,8 +214,8 @@ export class LoadCommand extends BaseCommand {
     public helpMessage(guild: GuildManager): MessageEmbed {
         const res = helpTemplate(this.name());
         const pref = `${guild.commandPrefix}${this.name()}`;
-        res.addField('Usage: ', `${pref} <list-name> (To play the list)
-                ${pref} <list-url> <list-name>  (To save as playlist)
+        res.addField('Usage: ', `${pref} <list-name>/<list-url> (To just play the playlist)
+                ${pref} <list-url> <list-name>  (To save as playlist in cloud storage)
                 ${pref} <index> (To choose from playlists)`);
         return res;
     }

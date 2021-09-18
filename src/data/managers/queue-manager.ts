@@ -1,19 +1,19 @@
 import {GuildManager} from "../../app/guild";
 import {SongInfo} from "../model/song-info";
 import {getLogger, Logger} from "../../utils/logger";
-import {MessageEmbed} from "discord.js";
 import {CommandException} from "../../commands/base-command";
 import {shuffle} from "../../utils/utils";
 import * as stream from "../../utils/bilidl";
 import ytdl from 'ytdl-core';
 import {
-    AudioPlayer, AudioPlayerStatus,
+    AudioPlayer,
+    AudioPlayerStatus,
     AudioResource,
-    createAudioResource,
-    entersState,
+    createAudioResource, entersState,
     VoiceConnection,
     VoiceConnectionStatus
 } from "@discordjs/voice";
+import {MessageEmbed} from "discord.js";
 
 export class QueueManager {
     protected readonly logger: Logger;
@@ -45,7 +45,7 @@ export class QueueManager {
         this.threshold = threshold;
         this._isLoop = false;
         this.stream = new stream.Streamer();
-        this.volume = 0.5;
+        this.volume = 1;
     }
 
     public joinChannel(voiceConnection: VoiceConnection, audioPlayer: AudioPlayer): void {
@@ -84,15 +84,15 @@ export class QueueManager {
 
     public setVol(vol: number): void {
         this.volume = vol;
-        if(this.audioResource) this.audioResource.volume.setVolume(this.volume);
+        if(this.audioResource) this.audioResource.volume.setVolumeLogarithmic(vol);
     }
 
-    public pushSong(song: SongInfo): void {
+    public pushSong(song: SongInfo, isPlaylist?: boolean): void {
         this.queue.push(song);
         if (!this.isPlaying()) {
             this.playSong(this.queue.shift());
         } else {
-            this.guild.printAddToQueue(song, this.queue.length);
+            this.guild.printAddToQueue(song, this.queue.length, isPlaylist);
         }
     }
 
@@ -122,7 +122,7 @@ export class QueueManager {
     }
 
     public pause(): boolean {
-        if (this.isPlaying) {
+        if (this.isPlaying()) {
             this.audioPlayer.pause();
             return true;
         }
@@ -165,10 +165,10 @@ export class QueueManager {
 
         this.audioPlayer.play(this.audioResource);
         this.logger.info(`Playing: ${song.title}`);
-        this.activeConnection.subscribe(this.audioPlayer)
+        this.activeConnection.subscribe(this.audioPlayer);
         this.audioResource.playStream.on('finish', (): void => {
             this.playNext();
-        })
+        });
         this.audioPlayer.on('error', (err): void => {
             this.logger.error(err);
             this.guild.printEvent(`<@${song.initiator.id}> An error occurred playing ${this.currentSong.title}! Please request again`);

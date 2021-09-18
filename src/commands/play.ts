@@ -30,7 +30,10 @@ export class PlayCommand extends BaseCommand {
         const plid = ytPlIdExtract(url);
         let song = await SongInfo.withUrl(url, message.author);
         if(!song) {
-            if(plid) await guild.commandEngine.commands.get('load').run(message, guild, ['-y', url])
+            if(plid) {
+                await guild.commandEngine.commands.get('load').run(message, guild, [url]);
+                return;
+            }
             else {
                 const url2 = await ytSearch(query);
                 if (!url2) throw CommandException.UserPresentable(`No result found for \`${query}\`!`);

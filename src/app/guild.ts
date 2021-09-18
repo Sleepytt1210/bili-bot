@@ -1,4 +1,4 @@
-import {Logger, getLogger} from "../utils/logger";
+import {getLogger, Logger} from "../utils/logger";
 import {SongInfo} from "../data/model/song-info";
 import {Guild, GuildMember, Message, MessageEmbed, MessageReaction, StageChannel, TextChannel} from "discord.js";
 import {SearchSongEntity} from "../data/datasources/bilibili-api";
@@ -22,7 +22,7 @@ export class GuildManager {
     public commandPrefix: string;
     public readonly commandEngine: CommandEngine;
     public readonly dataManager: PlaylistManager;
-    public previousCommand: "search" | "showlist" | "playlists"| "load";
+    public previousCommand: "search" | "showlist" | "playlists" | "load";
     public inorinBvid: string;
 
     public constructor(guild: Guild, prefix: string = '~') {
@@ -73,7 +73,7 @@ export class GuildManager {
         this.queueManager.activeConnection.on('error', (error): void => console.warn(error));
     }
 
-    public setPreviousCommand(command: null | "search" | "showlist" | "playlists"| "load"): void {
+    public setPreviousCommand(command: null | "search" | "showlist" | "playlists" | "load"): void {
         this.previousCommand = command;
     }
 
@@ -93,7 +93,7 @@ export class GuildManager {
         this.commandPrefix = prefix;
     }
 
-    public printEvent(desc: string): void{
+    public printEvent(desc: string): void {
         const embed = new MessageEmbed()
             .setDescription(desc)
             .setColor(0x0ACDFF);
@@ -104,21 +104,24 @@ export class GuildManager {
         const embed = new MessageEmbed()
             .setTitle(`Now playing: `)
             .setDescription(`**[${song.title}](${song.url})** --> *Requested by:* <@${song.initiator.id}>`)
-            .setFooter(`Duration: ${song.hmsDuration}`, song.initiator.avatarURL());
+            .setFooter(`Duration: ${song.hmsDuration}`, song.initiator.avatarURL())
+            .setColor(0x0ACDFF);
         this.printEmbeds(embed);
     }
 
     public printOutOfSongs(): void {
-        this.printEmbeds(new MessageEmbed().setDescription("Running out of songs"));
-    }
-
-    public printAddToQueue(song: SongInfo, queueLength: number): void {
-        const embed = new MessageEmbed()
-            .setDescription(`**[${song.title}](${song.url})** is added to queue, current number of songs in the list: ${queueLength}`);
+        const embed = new MessageEmbed().setDescription("Running out of songs")
+            .setColor(0x0ACDFF);
         this.printEmbeds(embed);
     }
 
-    public printEmbeds(embed: MessageEmbed | MessageEmbed[]): void {
+    public printAddToQueue(song: SongInfo, queueLength: number, isPlaylist?: boolean): void {
+        const embed = new MessageEmbed()
+            .setDescription(`**[${song.title}](${song.url})** is added to queue, current number of songs in the list: ${queueLength}`);
+        this.printEmbeds(embed, isPlaylist);
+    }
+
+    public printEmbeds(embed: MessageEmbed | MessageEmbed[], isTransient?: boolean): void {
         if(Array.isArray(embed)){
             for (const e of embed) {
                 e.setColor(0x0ACDFF);
@@ -127,7 +130,15 @@ export class GuildManager {
             embed.setColor(0x0ACDFF);
         }
         const embedMsg = Array.isArray(embed) ? embed : [embed]
-        this.activeTextChannel.send({embeds: embedMsg});
+        this.activeTextChannel.send({embeds: embedMsg}).then((msg): void => {
+            if(isTransient) {
+                if(msg.deletable) {
+                    setTimeout((): Promise<Message> => msg.delete(), 10000)
+                } else {
+                    CommandException.UserPresentable("Message can't be deleted!");
+                }
+            }
+        });
     }
 
     public printFlipPages(list: any[], embed: (n: number) => MessageEmbed, message: Message): void {
