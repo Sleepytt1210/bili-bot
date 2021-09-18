@@ -45,7 +45,7 @@ export class QueueManager {
         this.threshold = threshold;
         this._isLoop = false;
         this.stream = new stream.Streamer();
-        this.volume = 1;
+        this.volume = 0.1;
     }
 
     public joinChannel(voiceConnection: VoiceConnection, audioPlayer: AudioPlayer): void {
@@ -67,7 +67,7 @@ export class QueueManager {
                 this.activeConnection.destroy();
                 this.activeConnection = null;
             }
-        })
+        });
     }
 
     public isPlaying(): boolean {
@@ -166,6 +166,7 @@ export class QueueManager {
         this.audioPlayer.play(this.audioResource);
         this.logger.info(`Playing: ${song.title}`);
         this.activeConnection.subscribe(this.audioPlayer);
+        this.audioResource.volume.setVolumeLogarithmic(this.volume);
         this.audioResource.playStream.on('finish', (): void => {
             this.playNext();
         });
