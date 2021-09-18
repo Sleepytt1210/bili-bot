@@ -28,23 +28,21 @@ export class PlayCommand extends BaseCommand {
         const query = args.join(" ");
         const url = args.shift();
         const plid = ytPlIdExtract(url);
-        let song = await SongInfo.withUrl(url, message.author);
+        let song = await SongInfo.withUrl(url, message.member);
         if(!song) {
             if(plid) {
                 await guild.commandEngine.commands.get('load').run(message, guild, [url]);
                 return;
-            }
-            else {
+            } else {
                 const url2 = await ytSearch(query);
                 if (!url2) throw CommandException.UserPresentable(`No result found for \`${query}\`!`);
-                song = await SongInfo.withUrl(url2, message.author);
+                song = await SongInfo.withUrl(url2, message.member);
             }
         }
         if(!song && !plid) throw CommandException.UserPresentable(`Failed to retrieve info from ${query}`);
         if (!await SongDataSource.getInstance().getOne(song.uid)) {
             await SongDataSource.getInstance().insert(song);
         }
-        await guild.joinChannel(message);
         guild.queueManager.pushSong(song);
     }
 

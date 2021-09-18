@@ -63,10 +63,6 @@ export class LoadCommand extends BaseCommand {
     }
 
     private async load(message: Message, guild: GuildManager, collection?: string, type?: string, url?: string): Promise<void> {
-        // Join Channel
-        if (!guild.queueManager.activeConnection) {
-            await guild.joinChannel(message);
-        }
 
         // If type exists it means a valid url is given.
         if(type && url){
@@ -85,7 +81,7 @@ export class LoadCommand extends BaseCommand {
                 throw CommandException.UserPresentable('Playlist is empty');
             }
             for (const doc of songDocs) {
-                const song = await SongInfo.withRecord(doc, message.author);
+                const song = await SongInfo.withRecord(doc, message.member);
                 guild.queueManager.pushSong(song);
             }
             guild.printEvent(`<@${message.author.id}> Playlist ${collection} successfully loaded`);
@@ -145,10 +141,10 @@ export class LoadCommand extends BaseCommand {
                 try {
                     this.logger.info(`Now loading song: ${song.title}`);
                     const url = `https://www.youtube.com/watch?v=${song.id}`;
-                    const entity = await SongInfo.withUrl(url, message.author);
+                    const entity = await SongInfo.withUrl(url, message.member);
 
                     // Either save or play the song
-                    if (save) await guild.dataManager.saveToPlaylist(entity, entity.initiator, playlist);
+                    if (save) await guild.dataManager.saveToPlaylist(entity, entity.initiator.user, playlist);
                     else guild.queueManager.pushSong(entity, true);
                 } catch (err) {
                     // Skip duplicated error on batch load
@@ -192,7 +188,7 @@ export class LoadCommand extends BaseCommand {
             this.logger.info(`Now loading song: ${song.part}`);
             try {
                 const url = `https://www.bilibili.com/video/${songs.bvId}?p=${song.page}`
-                const entity = await SongInfo.withUrl(url, message.author);
+                const entity = await SongInfo.withUrl(url, message.member);
 
                 // Either save or play the song
                 if(save) await guild.dataManager.saveToPlaylist(entity, message.author, playlist);

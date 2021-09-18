@@ -4,8 +4,9 @@ import {Message, MessageEmbed} from "discord.js";
 import {GuildManager} from "../app/guild";
 import {helpTemplate} from "../utils/utils";
 import {bvidExtract, toHms} from "../data/datasources/bilibili-api";
-import * as ytdl from "ytdl-core";
+import ytdl from "ytdl-core";
 import {SongInfo} from "../data/model/song-info";
+import {AudioPlayerState, AudioPlayerStatus} from "@discordjs/voice";
 
 export class InfoCommand extends BaseCommand {
 
@@ -31,17 +32,21 @@ export class InfoCommand extends BaseCommand {
     }
 
     private async processResult(message: Message, guild: GuildManager, url?: string): Promise<void> {
-        const currentSong = (url) ? await SongInfo.withUrl(url, message.author) : guild.queueManager.currentSong;
+        const currentSong = (url) ? await SongInfo.withUrl(url, message.member) : guild.queueManager.currentSong;
         if (!currentSong && !guild.queueManager.currentSong) {
             throw CommandException.UserPresentable('No song is playing!');
         }
         this.logger.info(`Queried song: ${currentSong.title}`);
-        const embed = await this.urlInfo(message, guild, currentSong);
+        const embed = await this.urlInfo(currentSong);
         if(!url) {
-            const streamTime = Math.floor(guild.queueManager.audioPlayer.streamTime / 1000);
+            const audioPlayer = guild.queueManager.audioPlayer;
+            const playerState: AudioPlayerState = audioPlayer.state;
+            const pbDur = (playerState.status !== AudioPlayerStatus.Idle) ? playerState.resource.playbackDuration : 0;
+            const streamTime = Math.floor(pbDur / 1000);
             const stHms = toHms(streamTime);
             const playTime = Math.floor((streamTime * 15) / (currentSong.rawDuration)) + 1;
-            const emoji = (guild.queueManager.audioPlayer.paused) ? "<a:Zawarudo:757243016615559270>" : "<a:Rainbow_Weeb:640863491229614080>";
+            const isPaused = (playerState.status === AudioPlayerStatus.Paused || playerState.status === AudioPlayerStatus.AutoPaused);
+            const emoji = (isPaused) ? "<a:Zawarudo:757243016615559270>" : "<a:Rainbow_Weeb:640863491229614080>";
             const show = [emoji + "  ", "▬", "▬", "▬", "▬", "▬", "▬", "▬", "▬", "▬", "▬", "▬", "▬", "▬", "▬", "▬"];
             show[playTime] = "<a:WoopWoop:640863532866469888>";
             show.push(" " + stHms + "/" + currentSong.hmsDuration);
@@ -53,15 +58,14 @@ export class InfoCommand extends BaseCommand {
         guild.printEmbeds(embed);
     }
 
-    private async urlInfo(message: Message, guild: GuildManager, song?: SongInfo): Promise<MessageEmbed> {
+    private async urlInfo(song?: SongInfo): Promise<MessageEmbed> {
         return new MessageEmbed()
             .setTitle(song.title)
             .setTimestamp()
             .setThumbnail(song.thumbnail)
             .addField("Requested by: ", `<@${song.initiator.id}>`, true)
             .addField("Author: ", `${song.author}`, true)
-            .setURL(song.url)
-            .setColor(0x0ACDFF);
+            .setURL(song.url);
     }
 
     public helpMessage(guild: GuildManager): MessageEmbed {

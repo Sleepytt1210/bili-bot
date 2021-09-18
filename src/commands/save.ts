@@ -21,7 +21,7 @@ export class SaveCommand extends BaseCommand{
 
     public async run(message: Message, guild: GuildManager, args?: string[]): Promise<void> {
         if (args.length === 1) {
-            const song = await SongInfo.withUrl(args.shift(), message.author);
+            const song = await SongInfo.withUrl(args.shift(), message.member);
             const cur = guild.currentPlaylist.get(message.author.id)
             if(!cur){
                 throw CommandException.UserPresentable(`No playlist selected! Please do \`${guild.commandPrefix}playlist\` or \`${guild.commandPrefix}showlist <name>/<index>\` first`);

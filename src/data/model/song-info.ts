@@ -1,4 +1,4 @@
-import {User} from "discord.js";
+import {GuildMember} from "discord.js";
 import {getInfo, ytUidExtract} from "../../utils/utils";
 import {SongDataSource} from "../datasources/song-datasource";
 import {SongDoc} from "../db/schemas/song";
@@ -14,7 +14,7 @@ export class SongInfo {
     public readonly thumbnail: string;
     public readonly rawDuration: number;
     public readonly hmsDuration: string;
-    public readonly initiator: User;
+    public readonly initiator: GuildMember;
     public readonly uid: string;
     public readonly format: string;
     public readonly size: number;
@@ -30,7 +30,7 @@ export class SongInfo {
         thumbnail: string,
         rawDuration: number,
         hmsDuration: string,
-        initator: User,
+        initator: GuildMember,
         uid: string,
         ext: string,
         size: number,
@@ -57,7 +57,7 @@ export class SongInfo {
      * @param info YouTube song info entity.
      * @param initiator User who initiated the command.
      */
-    public static async withInfo(info: ytdl.videoInfo, initiator: User): Promise<SongInfo> {
+    public static async withInfo(info: ytdl.videoInfo, initiator: GuildMember): Promise<SongInfo> {
         const details = info.videoDetails;
         const format = chooseFormat(info.formats, {filter: 'audioonly'});
         const tmbarr = info.videoDetails.thumbnails;
@@ -100,7 +100,7 @@ export class SongInfo {
      * @param songEntity BiliBili song entity.
      * @param initiator User who initiated the command.
      */
-    public static async withSongEntity(songEntity: SearchSongEntity, initiator: User): Promise<SongInfo>{
+    public static async withSongEntity(songEntity: SearchSongEntity, initiator: GuildMember): Promise<SongInfo>{
         const url = songEntity.url;
         const title = songEntity.title;
         const uid = songEntity.uid;
@@ -122,7 +122,7 @@ export class SongInfo {
         );
     }
 
-    public static withRecord(record: SongDoc, initiator: User): SongInfo {
+    public static withRecord(record: SongDoc, initiator: GuildMember): SongInfo {
         return new SongInfo(
             record.url,
             record.dlurls,
@@ -141,15 +141,15 @@ export class SongInfo {
         );
     }
 
-    public static async withUrl(url: string, Initiator: User): Promise<SongInfo> {
+    public static async withUrl(url: string, initiator: GuildMember): Promise<SongInfo> {
         if(bvidExtract(url)){
             const entity = await getBasicInfo(url).catch((error): SearchSongEntity => {
                 throw error;
             });
-            return SongInfo.withSongEntity(entity, Initiator);
+            return SongInfo.withSongEntity(entity, initiator);
         }else if(ytUidExtract(url)){
             const info = await getInfo(url, {});
-            return SongInfo.withInfo(info, Initiator);
+            return SongInfo.withInfo(info, initiator);
         }else{
             return null;
         }

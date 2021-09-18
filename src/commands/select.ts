@@ -20,7 +20,7 @@ export class SelectCommand extends BaseCommand {
     }
 
     public async run(message: Message, guild: GuildManager, args?: string[]): Promise<void> {
-        await guild.checkMemberInChannel(message.member);
+        guild.checkMemberInChannel(message.member);
         if (args.length === 0) {
             throw CommandException.UserPresentable(this.helpMessage(guild).fields[0].value);
         }
@@ -34,15 +34,14 @@ export class SelectCommand extends BaseCommand {
             throw CommandException.UserPresentable(`Invalid Operation: Please do \`${guild.commandPrefix}search\` or \`${guild.commandPrefix}showlist\` first`);
         }
         const searchBase = guild.previousCommand == "search" ? guild.currentSearchResult : guild.currentShowlistResult.get(message.author.id);
-        if(searchBase.length === 0) throw CommandException.UserPresentable(`Result is empty! Nothing to select from!`);
+        if (searchBase.length === 0) throw CommandException.UserPresentable(`Result is empty! Nothing to select from!`);
         if (index < 0 || index >= searchBase.length) {
             throw CommandException.OutOfBound(searchBase.length);
         }
         const songdoc = searchBase[index];
-        const song = await SongInfo.withUrl(songdoc.url, message.author);
+        const song = await SongInfo.withUrl(songdoc.url, message.member);
         const sds = SongDataSource.getInstance();
-        if(!(await sds.getOne(song.uid))) await sds.insert(song);
-        await guild.joinChannel(message);
+        if (!(await sds.getOne(song.uid))) await sds.insert(song);
         guild.queueManager.pushSong(song);
     }
 

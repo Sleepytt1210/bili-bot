@@ -22,7 +22,7 @@ export class SummonCommand extends BaseCommand {
         if (!guild.queueManager.activeConnection) {
             await guild.joinChannel(msg);
         } else{
-            throw CommandException.UserPresentable(`I am already in the channel ${guild.queueManager.activeConnection.channel.name}!`);
+            throw CommandException.UserPresentable(`I am already in the channel ${guild.guild.me.voice.channel.name}!`);
         }
     }
 

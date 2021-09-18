@@ -8,12 +8,12 @@ import ytdl from 'ytdl-core';
 import {
     AudioPlayer,
     AudioPlayerStatus,
-    AudioResource,
-    createAudioResource, entersState,
+    AudioResource, createAudioPlayer,
+    createAudioResource, entersState, joinVoiceChannel,
     VoiceConnection,
     VoiceConnectionStatus
 } from "@discordjs/voice";
-import {MessageEmbed} from "discord.js";
+import {GuildMember, MessageEmbed, StageChannel} from "discord.js";
 
 export class QueueManager {
     protected readonly logger: Logger;
@@ -48,9 +48,25 @@ export class QueueManager {
         this.volume = 0.1;
     }
 
-    public joinChannel(voiceConnection: VoiceConnection, audioPlayer: AudioPlayer): void {
-        this.activeConnection = voiceConnection;
-        this.audioPlayer = audioPlayer;
+    public joinChannel(initiator: GuildMember): void {
+
+        const voiceId = initiator.voice.channelId;
+        if (!this.activeConnection || this.activeConnection.state.status === VoiceConnectionStatus.Disconnected) {
+            this.activeConnection = joinVoiceChannel({
+                channelId: voiceId,
+                guildId: this.guild.id,
+                adapterCreator: this.guild.guild.voiceAdapterCreator,
+            });
+            this.audioPlayer = createAudioPlayer();
+            this.logger.info(`Joined channel '${initiator.voice.channel.name}'`)
+        } else if (this.guild.guild.me.voice.channelId !== voiceId) {
+            this.logger.info(`Rejoin channel ${initiator.voice.channel.name}`);
+            this.activeConnection.rejoin({channelId: voiceId, selfMute: false, selfDeaf: true});
+        }
+        if (initiator.voice.channel instanceof StageChannel) {
+            this.guild.guild.me.voice.setChannel(voiceId).then((me): Promise<void> => me.voice.setSuppressed(false));
+        }
+        this.activeConnection.on('error', (error): void => console.warn(error));
         this.activeConnection.on(VoiceConnectionStatus.Disconnected, async (): Promise<void> => {
             try {
                 await Promise.race([
@@ -71,11 +87,11 @@ export class QueueManager {
     }
 
     public isPlaying(): boolean {
-        return this.audioPlayer.state.status === AudioPlayerStatus.Playing;
+        return this.audioPlayer && this.audioPlayer.state.status === AudioPlayerStatus.Playing;
     }
 
     public isPaused(): boolean {
-        return this.audioPlayer.state.status === AudioPlayerStatus.AutoPaused || this.audioPlayer.state.status === AudioPlayerStatus.Paused
+        return this.audioPlayer && this.audioPlayer.state.status === AudioPlayerStatus.AutoPaused || this.audioPlayer.state.status === AudioPlayerStatus.Paused
     }
 
     public isListEmpty(): boolean {
@@ -158,6 +174,8 @@ export class QueueManager {
         if(!this._isLoop){
             this.guild.printPlaying(song);
         }
+
+        this.joinChannel(song.initiator);
 
         this.audioResource = createAudioResource((song.type === "y") ?
             ytdl(song.url, {quality: "highestaudio", highWaterMark: 1 << 25}) :
