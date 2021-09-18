@@ -121,8 +121,10 @@ export class LoadCommand extends BaseCommand {
         const result = await getInfoWithArg(url, this.plArgs);
         if(!result) throw CommandException.UserPresentable(`Invalid YouTube playlist url!`)
         const songs = result['entries'];
+
         // Create PlaylistDatasource instance
         const pds = PlaylistDataSource.getInstance();
+
         let playlist;
 
         // Only find a playlist if a name is given
@@ -137,7 +139,7 @@ export class LoadCommand extends BaseCommand {
 
         // Start loading the song from playlist
         if (Array.isArray(songs)) {
-            const plTitle = (result.title && result.title !== '') ? result.title : 'YouTube playlist'
+            const plTitle = (result.title && result.title !== '') ? result.title : 'YouTube playlist';
             guild.printEvent(`Start to load from ${plTitle}, please be patient...`);
             for (const song of songs) {
                 try {
@@ -153,7 +155,7 @@ export class LoadCommand extends BaseCommand {
                     this.logger.warn(err.toString());
                 }
             }
-            guild.printEvent(`Successfully loaded YouTube playlist ${collection}`);
+            guild.printEvent(`Successfully loaded YouTube playlist ${plTitle}${ (collection ? ' into ' + collection : '') }`);
             this.logger.info(`Successfully loaded YouTube playlist ${plTitle}`);
         } else {
             throw CommandException.UserPresentable("Please use a valid YouTube playlist");
@@ -200,7 +202,7 @@ export class LoadCommand extends BaseCommand {
                 this.logger.warn(err.toString());
             }
         }
-        guild.printEvent(`Successfully loaded ${collection}`);
+        guild.printEvent(`Successfully loaded BiliBili playlist ${songs.mainTitle}${ (collection ? ' into ' + collection : '') }`);
         this.logger.info(`Successfully loaded BiliBili playlist ${songs.mainTitle}`);
     }
 
