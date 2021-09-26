@@ -1,4 +1,7 @@
-# bili-bot v2
+# bili-bot v4.0.0
+[![bilibili](https://img.shields.io/badge/bilibili-API-0ACDFF?logo=bilibili)](https://www.bilibili.com) 
+[![discord-bot](https://img.shields.io/badge/discord-bot-_.svg?colorB=8C9EFF&logo=discord)](https://discord.js.org)
+
 Discord bot for playing Bilibili video
 
 A fork project from https://github.com/JyaouShingan/bili-bot
@@ -49,6 +52,8 @@ Make sure `mongodb` service is running before starting the bot.
 ```
 npm install
 ```
+
+*If Sodium doesn't work, use libsodium-wrappers instead*
 
 ## Configuration
 
