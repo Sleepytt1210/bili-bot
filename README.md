@@ -7,7 +7,7 @@ Discord bot for playing Bilibili video
 A fork project from https://github.com/JyaouShingan/bili-bot
 
 ## Installation
-### 1. Install `NodeJs` version >= v10
+### 1. Install `NodeJs` version >= v16.6.x
 ### 2. Install `FFMpeg` library
 
 On macOS:
