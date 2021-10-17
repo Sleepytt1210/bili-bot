@@ -9,8 +9,7 @@ export class PromoteCommand extends BaseCommand {
     public alias: string[];
 
     public constructor() {
-        super();
-        this.alias = ['pm'];
+        super(['pm']);
     }
 
     public name(): CommandType {

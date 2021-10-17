@@ -16,6 +16,10 @@ export class LoadCommand extends BaseCommand {
         flatPlaylist: true,
     }
 
+    public constructor() {
+        super([]);
+    }
+
     public name(): CommandType {
         return CommandType.LOAD;
     }

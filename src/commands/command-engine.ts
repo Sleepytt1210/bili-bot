@@ -1,6 +1,6 @@
 import {GuildManager} from "../app/guild";
 import {Command, CommandException} from "./base-command";
-import {Commands} from "./commands";
+import {Commands, getCommand} from "./commands";
 import {Message} from "discord.js";
 import {getLogger, Logger} from "../utils/logger";
 
@@ -16,18 +16,19 @@ export class CommandEngine {
     }
 
     public async process(msg: Message, args: string[]): Promise<void> {
-        const command = args.shift();
-        if (this.commands.has(command)) {
+        const commandName = args.shift();
+        const command = getCommand(commandName, this.commands)
+        if (command) {
             try {
-                await this.commands.get(command).run(msg, this.guild, args)
+                await command.run(msg, this.guild, args)
             } catch (error) {
                 this.logger.error(error);
                 if (error instanceof CommandException && (error as CommandException).userPresentable) {
                     this.guild.printEvent(`${error}`);
                 }
             }
-        } else if (command.length > 0 && command.charCodeAt(0) >= 97 && command.charCodeAt(0) <= 122) {
-            await msg.reply(`Invalid command ${command}`);
+        } else if (commandName.length > 0 && commandName.charCodeAt(0) >= 97 && commandName.charCodeAt(0) <= 122) {
+            await msg.reply(`Invalid command ${commandName}`);
         }
     }
 }

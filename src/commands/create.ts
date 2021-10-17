@@ -11,8 +11,7 @@ export class CreateCommand extends SubCommand {
     public readonly parent: string;
 
     public constructor() {
-        super();
-        this.parent = CommandType.PLAYLISTS;
+        super(['cr','c'], CommandType.PLAYLISTS);
     }
 
     public name(): CommandType {

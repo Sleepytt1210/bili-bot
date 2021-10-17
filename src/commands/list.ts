@@ -11,8 +11,7 @@ export class ListCommand extends SubCommand {
     public readonly parent: string;
 
     public constructor() {
-        super();
-        this.parent = CommandType.PLAYLISTS;
+        super([] ,CommandType.PLAYLISTS);
     }
 
     public name(): CommandType {

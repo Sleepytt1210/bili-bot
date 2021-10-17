@@ -7,6 +7,10 @@ import {helpTemplate} from "../utils/utils";
 
 export class LoopCommand extends BaseCommand {
 
+    public constructor() {
+        super([]);
+    }
+
     public name(): CommandType {
         return CommandType.LOOP;
     }

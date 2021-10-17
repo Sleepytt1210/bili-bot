@@ -11,8 +11,7 @@ export class SaveCommand extends BaseCommand {
     public alias: string[];
 
     public constructor() {
-        super();
-        this.alias = ['add'];
+        super(['add']);
     }
 
     public name(): CommandType {

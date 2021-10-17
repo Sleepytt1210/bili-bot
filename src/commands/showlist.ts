@@ -12,8 +12,7 @@ export class ShowlistCommand extends BaseCommand {
     public alias: string[];
 
     public constructor() {
-        super();
-        this.alias = ['shw', 'show'];
+        super(['shw', 'show']);
     }
 
     public name(): CommandType {

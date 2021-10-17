@@ -11,8 +11,7 @@ export class DeleteCommand extends SubCommand {
     public readonly parent: string;
 
     public constructor() {
-        super();
-        this.parent = CommandType.PLAYLISTS;
+        super(['d', 'del'], CommandType.PLAYLISTS);
     }
 
     public name(): CommandType {

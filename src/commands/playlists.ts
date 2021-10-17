@@ -15,8 +15,7 @@ export class PlaylistsCommand extends BaseCommand {
     private subcommands: Map<string, SubCommand>;
 
     public constructor() {
-        super()
-        this.alias = ['pl'];
+        super(['pl'])
         this.subcommands = new Map<string, SubCommand>([
             [CommandType.LIST, new ListCommand()],
             [CommandType.CREATE, new CreateCommand()],

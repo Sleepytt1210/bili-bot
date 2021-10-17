@@ -9,8 +9,7 @@ export class NextCommand extends BaseCommand {
     public alias: string[];
 
     public constructor() {
-        super();
-        this.alias = ['n', 'skip'];
+        super(['n', 'skip']);
     }
 
     public name(): CommandType {

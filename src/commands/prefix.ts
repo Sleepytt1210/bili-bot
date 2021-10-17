@@ -10,8 +10,7 @@ export class SetPrefixCommand extends BaseCommand {
     public alias: string[];
 
     public constructor() {
-        super();
-        this.alias = ['pr'];
+        super(['pr']);
     }
 
     public name(): CommandType {

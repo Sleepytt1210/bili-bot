@@ -9,8 +9,7 @@ export class SummonCommand extends BaseCommand {
     public alias: string[];
 
     public constructor() {
-        super();
-        this.alias = ['sm', 'join'];
+        super(['sm', 'join', 'come', 'connect', 'cn', 'hopin']);
     }
 
     public name(): CommandType {

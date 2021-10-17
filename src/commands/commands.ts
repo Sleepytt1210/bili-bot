@@ -1,4 +1,4 @@
-import {BaseCommand} from "./base-command";
+import {BaseCommand, Command, SubCommand} from "./base-command";
 import {CommandType} from "./command-type";
 import {InfoCommand} from "./info";
 import {PlayCommand} from "./play";
@@ -25,7 +25,7 @@ import {PullCommand} from "./pull";
 import {RemoveCommand} from "./remove";
 import {VolumeCommand} from "./volume";
 
-const CommTemp = new Map<string, BaseCommand>([
+const BaseCommands = new Map<string, BaseCommand>([
     [CommandType.HELP, new HelpCommand()],
     [CommandType.INFO, new InfoCommand()],
     [CommandType.PLAY, new PlayCommand()],
@@ -52,19 +52,10 @@ const CommTemp = new Map<string, BaseCommand>([
     [CommandType.VOLUME, new VolumeCommand()]
 ]);
 
-function comp(): Map<string, BaseCommand> {
-    CommTemp.forEach((command) => {
-        if (command.alias) {
-            command.alias.forEach((alias) => {
-                CommTemp.set(alias, command);
-            })
-        }
-    });
-    //console.log(CommTemp.keys());
-    return CommTemp;
+export const Commands = BaseCommands;
+
+export const getCommand = (command: string, commandsList: Map<string, Command> | Map<string, SubCommand>): Command | SubCommand => {
+    return commandsList.get(command) || Array.from(commandsList.values())
+        .find((comm): boolean => comm.alias.includes(command));
 }
-
-
-export const Commands = comp();
-
 

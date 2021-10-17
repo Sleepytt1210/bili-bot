@@ -9,8 +9,7 @@ export class ShuffleCommand extends BaseCommand {
     public alias: string[];
 
     public constructor() {
-        super();
-        this.alias = ['sh'];
+        super(['sh']);
     }
 
     public name(): CommandType {

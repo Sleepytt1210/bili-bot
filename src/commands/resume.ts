@@ -9,8 +9,7 @@ export class ResumeCommand extends BaseCommand {
     public alias: string[];
 
     public constructor() {
-        super();
-        this.alias = ['r'];
+        super(['r', 'unpause', 'continue']);
     }
 
     public name(): CommandType {

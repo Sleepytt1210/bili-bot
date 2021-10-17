@@ -9,8 +9,7 @@ export class PauseCommand extends BaseCommand {
     public alias: string[];
 
     public constructor() {
-        super();
-        this.alias = ['pa'];
+        super(['pa']);
     }
 
     public name(): CommandType {

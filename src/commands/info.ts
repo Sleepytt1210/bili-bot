@@ -13,8 +13,7 @@ export class InfoCommand extends BaseCommand {
     public alias: string[];
 
     public constructor() {
-        super();
-        this.alias = ['i', 'np', 'nowplaying'];
+        super(['i', 'np', 'nowplaying']);
     }
 
     public name(): CommandType {

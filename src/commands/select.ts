@@ -11,8 +11,7 @@ export class SelectCommand extends BaseCommand {
     public alias: string[];
 
     public constructor() {
-        super();
-        this.alias = ['sl', 'sel'];
+        super(['sl', 'sel']);
     }
 
     public name(): CommandType {

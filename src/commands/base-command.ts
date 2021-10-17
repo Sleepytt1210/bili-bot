@@ -17,8 +17,9 @@ export class BaseCommand implements Command {
     public alias: string[];
     public readonly logger: Logger;
 
-    public constructor() {
+    public constructor(alias: string[]) {
         this.logger = getLogger(`Command - ${this.name()}`);
+        this.alias = alias;
     }
 
     public name(): CommandType {
@@ -39,8 +40,9 @@ export class SubCommand extends BaseCommand {
     public parent: string;
     public alias: string[];
 
-    public constructor() {
-        super();
+    public constructor(alias: string[], parent: string) {
+        super(alias);
+        this.parent = parent;
     }
 
     public name(): CommandType {

@@ -12,8 +12,7 @@ export class PlayCommand extends BaseCommand {
     public alias: string[];
 
     public constructor() {
-        super();
-        this.alias = ['p'];
+        super(['p']);
     }
 
     public name(): CommandType {

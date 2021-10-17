@@ -10,8 +10,7 @@ export class VolumeCommand extends BaseCommand {
     public alias: string[];
 
     public constructor() {
-        super();
-        this.alias = ['vol', 'sv', 'setvolume', 'v'];
+        super(['vol', 'sv', 'setvolume', 'v']);
     }
 
     public name(): CommandType {

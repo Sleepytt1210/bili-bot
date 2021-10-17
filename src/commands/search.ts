@@ -14,8 +14,7 @@ export class SearchCommand extends BaseCommand {
     public alias: string[];
 
     public constructor() {
-        super();
-        this.alias = ['se'];
+        super(['se', 'find']);
     }
 
     public name(): CommandType {

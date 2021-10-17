@@ -3,7 +3,7 @@ import {CommandType} from "./command-type";
 import {GuildManager} from "../app/guild";
 import {Message, MessageEmbed} from "discord.js";
 import {helpTemplate} from "../utils/utils";
-import {Logger} from "../utils/logger";
+import {Logger} from "winston";
 
 export class ClearCommand extends BaseCommand {
 
@@ -11,8 +11,7 @@ export class ClearCommand extends BaseCommand {
     public readonly logger: Logger;
 
     public constructor() {
-        super();
-        this.alias = ['c'];
+        super(['c']);
     }
 
     public name(): CommandType {

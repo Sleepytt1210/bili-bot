@@ -2,15 +2,14 @@ import {BaseCommand, CommandException} from "./base-command";
 import {CommandType} from "./command-type";
 import {Message, MessageEmbed} from "discord.js";
 import {GuildManager} from "../app/guild";
-import {Commands} from "./commands";
+import {Commands, getCommand} from "./commands";
 
 export class HelpCommand extends BaseCommand {
 
     public alias: string[];
 
     public constructor() {
-        super();
-        this.alias = ['h'];
+        super(['h']);
     }
 
     public name(): CommandType {
@@ -51,11 +50,12 @@ export class HelpCommand extends BaseCommand {
             guild.printEmbeds(embed);
             return;
         }
-        const command = args[0];
+        const commandName = args[0];
+        const command = getCommand(commandName, Commands);
 
-        if (Commands.has(command)) {
+        if (command) {
             try {
-                const help = await Commands.get(command).helpMessage(guild, msg);
+                const help = await command.helpMessage(guild, msg);
                 guild.printEmbeds(help);
             } catch (error) {
                 this.logger.error(error);
@@ -64,7 +64,7 @@ export class HelpCommand extends BaseCommand {
                 }
             }
         } else {
-            throw CommandException.UserPresentable(`Invalid command ${command}`);
+            throw CommandException.UserPresentable(`Invalid command ${commandName}`);
         }
     }
 

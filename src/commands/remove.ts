@@ -9,8 +9,7 @@ export class RemoveCommand extends BaseCommand {
     public alias: string[];
 
     public constructor() {
-        super();
-        this.alias = ['rm'];
+        super(['rm']);
     }
 
     public name(): CommandType {

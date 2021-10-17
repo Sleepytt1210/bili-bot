@@ -10,8 +10,7 @@ export class PullCommand extends BaseCommand {
     public alias: string[];
 
     public constructor() {
-        super();
-        this.alias = ['del']
+        super(['del']);
     }
 
     public name(): CommandType {

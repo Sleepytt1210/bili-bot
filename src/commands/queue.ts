@@ -10,8 +10,7 @@ export class QueueCommand extends BaseCommand {
     public alias: string[];
 
     public constructor() {
-        super();
-        this.alias = ['q'];
+        super(['q']);
     }
 
     public name(): CommandType {

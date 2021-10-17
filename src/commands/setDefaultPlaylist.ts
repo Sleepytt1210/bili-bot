@@ -11,8 +11,7 @@ export class SetDefaultPlaylistCommand extends SubCommand {
     public readonly parent: string;
 
     public constructor() {
-        super();
-        this.parent = CommandType.PLAYLISTS;
+        super(['setdefault'], CommandType.PLAYLISTS);
     }
 
     public name(): CommandType {

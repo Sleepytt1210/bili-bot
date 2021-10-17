@@ -9,8 +9,7 @@ export class StopCommand extends BaseCommand {
     public alias: string[];
 
     public constructor() {
-        super();
-        this.alias = ['s'];
+        super(['s']);
     }
 
     public name(): CommandType {
