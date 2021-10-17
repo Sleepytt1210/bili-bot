@@ -17,6 +17,7 @@ export class SongInfo {
     public readonly initiator: GuildMember;
     public readonly uid: string;
     public readonly format: string;
+    public readonly isLive: boolean;
     public readonly size: number;
     public readonly cached: boolean;
     public readonly type: 'y' | 'b';
@@ -33,6 +34,7 @@ export class SongInfo {
         initator: GuildMember,
         uid: string,
         ext: string,
+        isLive: boolean,
         size: number,
         cached: boolean,
         type: 'y' | 'b') {
@@ -47,6 +49,7 @@ export class SongInfo {
         this.initiator = initator;
         this.uid = uid;
         this.format = ext;
+        this.isLive = isLive;
         this.size = size;
         this.cached = cached;
         this.type = type;
@@ -65,6 +68,7 @@ export class SongInfo {
         //     return (a.height + a.width) - (b.height - b.width);
         // });
         const url = details.video_url;
+        const isLive = format.isLive;
         const title = details.title;
         const thumbnailUrl = tmbarr[tmbarr.length-1].url;
         const dlurl = [{url: format.url}];
@@ -73,7 +77,7 @@ export class SongInfo {
         const uid = details.videoId;
         const ext = format.mimeType.substr(format.mimeType.indexOf("codecs=\"")+8, format.mimeType.length-1);
         const duration = Number(details.lengthSeconds)
-        const hms = toHms(duration);
+        const hms = toHms(duration, isLive);
         const size = Number(format.contentLength);
         const cached = await SongDataSource.getInstance().isCached(uid);
         return new SongInfo(
@@ -88,6 +92,7 @@ export class SongInfo {
             initiator,
             uid,
             ext,
+            isLive,
             size,
             cached,
             'y'
@@ -116,6 +121,7 @@ export class SongInfo {
             initiator,
             uid,
             songEntity.format,
+            false,
             songEntity.size,
             songEntity.cached,
             'b'
@@ -135,6 +141,7 @@ export class SongInfo {
             initiator,
             record.uid,
             record.ext,
+            false,
             record.size,
             record.cached,
             record.type

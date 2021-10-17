@@ -196,7 +196,9 @@ export function bvidExtract(url: string): string[] {
     return url.match(/(^(https?:\/\/)?([a-z]+\.)?bilibili\.com\/\S*\/?(BV\w+|av\d+)(\?p=(\d+))?)|(b23\.tv\/(\w+))/);
 }
 
-export function toHms(seconds: number): string {
+export function toHms(seconds: number, isLive?: boolean): string {
+    if(isLive) return '♾️ LIVE'
+
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds - (hours * 3600)) / 60);
     const secs = seconds - (hours * 3600) - (minutes * 60);
@@ -286,7 +288,7 @@ export async function search(keyword: string, limit?: number): Promise<BiliSongE
     const keyWExt = new RegExp(/<([A-Za-z][A-Za-z0-9]*)\b[^>]*>(.*?)<\/\1>/gm);
     const encoded = encodeURI(api.searchApi(keyword, limit));
     const response = await jsonRequest(encoded);
-    const rawSongs = (response['data']['result'] as SearchResults[]).find((result) => result.result_type === 'video').data;
+    const rawSongs = (response['data']['result'] as SearchResults[]).find((result): boolean => result.result_type === 'video').data;
     if (!rawSongs) return [];
     return rawSongs.map((raw): BiliSongEntity => {
         let title = raw.title;
