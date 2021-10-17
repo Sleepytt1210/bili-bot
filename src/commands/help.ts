@@ -55,7 +55,7 @@ export class HelpCommand extends BaseCommand {
 
         if (Commands.has(command)) {
             try {
-                const help = await Commands.get(command).helpMessage(guild);
+                const help = await Commands.get(command).helpMessage(guild, msg);
                 guild.printEmbeds(help);
             } catch (error) {
                 this.logger.error(error);

@@ -45,10 +45,10 @@ export class PlaylistsCommand extends BaseCommand {
 
     public helpMessage(guild: GuildManager, message: Message): MessageEmbed {
         const res = helpTemplate(this);
-        let subs = String();
+        let subs = '';
         const entries = this.subcommands.entries();
         for (const entry of entries) {
-            subs += `**${entry[0]}** : ${entry[1].helpMessage(guild).fields[0].value}\n`;
+            subs += `**${entry[0]}** : ${entry[1].helpMessage(guild, message).fields[0].value}\n`;
         }
         const cur = guild.currentPlaylist.get(message.author.id);
         if (cur)
