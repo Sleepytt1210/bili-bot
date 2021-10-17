@@ -32,7 +32,6 @@ export class HelpCommand extends BaseCommand {
                     "\t``next``: Skip a song\n" +
                     "\t``pause``: Pause the song\n" +
                     "\t``play``: Play a song\n" +
-                    "\t``playlists``: Show all available playlists\n" +
                     "\t``promote``: Move a song to the top queue\n" +
                     "\t``pull``: Remove a song from selected playlist\n" +
                     "\t``queue``: Show the queue\n" +
@@ -46,7 +45,12 @@ export class HelpCommand extends BaseCommand {
                     "\t``summon``: Summon the bot to your voice channel\n" +
                     "\t``stop``: Stop playing\n" +
                     "\t``volume``: Check and set volume\n" +
-                    "\t``leave``: Leave the channel\n");
+                    "\t``leave``: Leave the channel\n")
+                .addField('Playlist Commands: ',
+                    "\t``pl create``: Create a new playlist\n" +
+                    "\t``pl delete``: Delete an existing playlist\n" +
+                    "\t``pl setdpl``: Set a default playlist\n" +
+                    "\t``pl list``: Select and show the info of a playlist\n" );
             guild.printEmbeds(embed);
             return;
         }
