@@ -20,7 +20,7 @@ export class NextCommand extends BaseCommand {
     public async run(message: Message, guild: GuildManager, _args?: string[]): Promise<void> {
         guild.checkMemberInChannel(message.member);
         if (guild.queueManager.isListEmpty()) {
-            if(guild.queueManager.isPlaying) {
+            if (guild.queueManager.isPlaying) {
                 guild.queueManager.stop();
             } else throw CommandException.UserPresentable(`Queue is empty!`);
         } else {
@@ -29,7 +29,7 @@ export class NextCommand extends BaseCommand {
     }
 
     public helpMessage(guild: GuildManager): MessageEmbed {
-        const res = helpTemplate(this.name());
+        const res = helpTemplate(this);
         res.addField('Usage: ', `${guild.commandPrefix}${this.name()}`);
         return res;
     }

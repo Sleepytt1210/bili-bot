@@ -24,9 +24,9 @@ export class InfoCommand extends BaseCommand {
     public async run(message: Message, guild: GuildManager, args?: string[]): Promise<void> {
         if (args.length === 0) {
             await this.processResult(message, guild);
-        }else if(args.length === 1) {
+        } else if (args.length === 1) {
             const url = args.shift();
-            if(ytdl.validateURL(url) || bvidExtract(url)) await this.processResult(message, guild, url);
+            if (ytdl.validateURL(url) || bvidExtract(url)) await this.processResult(message, guild, url);
             else throw CommandException.UserPresentable(`Invalid url ${url}`);
         }
     }
@@ -38,7 +38,7 @@ export class InfoCommand extends BaseCommand {
         }
         this.logger.info(`Queried song: ${currentSong.title}`);
         const embed = await this.urlInfo(currentSong);
-        if(!url) {
+        if (!url) {
             const audioPlayer = guild.queueManager.audioPlayer;
             const playerState: AudioPlayerState = audioPlayer.state;
             const pbDur = (playerState.status !== AudioPlayerStatus.Idle) ? playerState.resource.playbackDuration : 0;
@@ -52,7 +52,7 @@ export class InfoCommand extends BaseCommand {
             show.push(" " + stHms + "/" + currentSong.hmsDuration);
             const showString = show.join("");
             embed.addField('Progress: ', showString)
-        }else {
+        } else {
             embed.addField('Duration: ', currentSong.hmsDuration);
         }
         guild.printEmbeds(embed);
@@ -69,7 +69,7 @@ export class InfoCommand extends BaseCommand {
     }
 
     public helpMessage(guild: GuildManager): MessageEmbed {
-        const res = helpTemplate(this.name());
+        const res = helpTemplate(this);
         res.addField('Usage: ', `${guild.commandPrefix}${this.name()}
                                             ${guild.commandPrefix}${this.name()} <url>`);
         return res;

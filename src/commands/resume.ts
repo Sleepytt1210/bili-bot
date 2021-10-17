@@ -20,11 +20,12 @@ export class ResumeCommand extends BaseCommand {
     public async run(message: Message, guild: GuildManager, _args?: string[]): Promise<void> {
         guild.checkMemberInChannel(message.member);
         if (guild.queueManager.resume()) {
-            guild.printEvent(`Audio resumed`);        }
+            guild.printEvent(`Audio resumed`);
+        }
     }
 
     public helpMessage(guild: GuildManager): MessageEmbed {
-        const res = helpTemplate(this.name());
+        const res = helpTemplate(this);
         res.addField('Usage: ', `${guild.commandPrefix}${this.name()}`);
         return res;
     }

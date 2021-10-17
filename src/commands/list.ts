@@ -1,7 +1,7 @@
 import {SubCommand} from "./base-command";
 import {CommandType} from "./command-type";
 import {GuildManager} from "../app/guild";
-import {Message, MessageEmbed, MessageReaction} from "discord.js";
+import {Message, MessageEmbed} from "discord.js";
 import {helpTemplate} from "../utils/utils";
 
 export class ListCommand extends SubCommand {
@@ -46,7 +46,7 @@ export class ListCommand extends SubCommand {
     }
 
     public helpMessage(guild: GuildManager): MessageEmbed {
-        const res = helpTemplate(this.name());
+        const res = helpTemplate(this);
         res.addField('Usage: ', `${guild.commandPrefix}${this.parent} ${this.name()}`);
         return res;
     }

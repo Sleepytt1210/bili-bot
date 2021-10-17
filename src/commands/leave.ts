@@ -21,11 +21,11 @@ export class LeaveCommand extends BaseCommand {
         guild.checkMemberInChannel(message.member);
         if (!guild.queueManager.activeConnection) return;
         guild.queueManager.stop();
-        await guild.queueManager.activeConnection.voice.setChannel(null);
+        guild.queueManager.activeConnection.disconnect();
     }
 
     public helpMessage(guild: GuildManager): MessageEmbed {
-        const res = helpTemplate(this.name());
+        const res = helpTemplate(this);
         res.addField('Usage: ', `${guild.commandPrefix}${this.name()}`);
         return res;
     }

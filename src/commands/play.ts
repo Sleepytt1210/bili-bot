@@ -29,8 +29,8 @@ export class PlayCommand extends BaseCommand {
         const url = args.shift();
         const plid = ytPlIdExtract(url);
         let song = await SongInfo.withUrl(url, message.member);
-        if(!song) {
-            if(plid) {
+        if (!song) {
+            if (plid) {
                 await guild.commandEngine.commands.get('load').run(message, guild, [url]);
                 return;
             } else {
@@ -39,7 +39,7 @@ export class PlayCommand extends BaseCommand {
                 song = await SongInfo.withUrl(url2, message.member);
             }
         }
-        if(!song && !plid) throw CommandException.UserPresentable(`Failed to retrieve info from ${query}`);
+        if (!song && !plid) throw CommandException.UserPresentable(`Failed to retrieve info from ${query}`);
         if (!await SongDataSource.getInstance().getOne(song.uid)) {
             await SongDataSource.getInstance().insert(song);
         }
@@ -47,7 +47,7 @@ export class PlayCommand extends BaseCommand {
     }
 
     public helpMessage(guild: GuildManager): MessageEmbed {
-        const res = helpTemplate(this.name());
+        const res = helpTemplate(this);
         res.addField('Usage: ', `${guild.commandPrefix}${this.name()} <videourl>`);
         return res;
     }

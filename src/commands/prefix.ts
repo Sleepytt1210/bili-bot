@@ -22,13 +22,13 @@ export class SetPrefixCommand extends BaseCommand {
         if (args.length === 1) {
             await GuildDataSource.getInstance().updatePrefix(guild, args[0]);
             guild.printEvent(`Command prefix has been updated to \`${args[0]}\` by ${message.member.displayName}`);
-        }else {
+        } else {
             throw CommandException.UserPresentable(`Invalid prefix`);
         }
     }
 
     public helpMessage(guild: GuildManager): MessageEmbed {
-        const res = helpTemplate(this.name());
+        const res = helpTemplate(this);
         res.addField('Usage: ', `${guild.commandPrefix}${this.name()} <new prefix>`);
         return res;
     }

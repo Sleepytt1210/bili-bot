@@ -46,7 +46,7 @@ export class SelectCommand extends BaseCommand {
     }
 
     public helpMessage(guild: GuildManager): MessageEmbed {
-        const res = helpTemplate(this.name());
+        const res = helpTemplate(this);
         res.addField('Usage: ', `${guild.commandPrefix}${this.name()} <index>`);
         return res;
     }

@@ -1,6 +1,7 @@
 import youtubedl, {YtResponse} from "youtube-dl-exec";
 import {MessageEmbed} from "discord.js";
 import ytdl from "ytdl-core";
+import {BaseCommand} from "../commands/base-command";
 
 export const getInfo = ytdl.getInfo;
 
@@ -28,10 +29,14 @@ export const shuffle = <T>(array: T[]): void => {
     }
 };
 
-export const helpTemplate = (type: string): MessageEmbed => {
+export const helpTemplate = (command: BaseCommand): MessageEmbed => {
     const embed = new MessageEmbed();
-    embed.setTitle(`**${type.toUpperCase()}**`)
+    embed.setTitle(`**${command.name().toUpperCase()}**`)
         .setColor(0x0ACDFF)
+    if(command.alias && command.alias.length > 0) {
+        const aliases = command.alias.join(', ');
+        embed.addField('Alias', aliases)
+    }
     return embed;
 }
 

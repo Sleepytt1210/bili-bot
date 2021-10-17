@@ -1,4 +1,4 @@
-import {BaseCommand, Command} from "./base-command";
+import {BaseCommand} from "./base-command";
 import {CommandType} from "./command-type";
 import {InfoCommand} from "./info";
 import {PlayCommand} from "./play";
@@ -54,7 +54,7 @@ const CommTemp = new Map<string, BaseCommand>([
 
 function comp(): Map<string, BaseCommand> {
     CommTemp.forEach((command) => {
-        if(command.alias) {
+        if (command.alias) {
             command.alias.forEach((alias) => {
                 CommTemp.set(alias, command);
             })

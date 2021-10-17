@@ -1,11 +1,3 @@
-import {BaseCommand} from "./base-command";
-import {CommandType} from "./command-type";
-import {GuildManager} from "../app/guild";
-import {Message, MessageEmbed} from "discord.js";
-import * as api from "../data/datasources/bilibili-api";
-import {SongInfo} from "../data/model/song-info";
-import {getInfo} from "../utils/utils";
-
 // export class RandomCommand extends BaseCommand {
 //     public type(): CommandType {
 //         return CommandType.RANDOM;

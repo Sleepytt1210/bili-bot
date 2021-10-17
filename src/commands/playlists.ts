@@ -31,23 +31,23 @@ export class PlaylistsCommand extends BaseCommand {
 
     public async run(message: Message, guild: GuildManager, args?: string[]): Promise<void> {
 
-        if(args.length === 0) {
+        if (args.length === 0) {
             guild.printEmbeds(this.helpMessage(guild, message));
-        }else{
+        } else {
             const subcommand = args.shift();
-            if(!this.subcommands.has(subcommand)) {
+            if (!this.subcommands.has(subcommand)) {
                 guild.printEmbeds(this.helpMessage(guild, message));
-            }else{
+            } else {
                 await this.subcommands.get(subcommand).run(message, guild, args);
             }
         }
     }
 
     public helpMessage(guild: GuildManager, message: Message): MessageEmbed {
-        const res = helpTemplate(this.name());
+        const res = helpTemplate(this);
         let subs = String();
         const entries = this.subcommands.entries();
-        for(const entry of entries){
+        for (const entry of entries) {
             subs += `**${entry[0]}** : ${entry[1].helpMessage(guild).fields[0].value}\n`;
         }
         const cur = guild.currentPlaylist.get(message.author.id);

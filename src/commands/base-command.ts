@@ -1,11 +1,13 @@
-import {Logger, getLogger} from "../utils/logger";
+import {getLogger, Logger} from "../utils/logger";
 import {Message, MessageEmbed} from "discord.js";
 import {GuildManager} from "../app/guild";
 import {CommandType} from "./command-type";
 
 export interface Command {
     alias: string[];
+
     name(): CommandType;
+
     run(message: Message, guild: GuildManager, args?: string[]): Promise<void>;
 
     helpMessage(guild: GuildManager, message?: Message): MessageEmbed;
@@ -19,15 +21,15 @@ export class BaseCommand implements Command {
         this.logger = getLogger(`Command - ${this.name()}`);
     }
 
-    public name(): CommandType{
+    public name(): CommandType {
         return CommandType.INVALID;
     }
 
-    public run(_message: Message, _guild: GuildManager, _args?: string[]): Promise<void>{
+    public run(_message: Message, _guild: GuildManager, _args?: string[]): Promise<void> {
         return;
     }
 
-    public helpMessage(guild: GuildManager, message?: Message): MessageEmbed{
+    public helpMessage(guild: GuildManager, message?: Message): MessageEmbed {
         throw new Error('helpMessage() requires override');
     }
 }
@@ -41,24 +43,24 @@ export class SubCommand extends BaseCommand {
         super();
     }
 
-    public name(): CommandType{
+    public name(): CommandType {
         return super.name();
     }
 
-    public run(_message: Message, _guild: GuildManager, _args?: string[]): Promise<void>{
+    public run(_message: Message, _guild: GuildManager, _args?: string[]): Promise<void> {
         return;
     }
 
-    public helpMessage(guild: GuildManager, message?: Message): MessageEmbed{
+    public helpMessage(guild: GuildManager, message?: Message): MessageEmbed {
         throw new Error('helpMessage() requires override');
     }
 }
 
 export class CommandException {
     public userPresentable: boolean;
-    public error: string|Error;
+    public error: string | Error;
 
-    public constructor(userPresentable: boolean, error: string|Error) {
+    public constructor(userPresentable: boolean, error: string | Error) {
         this.userPresentable = userPresentable;
         this.error = error;
     }

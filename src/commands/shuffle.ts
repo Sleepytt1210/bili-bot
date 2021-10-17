@@ -25,7 +25,7 @@ export class ShuffleCommand extends BaseCommand {
     }
 
     public helpMessage(guild: GuildManager): MessageEmbed {
-        const res = helpTemplate(this.name());
+        const res = helpTemplate(this);
         res.addField('Usage: ', `${guild.commandPrefix}${this.name()}`);
         return res;
     }

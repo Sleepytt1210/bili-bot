@@ -1,7 +1,7 @@
 import {GuildManager} from "../app/guild";
 import {Command, CommandException} from "./base-command";
 import {Commands} from "./commands";
-import {Message, MessageEmbed} from "discord.js";
+import {Message} from "discord.js";
 import {getLogger, Logger} from "../utils/logger";
 
 export class CommandEngine {
@@ -26,7 +26,7 @@ export class CommandEngine {
                     this.guild.printEvent(`${error}`);
                 }
             }
-        } else if(command.length > 0 && command.charCodeAt(0) >= 97 && command.charCodeAt(0) <= 122){
+        } else if (command.length > 0 && command.charCodeAt(0) >= 97 && command.charCodeAt(0) <= 122) {
             await msg.reply(`Invalid command ${command}`);
         }
     }

@@ -23,19 +23,19 @@ export class ShowlistCommand extends BaseCommand {
         let playlist: PlaylistDoc;
         const cur = guild.currentPlaylist.get(message.author.id)
         // Check argument to be index or name
-        if(args.length === 1 && isNum(args[0])){
+        if (args.length === 1 && isNum(args[0])) {
             const index = Number.parseInt(args.shift());
             const lists = await guild.dataManager.showPlayLists(message.author);
-            if(!(index > 0 && index <= lists.length))
+            if (!(index > 0 && index <= lists.length))
                 throw CommandException.OutOfBound(lists.length);
-            playlist = lists[index-1];
-        }else if(args.length === 1 && args[0] === "current" || args[0] === "c"){
-            if(cur) playlist = cur;
+            playlist = lists[index - 1];
+        } else if (args.length === 1 && args[0] === "current" || args[0] === "c") {
+            if (cur) playlist = cur;
             else throw CommandException.UserPresentable(`There is no selected playlist currently!`)
-        }else {
+        } else {
             const name = args.join(' ');
             playlist = await PlaylistDataSource.getInstance().get(message.author, name);
-            if(!playlist) throw CommandException.UserPresentable(`Playlist ${name} does not exist!`);
+            if (!playlist) throw CommandException.UserPresentable(`Playlist ${name} does not exist!`);
         }
         guild.setCurrentPlaylist(playlist, message.author.id);
         guild.setPreviousCommand("showlist");
@@ -47,11 +47,11 @@ export class ShowlistCommand extends BaseCommand {
         guild.setCurrentShowlistResult(songs, message.author.id);
 
         const generatedEmbed = (start): MessageEmbed => {
-            const end = songs.length < 10 ? songs.length : start+10;
+            const end = songs.length < 10 ? songs.length : start + 10;
             const current = songs.slice(start, end);
 
             const embed = new MessageEmbed()
-                .setTitle(`${playlist.name}:\nShowing ${start+1}-${end} out of ${songs.length}`)
+                .setTitle(`${playlist.name}:\nShowing ${start + 1}-${end} out of ${songs.length}`)
                 .setFooter(`Use ${guild.commandPrefix}select <index> to play a song`)
                 .setColor(0x0ACDFF);
             const resultMessage = current.map((song, index): string => {
@@ -71,7 +71,7 @@ export class ShowlistCommand extends BaseCommand {
     }
 
     public helpMessage(guild: GuildManager): MessageEmbed {
-        const res = helpTemplate(this.name());
+        const res = helpTemplate(this);
         const pref = guild.commandPrefix;
         res.addField('Usage: ', `${pref}${this.name()} <name>/<index>`)
             .addField('Following commands: ', `${pref}select <index> to play a song

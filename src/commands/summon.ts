@@ -20,14 +20,14 @@ export class SummonCommand extends BaseCommand {
     public async run(msg: Message, guild: GuildManager, args?: string[]): Promise<void> {
         guild.checkMemberInChannel(msg.member, false);
         if (!guild.queueManager.activeConnection) {
-            await guild.joinChannel(msg);
-        } else{
+            guild.queueManager.joinChannel(msg.member);
+        } else {
             throw CommandException.UserPresentable(`I am already in the channel ${guild.guild.me.voice.channel.name}!`);
         }
     }
 
     public helpMessage(guild: GuildManager): MessageEmbed {
-        const res = helpTemplate(this.name());
+        const res = helpTemplate(this);
         res.addField('Usage: ', `${guild.commandPrefix}${this.name()}`);
         return res;
     }

@@ -20,17 +20,17 @@ export class VolumeCommand extends BaseCommand {
 
     public async run(message: Message, guild: GuildManager, args?: string[]): Promise<void> {
         const num = args.shift();
-        if(!num) guild.printEvent(`Current volume: ${guild.queueManager.volume * 100}%`);
-        else if(args.length !== 0 || !isNum(num)) throw CommandException.UserPresentable(`Invalid input!`);
-        else if(Number(num) < 0 || Number(num) > 100) throw CommandException.UserPresentable(`Volume should be between 0 and 100!`);
-        else{
-            guild.queueManager.setVol(Number(num)/100);
+        if (!num) guild.printEvent(`Current volume: ${guild.queueManager.volume * 100}%`);
+        else if (args.length !== 0 || !isNum(num)) throw CommandException.UserPresentable(`Invalid input!`);
+        else if (Number(num) < 0 || Number(num) > 100) throw CommandException.UserPresentable(`Volume should be between 0 and 100!`);
+        else {
+            guild.queueManager.setVol(Number(num) / 100);
             guild.printEvent(`Current volume: ${guild.queueManager.volume * 100}%`);
         }
     }
 
     public helpMessage(guild: GuildManager): MessageEmbed {
-        const res = helpTemplate(this.name());
+        const res = helpTemplate(this);
         res.addField('Usage: ', `${guild.commandPrefix}${this.name()}
                                             ${guild.commandPrefix}${this.name()} \`0 ~ 100\``);
         return res;
