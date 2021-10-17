@@ -23,7 +23,6 @@ export enum CommandType {
     SELECT = 'select',
     SETPREFIX = 'setprefix',
     SETDEFAULTPLAYLIST = 'setdpl',
-    SHOWLIST = 'showlist',
     SUMMON = 'summon',
     INVALID = 'invalid',
     PULL = 'pull',
