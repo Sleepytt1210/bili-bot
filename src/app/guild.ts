@@ -8,6 +8,7 @@ import {PlaylistManager} from "../data/managers/playlist-manager";
 import {QueueManager} from "../data/managers/queue-manager";
 import {SongDoc} from "../data/db/schemas/song";
 import {PlaylistDoc} from "../data/db/schemas/playlist";
+import {biliblue, EmbedOptions, generateEmbed} from "../utils/utils";
 
 export class GuildManager {
     protected readonly logger: Logger;
@@ -119,10 +120,10 @@ export class GuildManager {
         });
     }
 
-    public printFlipPages(list: any[], embed: (n: number) => MessageEmbed, message: Message): void {
+    public printFlipPages(list: SongInfo[] | PlaylistDoc[] | BiliSongEntity[] | SongDoc[], embedOptions: EmbedOptions, message: Message): void {
         let currentPage = 1;
 
-        message.channel.send({embeds: [embed(0)]}).then((msg): Promise<void> => {
+        message.channel.send({embeds: [generateEmbed(embedOptions)]}).then((msg): Promise<void> => {
             if (list.length <= 10) return;
 
             msg.react('⬅').then((_): void => {
@@ -137,13 +138,15 @@ export class GuildManager {
                 prevCollector.on('collect', (r, u): Promise<MessageReaction> => {
                     if (currentPage === 1) return r.users.remove(u);
                     currentPage--;
-                    msg.edit({embeds: [embed((currentPage - 1) * 10)]});
+                    embedOptions["start"] = (currentPage - 1) * 10;
+                    msg.edit({embeds: [generateEmbed(embedOptions)]});
                     return r.users.remove(u);
                 });
                 nextCollector.on('collect', (r, u): Promise<MessageReaction> => {
                     if (currentPage === Math.ceil((list.length / 10))) return r.users.remove(u);
                     currentPage++;
-                    msg.edit({embeds: [embed((currentPage - 1) * 10)]});
+                    embedOptions["start"] = (currentPage - 1) * 10
+                    msg.edit({embeds: [generateEmbed(embedOptions)]});
                     return r.users.remove(u);
                 });
             });

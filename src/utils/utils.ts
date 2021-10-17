@@ -5,6 +5,10 @@ import {BaseCommand} from "../commands/base-command";
 
 export const biliblue = 0x0ACDFF;
 
+/**
+ * Api Tools
+ */
+
 export const getInfo = ytdl.getInfo;
 
 export const getInfoWithArg = (url: string, args: object): Promise<YtResponse> => youtubedl(url, args);
@@ -24,12 +28,24 @@ export const ytPlIdExtract = (url: string): string => {
     return match ? match[7] : null;
 }
 
+/**
+ * Misc
+ */
+
 export const shuffle = <T>(array: T[]): void => {
     for (let i = array.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [array[i], array[j]] = [array[j], array[i]];
     }
 };
+
+export const isNum = (num: string): boolean => {
+    return num != null && !isNaN(Number(num)) && Number.isInteger(Number(num));
+}
+
+/**
+ * Help Menu Generator
+ */
 
 export const helpTemplate = (command: BaseCommand): MessageEmbed => {
     const embed = new MessageEmbed();
@@ -42,6 +58,31 @@ export const helpTemplate = (command: BaseCommand): MessageEmbed => {
     return embed;
 }
 
-export const isNum = (num: string): boolean => {
-    return num != null && !isNaN(Number(num)) && Number.isInteger(Number(num));
+/**
+ * Flip page embeds utilities
+ */
+
+export interface EmbedOptions {
+    embedTitle: string;
+    start: number;
+    mapFunc: (start) => (entity, index) => string;
+    embedFooter: string;
+    list: object[];
+    delim?: string;
+}
+
+export const generateEmbed = (embedOptions: EmbedOptions): MessageEmbed => {
+    const songs = embedOptions.list;
+    const start = embedOptions.start;
+    const delim = embedOptions.delim ? embedOptions.delim : ( embedOptions.delim !== undefined && embedOptions.delim !== null ? embedOptions.delim : '\n');
+    const end = songs.length < 10 ? songs.length : start + 10;
+    const current = songs.slice(start, end);
+
+    const embed = new MessageEmbed()
+        .setTitle(embedOptions.embedTitle)
+        .setFooter(embedOptions.embedFooter)
+        .setColor(biliblue);
+    const resultMessage = current.map(embedOptions.mapFunc(start));
+    embed.setDescription(resultMessage.join(delim));
+    return embed;
 }

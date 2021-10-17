@@ -3,7 +3,8 @@ import {CommandType} from "./command-type";
 import {GuildManager} from "../app/guild";
 import {Message, MessageEmbed} from "discord.js";
 import * as api from "../data/datasources/bilibili-api";
-import {helpTemplate} from "../utils/utils";
+import {BiliSongEntity} from "../data/datasources/bilibili-api";
+import {EmbedOptions, helpTemplate} from "../utils/utils";
 import {XmlEntities} from 'html-entities';
 
 const decoder = new XmlEntities();
@@ -29,20 +30,27 @@ export class SearchCommand extends BaseCommand {
 
         const keyword = args.join(" ");
 
-        const entities = await api.search(keyword, 20);
+        const entities = await api.search(keyword, 50);
         guild.setCurrentSearchResult(null);
         if (entities.length === 0) {
             throw CommandException.UserPresentable("No result found");
         } else {
             guild.setCurrentSearchResult(entities);
-            const resultMessage = entities.map((entity, index): string => {
-                return decoder.decode(`\`\`\`${index + 1}. ${entity.title} - ${entity.play} plays\`\`\``);
-            });
-            const embed = new MessageEmbed()
-                .setTitle('Search result:')
-                .setDescription(`${resultMessage.join("")}`)
-                .setFooter(`Use ${guild.commandPrefix}select [number] to play a song`);
-            guild.printEmbeds(embed);
+
+            const resultFunc = function (start): (entity: BiliSongEntity, index: number) => string {
+                return (entity, index): string => {
+                    return decoder.decode(`\`\`\`${start + index + 1}. ${entity.title} - ${entity.play} plays\`\`\``);
+                };
+            }
+            const opt: EmbedOptions = {
+                embedTitle: 'Search Result: ',
+                start: 0,
+                mapFunc: resultFunc,
+                embedFooter: `Use ${guild.commandPrefix}select [number] to play a song`,
+                list: entities,
+                delim: '',
+            }
+            guild.printFlipPages(entities, opt, message);
             guild.setPreviousCommand("search");
         }
     }

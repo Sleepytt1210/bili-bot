@@ -2,7 +2,8 @@ import {SubCommand} from "./base-command";
 import {CommandType} from "./command-type";
 import {GuildManager} from "../app/guild";
 import {Message, MessageEmbed} from "discord.js";
-import {helpTemplate} from "../utils/utils";
+import {EmbedOptions, helpTemplate} from "../utils/utils";
+import {PlaylistDoc} from "../data/db/schemas/playlist";
 
 export class ListCommand extends SubCommand {
 
@@ -23,24 +24,24 @@ export class ListCommand extends SubCommand {
     }
 
     public async run(message: Message, guild: GuildManager, args?: string[]): Promise<void> {
-        const lists = await guild.dataManager.showPlayLists(message.author);
+        const playlists = await guild.dataManager.showPlayLists(message.author);
 
-        const generatedEmbed = (start: number): MessageEmbed => {
-            const end = lists.length < 10 ? lists.length : start + 10;
-            const current = lists.slice(start, end);
-
-            const embed = new MessageEmbed()
-                .setTitle(`Your playlists: `)
-                .setFooter(`Use ${guild.commandPrefix}showlist <name> or <index> to check songs in list`);
-            const result = current.map((list, index): string => {
-                const name = (list.default) ? list.name + " 【Default】" : list.name;
-                return `${start + index + 1}.   ${name}\n`;
-            });
-            embed.setDescription(result.toString());
-            return embed;
+        const resultFunc = function (start): (playlist: PlaylistDoc, index: number) => string {
+            return (playlist, index): string => {
+                const name = (playlist.default) ? playlist.name + " 【Default】" : playlist.name;
+                return `${start + index + 1}. ${name}`;
+            };
         }
 
-        guild.printFlipPages(lists, generatedEmbed, message);
+        const opt: EmbedOptions = {
+            embedTitle: 'Your playlists: ',
+            embedFooter: `Use ${guild.commandPrefix}showlist <name> or <index> to check songs in list`,
+            start: 0,
+            mapFunc: resultFunc,
+            list: playlists
+        }
+
+        guild.printFlipPages(playlists, opt, message);
 
         guild.setPreviousCommand("playlists");
     }

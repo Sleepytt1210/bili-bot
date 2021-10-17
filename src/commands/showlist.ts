@@ -2,9 +2,10 @@ import {BaseCommand, CommandException} from "./base-command";
 import {CommandType} from "./command-type";
 import {GuildManager} from "../app/guild";
 import {Message, MessageEmbed} from "discord.js";
-import {helpTemplate, isNum} from "../utils/utils";
+import {EmbedOptions, helpTemplate, isNum} from "../utils/utils";
 import {PlaylistDataSource} from "../data/datasources/playlist-datasource";
 import {PlaylistDoc} from "../data/db/schemas/playlist";
+import {SongDoc} from "../data/db/schemas/song";
 
 export class ShowlistCommand extends BaseCommand {
 
@@ -46,22 +47,21 @@ export class ShowlistCommand extends BaseCommand {
         }
         guild.setCurrentShowlistResult(songs, message.author.id);
 
-        const generatedEmbed = (start): MessageEmbed => {
-            const end = songs.length < 10 ? songs.length : start + 10;
-            const current = songs.slice(start, end);
+        const resultFunc = function (start): (song: SongDoc, index: number) => string {
+            return (song, index): string => {
+                return `${(start + index + 1)}. **[${song.title}](${song.url})**`;
+            }
+        };
 
-            const embed = new MessageEmbed()
-                .setTitle(`${playlist.name}:\nShowing ${start + 1}-${end} out of ${songs.length}`)
-                .setFooter(`Use ${guild.commandPrefix}select <index> to play a song`)
-                .setColor(biliblue);
-            const resultMessage = current.map((song, index): string => {
-                return `${(start + index + 1)}. ${song.title}\n`;
-            });
-            embed.setDescription(resultMessage.toString());
-            return embed;
+        const opt: EmbedOptions = {
+            embedTitle: `${playlist.name}:`,
+            embedFooter: `Use ${guild.commandPrefix}select <index> to play a song`,
+            list: songs,
+            mapFunc: resultFunc,
+            start: 0
         }
 
-        guild.printFlipPages(songs, generatedEmbed, message);
+        guild.printFlipPages(songs, opt, message);
 
         setTimeout(function (): void {
             guild.setPreviousCommand(null);

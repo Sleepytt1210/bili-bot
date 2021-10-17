@@ -2,7 +2,8 @@ import {BaseCommand} from "./base-command";
 import {CommandType} from "./command-type";
 import {GuildManager} from "../app/guild";
 import {Message, MessageEmbed} from "discord.js";
-import {helpTemplate} from "../utils/utils";
+import {EmbedOptions, helpTemplate} from "../utils/utils";
+import {SongInfo} from "../data/model/song-info";
 
 export class QueueCommand extends BaseCommand {
 
@@ -24,21 +25,20 @@ export class QueueCommand extends BaseCommand {
         } else {
             const list = guild.queueManager.queue;
 
-            const generatedEmbed = start => {
-                const end = list.length < 10 ? list.length : start + 10;
-                const current = list.slice(start, end);
-
-                const embed = new MessageEmbed()
-                    .setTitle('Queue:')
-                    .setColor(biliblue);
-                const result = current.map((song, index) => {
-                    return `${start + index + 1}.   ${song.title}\n`;
-                });
-                embed.setDescription(result.toString());
-                return embed;
+            const resultFunc = function (start): (song: SongInfo, index: number) => string {
+                return (song, index): string => {
+                    return `${start + index + 1}. **[${song.title}](${song.url})**`;
+                };
+            }
+            const opt: EmbedOptions = {
+                embedTitle: 'Queue:',
+                embedFooter: '',
+                list: list,
+                mapFunc: resultFunc,
+                start: 0
             }
 
-            guild.printFlipPages(list, generatedEmbed, message);
+            guild.printFlipPages(list, opt, message);
         }
     }
 
