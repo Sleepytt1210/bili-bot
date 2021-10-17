@@ -14,7 +14,6 @@ import {QueueCommand} from "./queue";
 import {PromoteCommand} from "./promote";
 import {SearchCommand} from "./search";
 import {SelectCommand} from "./select";
-import {ShowlistCommand} from "./showlist";
 import {HelpCommand} from "./help";
 import {SummonCommand} from "./summon";
 import {LoopCommand} from "./loop";
@@ -47,7 +46,6 @@ const BaseCommands = new Map<string, BaseCommand>([
     [CommandType.SEARCH, new SearchCommand()],
     [CommandType.SELECT, new SelectCommand()],
     [CommandType.SETPREFIX, new SetPrefixCommand()],
-    [CommandType.SHOWLIST, new ShowlistCommand()],
     [CommandType.SUMMON, new SummonCommand()],
     [CommandType.VOLUME, new VolumeCommand()]
 ]);

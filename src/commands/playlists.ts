@@ -2,11 +2,13 @@ import {Message, MessageEmbed} from "discord.js";
 import {BaseCommand, SubCommand} from "./base-command";
 import {CommandType} from "./command-type";
 import {GuildManager} from "../app/guild";
-import {helpTemplate} from "../utils/utils";
+import {EmbedOptions, helpTemplate} from "../utils/utils";
 import {ListCommand} from "./list";
 import {CreateCommand} from "./create";
 import {DeleteCommand} from "./delete";
 import {SetDefaultPlaylistCommand} from "./setDefaultPlaylist";
+import {getCommand} from "./commands";
+import {PlaylistDoc} from "../data/db/schemas/playlist";
 
 
 export class PlaylistsCommand extends BaseCommand {
@@ -31,15 +33,39 @@ export class PlaylistsCommand extends BaseCommand {
     public async run(message: Message, guild: GuildManager, args?: string[]): Promise<void> {
 
         if (args.length === 0) {
-            guild.printEmbeds(this.helpMessage(guild, message));
+            await this.listAll(guild, message);
         } else {
-            const subcommand = args.shift();
-            if (!this.subcommands.has(subcommand)) {
+            const subcommandName = args.shift();
+            const subcommand = getCommand(subcommandName, this.subcommands);
+            if (!subcommand) {
                 guild.printEmbeds(this.helpMessage(guild, message));
             } else {
-                await this.subcommands.get(subcommand).run(message, guild, args);
+                await subcommand.run(message, guild, args);
             }
         }
+    }
+
+    private async listAll(guild: GuildManager, message: Message): Promise<void> {
+        const playlists = await guild.dataManager.showPlayLists(message.author);
+
+        const resultFunc = function (start): (playlist: PlaylistDoc, index: number) => string {
+            return (playlist, index): string => {
+                const name = (playlist.default) ? playlist.name + " 【Default】" : playlist.name;
+                return `${start + index + 1}. ${name}`;
+            };
+        }
+
+        const opt: EmbedOptions = {
+            embedTitle: 'Your playlists: ',
+            embedFooter: `${guild.commandPrefix}pl list <name> or <index> to check songs in list, ${guild.commandPrefix}load <name> or <index> to play the entire playlist`,
+            start: 0,
+            mapFunc: resultFunc,
+            list: playlists
+        }
+
+        guild.printFlipPages(playlists, opt, message);
+
+        guild.setPreviousCommand("playlists");
     }
 
     public helpMessage(guild: GuildManager, message: Message): MessageEmbed {

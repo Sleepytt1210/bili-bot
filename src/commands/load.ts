@@ -208,9 +208,9 @@ export class LoadCommand extends BaseCommand {
 
     public static checkArg(name: string): void {
         const opts = ytPlIdExtract(name) ? '-y' : bvidExtract(name) ? '-b' : null;
-        if (opts) {
-            throw CommandException.UserPresentable(`Please do not use playlist url as name!`);
-        }
+        if(!name) throw CommandException.UserPresentable(`Please provide a name to the playlist!`);
+        else if (opts) throw CommandException.UserPresentable(`Please do not use playlist url as name!`);
+        else if(isNum(name)) throw CommandException.UserPresentable(`Please do not use number as name!`)
     }
 
     public helpMessage(guild: GuildManager): MessageEmbed {
