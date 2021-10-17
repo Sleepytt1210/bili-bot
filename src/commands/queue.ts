@@ -30,7 +30,7 @@ export class QueueCommand extends BaseCommand {
 
                 const embed = new MessageEmbed()
                     .setTitle('Queue:')
-                    .setColor(0x0ACDFF);
+                    .setColor(biliblue);
                 const result = current.map((song, index) => {
                     return `${start + index + 1}.   ${song.title}\n`;
                 });

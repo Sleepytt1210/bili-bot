@@ -53,7 +53,7 @@ export class ShowlistCommand extends BaseCommand {
             const embed = new MessageEmbed()
                 .setTitle(`${playlist.name}:\nShowing ${start + 1}-${end} out of ${songs.length}`)
                 .setFooter(`Use ${guild.commandPrefix}select <index> to play a song`)
-                .setColor(0x0ACDFF);
+                .setColor(biliblue);
             const resultMessage = current.map((song, index): string => {
                 return `${(start + index + 1)}. ${song.title}\n`;
             });

@@ -3,6 +3,8 @@ import {MessageEmbed} from "discord.js";
 import ytdl from "ytdl-core";
 import {BaseCommand} from "../commands/base-command";
 
+export const biliblue = 0x0ACDFF;
+
 export const getInfo = ytdl.getInfo;
 
 export const getInfoWithArg = (url: string, args: object): Promise<YtResponse> => youtubedl(url, args);
@@ -32,7 +34,7 @@ export const shuffle = <T>(array: T[]): void => {
 export const helpTemplate = (command: BaseCommand): MessageEmbed => {
     const embed = new MessageEmbed();
     embed.setTitle(`**${command.name().toUpperCase()}**`)
-        .setColor(0x0ACDFF)
+        .setColor(biliblue)
     if(command.alias && command.alias.length > 0) {
         const aliases = command.alias.join(', ');
         embed.addField('Alias', aliases)

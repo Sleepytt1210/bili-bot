@@ -50,7 +50,7 @@
 //         const embed = new MessageEmbed()
 //             .setTitle('Random result:')
 //             .setDescription(`${entity.title} - ${entity.play} plays`)
-//             .setColor(0x0ACDFF);
+//             .setColor(biliblue);
 //         await guild.activeTextChannel.send(embed);
 //         const songEntity = await api.videoDet(entity.url);
 //         const songEntityDl = await api.dlurl(songEntity);

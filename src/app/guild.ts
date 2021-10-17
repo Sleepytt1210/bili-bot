@@ -74,7 +74,7 @@ export class GuildManager {
     public printEvent(desc: string): void {
         const embed = new MessageEmbed()
             .setDescription(desc)
-            .setColor(0x0ACDFF);
+            .setColor(biliblue);
         this.printEmbeds(embed);
     }
 
@@ -83,13 +83,13 @@ export class GuildManager {
             .setTitle(`Now playing: `)
             .setDescription(`**[${song.title}](${song.url})** --> *Requested by:* <@${song.initiator.id}>`)
             .setFooter(`Duration: ${song.hmsDuration}`, song.initiator.user.avatarURL())
-            .setColor(0x0ACDFF);
+            .setColor(biliblue);
         this.printEmbeds(embed);
     }
 
     public printOutOfSongs(): void {
         const embed = new MessageEmbed().setDescription("Running out of songs")
-            .setColor(0x0ACDFF);
+            .setColor(biliblue);
         this.printEmbeds(embed);
     }
 
@@ -102,10 +102,10 @@ export class GuildManager {
     public printEmbeds(embed: MessageEmbed | MessageEmbed[], isTransient?: boolean): void {
         if (Array.isArray(embed)) {
             for (const e of embed) {
-                e.setColor(0x0ACDFF);
+                e.setColor(biliblue);
             }
         } else {
-            embed.setColor(0x0ACDFF);
+            embed.setColor(biliblue);
         }
         const embedMsg = Array.isArray(embed) ? embed : [embed]
         this.activeTextChannel.send({embeds: embedMsg}).then((msg): void => {
