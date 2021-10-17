@@ -19,10 +19,9 @@ export class HelpCommand extends BaseCommand {
     public async run(msg: Message, guild: GuildManager, args?: string[]): Promise<void> {
         const dev = guild.guild.members.resolve("293762535675527168")
         if (args.length === 0) {
-            const embed = new MessageEmbed().setTitle("Bilibili Player")
+            const embed = new MessageEmbed().setTitle(`Bilibili Player (Modified by: ${dev.displayName})`)
                 .setThumbnail(guild.guild.client.user.avatarURL())
-                .addField(guild.guild.name, `Prefix: ${guild.commandPrefix}
-                Modified by: ${dev.displayName}`)
+                .addField(guild.guild.name, `\`\`\`properties\nPrefix: ${guild.commandPrefix}\n\`\`\``)
                 .addField("Commands (Use help <command> for more detail)",
                     "\t``clear``: Clear the queue\n" +
                     "\t``help``: Show this help menu\n" +
@@ -56,11 +55,10 @@ export class HelpCommand extends BaseCommand {
         }
         const commandName = args[0];
         const command = getCommand(commandName, Commands);
-
         if (command) {
             try {
                 const help = await command.helpMessage(guild, msg);
-                guild.printEmbeds(help);
+                msg.channel.send({embeds: [help]});
             } catch (error) {
                 this.logger.error(error);
                 if (error instanceof CommandException && (error as CommandException).userPresentable) {
