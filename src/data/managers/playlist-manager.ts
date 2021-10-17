@@ -7,7 +7,7 @@ import {SongDoc} from "../db/schemas/song";
 import {SongDataSource} from "../datasources/song-datasource";
 import {PlaylistDataSource} from "../datasources/playlist-datasource";
 import {PlaylistDoc} from "../db/schemas/playlist";
-import {SearchSongEntity} from "../datasources/bilibili-api";
+import {BiliSongEntity} from "../datasources/bilibili-api";
 
 export class PlaylistManager {
     protected readonly logger: Logger;
@@ -22,7 +22,7 @@ export class PlaylistManager {
         this.playlistDataSource = PlaylistDataSource.getInstance();
     }
 
-    public async saveToPlaylist(song: SongInfo | SearchSongEntity, initiator: User, listDoc: PlaylistDoc): Promise<void> {
+    public async saveToPlaylist(song: SongInfo | BiliSongEntity, initiator: User, listDoc: PlaylistDoc): Promise<void> {
 
         // Check if this song is already in playlist
         let songDoc = await this.songDataSource.getOne(song.uid);

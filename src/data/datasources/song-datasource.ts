@@ -3,7 +3,7 @@ import {SongDoc} from "../db/schemas/song";
 import {PlaylistDoc} from "../db/schemas/playlist";
 import {SongInfo} from "../model/song-info";
 import MongoDB from "../db/service";
-import {SearchSongEntity} from "./bilibili-api";
+import {BiliSongEntity} from "./bilibili-api";
 import {Schema} from "mongoose";
 
 export class SongDataSource {
@@ -41,9 +41,9 @@ export class SongDataSource {
         return result;
     }
 
-    public async insert(song: SongInfo | SongDoc | SearchSongEntity): Promise<SongDoc> {
+    public async insert(song: SongInfo | SongDoc | BiliSongEntity): Promise<SongDoc> {
         this.logger.verbose(`Saving song ${song.uid}`);
-        if (song instanceof SongInfo || song instanceof SearchSongEntity) {
+        if (song instanceof SongInfo || song instanceof BiliSongEntity) {
             return new MongoDB.Song({
                 uid: song.uid,
                 url: song.url,

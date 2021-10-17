@@ -31,7 +31,7 @@ const api = {
     _BILIBILI_KEY: 'aHRmhWMLkdeMuILqORnYZocwMBpMEOdt'
 }
 
-export class SearchSongEntity {
+export class BiliSongEntity {
     public title: string;
     public mainTitle: string;
     public aid: string;
@@ -210,7 +210,7 @@ export function toHms(seconds: number): string {
     return res;
 }
 
-export async function getExtraInfo(info: SearchSongEntity): Promise<SearchSongEntity> {
+export async function getExtraInfo(info: BiliSongEntity): Promise<BiliSongEntity> {
     const payload = `appkey=${api._APP_KEY}&cid=${info.uid}&otype=json&qn=80`
     const sign = crypto.createHash('md5').update(Buffer.from(payload + api._BILIBILI_KEY).toString('utf-8')).digest('hex');
     const dlapi = api.dlApi(payload, sign, info.bvId);
@@ -224,7 +224,7 @@ export async function getExtraInfo(info: SearchSongEntity): Promise<SearchSongEn
         .setContentLength(contentLength);
 }
 
-export async function getBasicInfo(url: string): Promise<SearchSongEntity> {
+export async function getBasicInfo(url: string): Promise<BiliSongEntity> {
     const fullId = await bvidExtract(url);
     let id;
     if (fullId[7]) {
@@ -262,7 +262,7 @@ export async function getBasicInfo(url: string): Promise<SearchSongEntity> {
     const accHms = toHms(duration);
     const title = (rawCids.length > 1) ? rawCids[pg - 1].part : rawData.title;
     const cached = await SongDataSource.getInstance().isCached(cid);
-    return getExtraInfo(new SearchSongEntity()
+    return getExtraInfo(new BiliSongEntity()
         .setCid(cid)
         .setTitle(title)
         .setMainTitle(mainTitle)
@@ -281,17 +281,17 @@ export async function getBasicInfo(url: string): Promise<SearchSongEntity> {
     );
 }
 
-export async function search(keyword: string, limit?: number): Promise<SearchSongEntity[]> {
+export async function search(keyword: string, limit?: number): Promise<BiliSongEntity[]> {
     if (!limit) limit = 20;
     const keyWExt = new RegExp(/<([A-Za-z][A-Za-z0-9]*)\b[^>]*>(.*?)<\/\1>/gm);
     const encoded = encodeURI(api.searchApi(keyword, limit));
     const response = await jsonRequest(encoded);
     const rawSongs = (response['data']['result'] as SearchResults[]).find((result) => result.result_type === 'video').data;
     if (!rawSongs) return [];
-    return rawSongs.map((raw): SearchSongEntity => {
+    return rawSongs.map((raw): BiliSongEntity => {
         let title = raw.title;
         title = title.replace(keyWExt, '$2');
-        return new SearchSongEntity()
+        return new BiliSongEntity()
             .setTitle(title)
             .setAuthor(raw.author)
             .setAid(raw.aid)

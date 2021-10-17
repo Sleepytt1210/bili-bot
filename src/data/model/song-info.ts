@@ -2,7 +2,7 @@ import {GuildMember} from "discord.js";
 import {getInfo, ytUidExtract} from "../../utils/utils";
 import {SongDataSource} from "../datasources/song-datasource";
 import {SongDoc} from "../db/schemas/song";
-import {SearchSongEntity, getBasicInfo, bvidExtract, toHms} from "../datasources/bilibili-api";
+import {BiliSongEntity, getBasicInfo, bvidExtract, toHms} from "../datasources/bilibili-api";
 import ytdl, {chooseFormat} from "ytdl-core";
 
 export class SongInfo {
@@ -100,7 +100,7 @@ export class SongInfo {
      * @param songEntity BiliBili song entity.
      * @param initiator User who initiated the command.
      */
-    public static async withSongEntity(songEntity: SearchSongEntity, initiator: GuildMember): Promise<SongInfo>{
+    public static async withSongEntity(songEntity: BiliSongEntity, initiator: GuildMember): Promise<SongInfo>{
         const url = songEntity.url;
         const title = songEntity.title;
         const uid = songEntity.uid;
@@ -143,7 +143,7 @@ export class SongInfo {
 
     public static async withUrl(url: string, initiator: GuildMember): Promise<SongInfo> {
         if(bvidExtract(url)){
-            const entity = await getBasicInfo(url).catch((error): SearchSongEntity => {
+            const entity = await getBasicInfo(url).catch((error): BiliSongEntity => {
                 throw error;
             });
             return SongInfo.withSongEntity(entity, initiator);

@@ -1,14 +1,13 @@
 import {getLogger, Logger} from "../utils/logger";
 import {SongInfo} from "../data/model/song-info";
-import {Guild, GuildMember, Message, MessageEmbed, MessageReaction, StageChannel, TextChannel} from "discord.js";
-import {SearchSongEntity} from "../data/datasources/bilibili-api";
+import {Guild, GuildMember, Message, MessageEmbed, MessageReaction, TextChannel} from "discord.js";
+import {BiliSongEntity} from "../data/datasources/bilibili-api";
 import {CommandEngine} from "../commands/command-engine";
 import {CommandException} from "../commands/base-command";
 import {PlaylistManager} from "../data/managers/playlist-manager";
 import {QueueManager} from "../data/managers/queue-manager";
 import {SongDoc} from "../data/db/schemas/song";
 import {PlaylistDoc} from "../data/db/schemas/playlist";
-import {createAudioPlayer, joinVoiceChannel, VoiceConnectionStatus} from "@discordjs/voice";
 
 export class GuildManager {
     protected readonly logger: Logger;
@@ -16,7 +15,7 @@ export class GuildManager {
     public readonly guild: Guild;
     public readonly queueManager: QueueManager;
     public activeTextChannel: TextChannel;
-    public currentSearchResult?: SearchSongEntity[];
+    public currentSearchResult?: BiliSongEntity[];
     public currentShowlistResult: Map<string, SongDoc[]>;
     public currentPlaylist: Map<string, PlaylistDoc>;
     public commandPrefix: string;
@@ -56,7 +55,7 @@ export class GuildManager {
         this.previousCommand = command;
     }
 
-    public setCurrentSearchResult(result: null | SearchSongEntity[]): void {
+    public setCurrentSearchResult(result: null | BiliSongEntity[]): void {
         this.currentSearchResult = result;
     }
 
@@ -101,17 +100,17 @@ export class GuildManager {
     }
 
     public printEmbeds(embed: MessageEmbed | MessageEmbed[], isTransient?: boolean): void {
-        if(Array.isArray(embed)){
+        if (Array.isArray(embed)) {
             for (const e of embed) {
                 e.setColor(0x0ACDFF);
             }
-        }else{
+        } else {
             embed.setColor(0x0ACDFF);
         }
         const embedMsg = Array.isArray(embed) ? embed : [embed]
         this.activeTextChannel.send({embeds: embedMsg}).then((msg): void => {
-            if(isTransient) {
-                if(msg.deletable) {
+            if (isTransient) {
+                if (msg.deletable) {
                     setTimeout((): Promise<Message> => msg.delete(), 10000)
                 } else {
                     CommandException.UserPresentable("Message can't be deleted!");
