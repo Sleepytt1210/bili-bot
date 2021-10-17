@@ -1,4 +1,4 @@
-import {Message, MessageEmbed} from "discord.js";
+import {EmbedField, Message, MessageEmbed} from "discord.js";
 import {BaseCommand, SubCommand} from "./base-command";
 import {CommandType} from "./command-type";
 import {GuildManager} from "../app/guild";
@@ -70,16 +70,20 @@ export class PlaylistsCommand extends BaseCommand {
 
     public helpMessage(guild: GuildManager, message: Message): MessageEmbed {
         const res = helpTemplate(this);
-        let subs = '';
+        const subs: EmbedField[] = [];
+        const pref = guild.commandPrefix + this.name();
         const entries = this.subcommands.entries();
         for (const entry of entries) {
-            subs += `**${entry[0]}** : ${entry[1].helpMessage(guild, message).fields[0].value}\n`;
+            const field: EmbedField = {name: entry[0], value: `> ${entry[1].helpMessage(guild, message).fields[1].value}`, inline: true}
+            subs.push(field);
         }
         const cur = guild.currentPlaylist.get(message.author.id);
-        if (cur)
-            res.addField('Current selected playlist: ', `${cur.name}`, true);
-        res.addField('Usage: ', `${guild.commandPrefix}${this.name()} <subcommand>`, true)
-            .addField('Subcommands: ', subs);
+        if (cur) {
+            res.addField('Current selected playlist:', `${cur.name}`);
+        }
+        res.addField('Usage:', `${pref}`)
+            .addField('Subcommands:', `${pref} <subcommand>`)
+            .addFields(subs);
         return res;
     }
 }
