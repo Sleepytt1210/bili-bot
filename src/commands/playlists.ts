@@ -14,7 +14,7 @@ import {PlaylistDoc} from "../data/db/schemas/playlist";
 export class PlaylistsCommand extends BaseCommand {
 
     public alias: string[];
-    private subcommands: Map<string, SubCommand>;
+    private readonly subcommands: Map<string, SubCommand>;
 
     public constructor() {
         super(['pl'])
