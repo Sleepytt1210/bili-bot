@@ -58,8 +58,8 @@ export class PlaylistDataSource {
 
     public async delete(creator: User, name: string): Promise<void> {
         this.logger.verbose(`Deleting playlist ${name} by ${creator.username}`);
-        await MongoDB.Playlist.deleteOne({name: name, creator: creator.id}).then((res) => {
-            if(!res.acknowledged || res.deletedCount == 0) throw CommandException.UserPresentable(`Playlist ${name} is not found!`)
+        await MongoDB.Playlist.deleteOne({name: name, creator: creator.id}).then((res): void => {
+            if(res.deletedCount == 0) throw CommandException.UserPresentable(`Playlist *${name}* is not found!`);
         });
     }
 
