@@ -72,11 +72,11 @@ export class GuildManager {
         this.commandPrefix = prefix;
     }
 
-    public printEvent(desc: string): void {
+    public printEvent(desc: string, isTransient: boolean = false): void {
         const embed = new MessageEmbed()
             .setDescription(desc)
             .setColor(biliblue);
-        this.printEmbeds(embed);
+        this.printEmbeds(embed, isTransient);
     }
 
     public printPlaying(song: SongInfo): void {
