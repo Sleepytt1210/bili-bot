@@ -120,17 +120,10 @@ export class LoadCommand extends BaseCommand {
         // Only find a playlist if a name is given
         if (collection) playlist = await pds.get(message.author, collection);
 
-        if (!playlist && collection) {
-            await pds.create(collection, guild.id, message.author).then((doc): void => {
-                playlist = doc;
-                guild.printEvent(`Playlist ${collection} created!`);
-            });
-        }
-
         // Start loading the song from playlist
         if (Array.isArray(songs)) {
             const plTitle = (result.title && result.title !== '') ? result.title : 'YouTube playlist';
-            guild.printEvent(`Start to load from ${plTitle}, please be patient...`);
+            guild.printEvent(`Start to load from playlist *${plTitle}*, please be patient...`);
             for (const song of songs) {
                 try {
                     logger.info(`Now loading song: ${song.title}`);
@@ -145,7 +138,7 @@ export class LoadCommand extends BaseCommand {
                     logger.warn(err.toString());
                 }
             }
-            guild.printEvent(`Successfully loaded YouTube playlist ${plTitle}${(collection ? ' into ' + collection : '')}`);
+            guild.printEvent(`Successfully loaded YouTube playlist ${plTitle}${(collection ? ' into *' + collection + '*': '')}`);
             logger.info(`Successfully loaded YouTube playlist ${plTitle}`);
         } else {
             throw CommandException.UserPresentable("Please use a valid YouTube playlist");
@@ -180,15 +173,8 @@ export class LoadCommand extends BaseCommand {
         // Only find a playlist if a name is given
         if (collection) playlist = await pds.get(message.author, collection);
 
-        if (!playlist && collection) {
-            await pds.create(collection, guild.id, message.author).then((doc): void => {
-                playlist = doc;
-                guild.printEvent(`Playlist ${collection} created!`);
-            });
-        }
-
         // Start loading the song from playlist
-        guild.printEvent(`Start to load from playlist ${songs.mainTitle}`);
+        guild.printEvent(`Start to load from playlist *${songs.mainTitle}*, please be patient...`);
         for (const song of songs.cidList) {
             logger.info(`Now loading song: ${song.part}`);
             try {
@@ -203,7 +189,7 @@ export class LoadCommand extends BaseCommand {
                 logger.warn(err.toString());
             }
         }
-        guild.printEvent(`Successfully loaded BiliBili playlist ${songs.mainTitle}${(collection ? ' into ' + collection : '')}`);
+        guild.printEvent(`Successfully loaded BiliBili playlist ${songs.mainTitle}${(collection ? ' into *' + collection + '*': '')}`);
         logger.info(`Successfully loaded BiliBili playlist ${songs.mainTitle}`);
     }
 
