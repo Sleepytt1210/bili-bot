@@ -13,7 +13,7 @@ export class ListCommand extends SubCommand {
     public readonly parent: string;
 
     public constructor() {
-        super(['shw', 'show'], CommandType.PLAYLISTS);
+        super(['shw', 'show', 'l'], CommandType.PLAYLISTS);
     }
 
     public name(): CommandType {
