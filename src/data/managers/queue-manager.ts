@@ -222,7 +222,7 @@ export class QueueManager {
                 {
                     o: '-',
                     q: '',
-                    f: 'bestaudio[ext=webm+acodec=opus+asr=48000]/bestaudio',
+                    f: 'bestaudio[ext=webm+acodec=opus+asr=48000]/bestaudio/best',
                     r: '100K',
                 },
                 { stdio: ['ignore', 'pipe', 'ignore'] },
