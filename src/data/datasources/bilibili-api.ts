@@ -27,6 +27,9 @@ const api = {
     searchApi: (keyword, limit): string => {
         return `https://api.bilibili.com/x/web-interface/search/all/v2?keyword=${keyword}&page=1&order=totalrank&pagesize=${limit}&search_type=video`
     },
+    youtubeApi: (keyword, apiKey): string => {
+        return `https://youtube.googleapis.com/youtube/v3/search?part=snippet&maxResults=25&q=${keyword}&key=${apiKey}`
+    },
     _APP_KEY: 'iVGUTjsxvpLeuDCf',
     _BILIBILI_KEY: 'aHRmhWMLkdeMuILqORnYZocwMBpMEOdt'
 }
@@ -308,8 +311,8 @@ export async function search(keyword: string, limit?: number): Promise<BiliSongE
 }
 
 export const ytSearch = async (keyword: string): Promise<string> => {
-    const api = `https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=5&order=relevance&q=${keyword}&type=video&key=${configuration.getYTApiKey()}`;
-    const url = encodeURI(api);
+    const searchApi = api.youtubeApi(keyword, configuration.getYTApiKey());
+    const url = encodeURI(searchApi);
     const resp = await got(url, {
         method: 'GET',
         headers: {
