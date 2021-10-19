@@ -9,22 +9,23 @@ import {
     AudioPlayer,
     AudioPlayerStatus,
     AudioResource, createAudioPlayer,
-    createAudioResource, entersState, joinVoiceChannel,
+    createAudioResource, demuxProbe, entersState, joinVoiceChannel,
     VoiceConnection,
     VoiceConnectionStatus
 } from "@discordjs/voice";
 import {GuildMember, MessageEmbed, StageChannel} from "discord.js";
+import {raw as youtubedl} from "youtube-dl-exec";
 
 export class QueueManager {
     protected readonly logger: Logger;
     private readonly guild: GuildManager;
     private readonly threshold: number;
-    public readonly queue: SongInfo[];
+    public queue: SongInfo[];
     public volume: number;
     public currentSong?: SongInfo;
     public activeConnection: VoiceConnection;
     public audioPlayer: AudioPlayer;
-    private audioResource: AudioResource;
+    private audioResource: AudioResource<SongInfo>;
     private readonly stream: stream.Streamer;
     private _isLoop: boolean;
 
@@ -38,7 +39,7 @@ export class QueueManager {
         this._isLoop = value;
     }
 
-    public constructor(guild: GuildManager, threshold: number = 3) {
+    public constructor(guild: GuildManager, threshold = 3) {
         this.logger = getLogger(`QueueManager-${guild.id}`);
         this.guild = guild;
         this.queue = [];
@@ -81,9 +82,12 @@ export class QueueManager {
                 await this.guild.printEmbeds(embed);
                 // Seems to be disconnected - destroy
                 this.activeConnection.destroy();
+                this.stop();
                 this.activeConnection = null;
             }
         });
+
+        this.activeConnection.subscribe(this.audioPlayer);
     }
 
     public isPlaying(): boolean {
@@ -106,7 +110,7 @@ export class QueueManager {
     public pushSong(song: SongInfo, isPlaylist?: boolean): void {
         this.queue.push(song);
         if (!this.isPlaying()) {
-            this.playSong(this.queue.shift());
+            void this.playSong(this.queue.shift());
         } else {
             this.guild.printAddToQueue(song, this.queue.length, isPlaylist);
         }
@@ -119,7 +123,7 @@ export class QueueManager {
     }
 
     public clear(): void {
-        while (this.queue.length !== 0) this.queue.pop();
+        this.queue = [];
     }
 
     public promoteSong(index: number): SongInfo {
@@ -162,13 +166,15 @@ export class QueueManager {
     }
 
     public next(): void {
+        // eslint-disable-next-line @typescript-eslint/no-this-alias
         const self = this;
+        this.audioResource.playStream.destroy();
         setTimeout(function (): void {
             self.playNext();
-        }, 500);
+        }, 70);
     }
 
-    private playSong(song: SongInfo): void {
+    private async playSong(song: SongInfo): Promise<void> {
         this.currentSong = song;
 
         if(!this._isLoop){
@@ -177,34 +183,67 @@ export class QueueManager {
 
         this.joinChannel(song.initiator);
 
-        this.audioResource = createAudioResource((song.type === "y") ?
-            ytdl(song.url, {quality: "highestaudio", highWaterMark: 1 << 25}) :
-            this.stream.ytbdl(song), {metadata: song, inlineVolume: true});
+        // this.audioResource = createAudioResource((song.type === "y") ?
+        //     ytdl(song.url, {quality: "highestaudio"}) :
+        //     this.stream.ytbdl(song), {metadata: song, inlineVolume: true});
+        this.audioResource = await this.createAudioResource(song);
 
         this.audioPlayer.play(this.audioResource);
         this.logger.info(`Playing: ${song.title}`);
-        this.activeConnection.subscribe(this.audioPlayer);
         this.audioResource.volume.setVolumeLogarithmic(this.volume);
         this.audioResource.playStream.on('finish', (): void => {
-            this.playNext();
+            this.next();
         });
         this.audioPlayer.on('error', (err): void => {
             this.logger.error(err);
             this.guild.printEvent(`<@${song.initiator.id}> An error occurred playing ${this.currentSong.title}! Please request again`);
-            this.playNext();
+            this.next();
         });
     }
 
     private playNext(): void {
         if(this._isLoop === true) {
-            this.playSong(this.currentSong);
+            void this.playSong(this.currentSong);
         }else {
             if (this.queue.length === 0) {
                 this.currentSong = null;
                 this.guild.printOutOfSongs();
             } else {
-                this.playSong(this.queue.shift());
+                void this.playSong(this.queue.shift());
             }
         }
+    }
+
+    public createAudioResource(song: SongInfo): Promise<AudioResource<SongInfo>> {
+        return new Promise((resolve, reject) => {
+            if(song.type == "b") resolve(createAudioResource(this.stream.ytbdl(song), {metadata: song, inlineVolume: true}));
+            const process = youtubedl(
+                song.url,
+                {
+                    o: '-',
+                    q: '',
+                    f: 'bestaudio[ext=webm+acodec=opus+asr=48000]/bestaudio',
+                    r: '100K',
+                },
+                { stdio: ['ignore', 'pipe', 'ignore'] },
+            );
+            if (!process.stdout) {
+                reject(new Error('No stdout'));
+                return;
+            }
+            const stream = process.stdout;
+            const onError = (error: Error) => {
+                if (!process.killed) process.kill();
+                stream.resume();
+                reject(error);
+            };
+            process
+                .once('spawn', () => {
+                    demuxProbe(stream)
+                        .then((probe) => resolve(createAudioResource(probe.stream, { metadata: song, inputType: probe.type, inlineVolume: true })))
+                        .catch(onError);
+                })
+                .catch(onError);
+        });
     }
 }
