@@ -19,7 +19,7 @@ export class NextCommand extends BaseCommand {
     public async run(message: Message, guild: GuildManager, _args?: string[]): Promise<void> {
         guild.checkMemberInChannel(message.member);
         if (guild.queueManager.isListEmpty()) {
-            if (guild.queueManager.isPlaying) {
+            if (guild.queueManager.isPlaying()) {
                 guild.queueManager.stop();
             } else throw CommandException.UserPresentable(`Queue is empty!`);
         } else {
