@@ -26,6 +26,9 @@ export class SearchCommand extends BaseCommand {
 
         const userid = message.author.id;
 
+        const timer = guild.currentSearchTimer.get(userid);
+        if(timer) clearTimeout(timer)
+
         if (args.length === 0) {
             guild.printEmbeds(this.helpMessage(guild));
             return;
@@ -55,9 +58,9 @@ export class SearchCommand extends BaseCommand {
             }
             guild.printFlipPages(entities, opt, message);
 
-            setTimeout(function (): void {
+            guild.setCurrentSearchTimer(setTimeout(function (): void {
                 guild.currentSearchResult.delete(userid);
-            }, 300000);
+            }, 300000), userid);
         }
     }
 

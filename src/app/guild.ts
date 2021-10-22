@@ -9,6 +9,7 @@ import {QueueManager} from "../data/managers/queue-manager";
 import {SongDoc} from "../data/db/schemas/song";
 import {PlaylistDoc} from "../data/db/schemas/playlist";
 import {biliblue, EmbedOptions, generateEmbed} from "../utils/utils";
+import Timeout = NodeJS.Timeout;
 
 export class GuildManager {
     protected readonly logger: Logger;
@@ -17,7 +18,9 @@ export class GuildManager {
     public readonly queueManager: QueueManager;
     public activeTextChannel: TextChannel;
     public currentSearchResult?: Map<string, BiliSongEntity[]>;
+    public currentSearchTimer: Map<string, Timeout>;
     public currentShowlistResult: Map<string, SongDoc[]>;
+    public currentShowlistTimer: Map<string, Timeout>;
     public currentPlaylist: Map<string, PlaylistDoc>;
     public commandPrefix: string;
     public readonly commandEngine: CommandEngine;
@@ -29,9 +32,11 @@ export class GuildManager {
         this.id = guild.id;
         this.guild = guild;
         this.queueManager = new QueueManager(this);
-        this.currentPlaylist = new Map<string, PlaylistDoc>();
-        this.currentShowlistResult = new Map<string, SongDoc[]>();
         this.currentSearchResult = new Map<string, BiliSongEntity[]>();
+        this.currentShowlistResult = new Map<string, SongDoc[]>();
+        this.currentPlaylist = new Map<string, PlaylistDoc>();
+        this.currentSearchTimer = new Map<string, NodeJS.Timeout>();
+        this.currentShowlistTimer = new Map<string, NodeJS.Timeout>();
         this.commandPrefix = prefix;
         this.commandEngine = new CommandEngine(this);
         this.dataManager = new PlaylistManager(this);
@@ -56,9 +61,17 @@ export class GuildManager {
         this.currentShowlistResult.set(userid, null);
     }
 
+    public setCurrentSearchTimer(timer: null | Timeout, userid: string): void {
+        this.currentSearchTimer.set(userid, timer);
+    }
+
     public setCurrentShowlistResult(result: null | SongDoc[], userid: string): void {
         this.currentShowlistResult.set(userid, result);
         this.currentSearchResult.set(userid, null);
+    }
+
+    public setCurrentShowlistTimer(timer: null | Timeout, userid: string): void {
+        this.currentShowlistTimer.set(userid, timer);
     }
 
     public setCurrentPlaylist(result: PlaylistDoc | null, userid: string): void {

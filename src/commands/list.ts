@@ -26,6 +26,10 @@ export class ListCommand extends SubCommand {
         let switcher = 0;
         const userid = message.author.id;
         const cur = guild.currentPlaylist.get(userid);
+
+        const timer = guild.currentShowlistTimer.get(userid);
+        if(timer) clearTimeout(timer)
+
         // Check argument to be index or name
         if (args.length === 1 && isNum(args[0])) {
             playlist = await PlaylistsCommand.getPlaylistFromIndex(guild, message, args[0]);
