@@ -22,15 +22,15 @@ export class PullCommand extends BaseCommand {
         if (args.length === 1 && isNum(args[0])) {
             const index = Number(args.shift());
             if (!cur) {
-                throw CommandException.UserPresentable(`No playlist selected! Please do \`${guild.commandPrefix}playlist\` or \`${guild.commandPrefix}showlist <name>/<index>\` first`);
+                throw CommandException.UserPresentable(`No playlist selected! Please do \`${guild.commandPrefix}playlists\` and \`${guild.commandPrefix}playlists list <name>/<index>\` first`);
             }
-            if (cur.songs.length === 0) throw CommandException.UserPresentable(`Playlist ${cur.name} is empty!`)
+            if (cur.songs.length === 0) throw CommandException.UserPresentable(`Playlist *${cur.name}* is empty!`)
             if (index < 1 || index > cur.songs.length) throw CommandException.OutOfBound(cur.songs.length);
             await this.pull(guild, message.author, cur, (index - 1));
         } else if (args.length >= 1) {
             const name = args.join(" ");
             const songs = guild.currentShowlistResult.get(message.author.id);
-            const doc = songs.find((song) => song.title === name);
+            const doc = songs.find((song): boolean => song.title === name);
             if (!doc) throw CommandException.UserPresentable(`Song ${name} not found in playlist ${cur.name}!`);
             await this.pull(guild, message.author, cur, songs.indexOf(doc));
         } else {
