@@ -28,7 +28,7 @@ export class ListCommand extends SubCommand {
         const cur = guild.currentPlaylist.get(userid);
         // Check argument to be index or name
         if (args.length === 1 && isNum(args[0])) {
-            playlist = PlaylistsCommand.getPlaylistFromIndex(guild, message, args[0]);
+            playlist = await PlaylistsCommand.getPlaylistFromIndex(guild, message, args[0]);
         } else if ( (args.length === 0 || (args.length === 1 && args[0] === "current" || args[0] === "c")) && cur) {
             playlist = cur;
             switcher = 1;

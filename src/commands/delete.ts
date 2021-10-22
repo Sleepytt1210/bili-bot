@@ -29,7 +29,7 @@ export class DeleteCommand extends SubCommand {
         const creator = message.author;
         let name;
         if (args.length === 1 && isNum(args[0])) {
-            name = PlaylistsCommand.getPlaylistFromIndex(guild, message, args[0]).name;
+            name = (await PlaylistsCommand.getPlaylistFromIndex(guild, message, args[0])).name;
         } else {
             name = args.join(" ");
         }

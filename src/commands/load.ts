@@ -58,7 +58,7 @@ export class LoadCommand extends BaseCommand {
             }
             // A name could be given instead, which indicates from user's playlist.
         } else {
-            const playlist = isNum(collection) ? PlaylistsCommand.getPlaylistFromIndex(guild, message, collection) : await PlaylistDataSource.getInstance().get(message.author, collection);
+            const playlist = isNum(collection) ? await PlaylistsCommand.getPlaylistFromIndex(guild, message, collection) : await PlaylistDataSource.getInstance().get(message.author, collection);
             // If playlist with collection name doesn't exist.
             if (!playlist) throw CommandException.UserPresentable(`Playlist *${collection}* does not exist!`);
 
