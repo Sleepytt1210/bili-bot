@@ -165,7 +165,7 @@ export class GuildManager {
         } else if (requireSameChannel && this.guild.me.voice.channel && member.voice.channelId != this.guild.me.voice.channelId) {
             throw CommandException.UserPresentable("You cannot use this command if you are not in the channel I'm playing");
         } else {
-            return;
+            if(!this.queueManager.activeConnection || !this.queueManager.audioPlayer) this.queueManager.joinChannel(member);
         }
     }
 }

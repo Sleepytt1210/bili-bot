@@ -19,12 +19,13 @@ export class QueueManager {
     protected readonly logger: Logger;
     private readonly guild: GuildManager;
     private readonly threshold: number;
+    private queueLock: boolean;
     public queue: SongInfo[];
     public volume: number;
     public currentSong?: SongInfo;
     public activeConnection: VoiceConnection;
     public audioPlayer: AudioPlayer;
-    private audioResource: AudioResource<SongInfo>;
+    public audioResource: AudioResource<SongInfo>;
     private readonly stream: stream.Streamer;
     private _isLoop: boolean;
 
@@ -42,6 +43,7 @@ export class QueueManager {
         this.logger = getLogger(`QueueManager-${guild.id}`);
         this.guild = guild;
         this.queue = [];
+        this.queueLock = false;
         this.threshold = threshold;
         this._isLoop = false;
         this.stream = new stream.Streamer();
@@ -51,6 +53,7 @@ export class QueueManager {
     public joinChannel(initiator: GuildMember): void {
 
         const voiceId = initiator.voice.channelId;
+
         if (!this.activeConnection || this.activeConnection.state.status === VoiceConnectionStatus.Disconnected) {
             this.activeConnection = joinVoiceChannel({
                 channelId: voiceId,
@@ -108,8 +111,8 @@ export class QueueManager {
 
     public pushSong(song: SongInfo, isPlaylist?: boolean): void {
         this.queue.push(song);
-        if (!this.isPlaying()) {
-            void this.playSong(this.queue.shift());
+        if (!this.isPlaying() && !this.queueLock) {
+            void this.playNext();
         } else {
             this.guild.printAddToQueue(song, this.queue.length, isPlaylist);
         }
@@ -165,12 +168,8 @@ export class QueueManager {
     }
 
     public next(): void {
-        // eslint-disable-next-line @typescript-eslint/no-this-alias
-        const self = this;
-        this.audioResource.playStream.destroy();
-        setTimeout(function (): void {
-            self.playNext();
-        }, 70);
+        this.audioPlayer.stop(true);
+        void this.playNext();
     }
 
     private async playSong(song: SongInfo): Promise<void> {
@@ -180,19 +179,14 @@ export class QueueManager {
             this.guild.printPlaying(song);
         }
 
-        this.joinChannel(song.initiator);
-
-        // this.audioResource = createAudioResource((song.type === "y") ?
-        //     ytdl(song.url, {quality: "highestaudio"}) :
-        //     this.stream.ytbdl(song), {metadata: song, inlineVolume: true});
         this.audioResource = await this.createAudioResource(song);
-
+        this.queueLock = false;
         this.audioPlayer.play(this.audioResource);
         this.logger.info(`Playing: ${song.title}`);
         this.audioResource.volume.setVolumeLogarithmic(this.volume);
         this.audioResource.playStream.on('finish', (): void => {
             this.next();
-        });
+        }).on('error', err => this.logger.error(err));
         this.audioPlayer.on('error', (err): void => {
             this.logger.error(err);
             this.guild.printEvent(`<@${song.initiator.id}> An error occurred playing ${this.currentSong.title}! Please request again`);
@@ -200,17 +194,27 @@ export class QueueManager {
         });
     }
 
-    private playNext(): void {
-        if(this._isLoop === true) {
-            void this.playSong(this.currentSong);
-        }else {
-            if (this.queue.length === 0) {
-                this.currentSong = null;
-                this.guild.printOutOfSongs();
-            } else {
-                void this.playSong(this.queue.shift());
-            }
+    private async playNext(): Promise<void> {
+
+        if (this.queueLock || this.audioPlayer.state.status !== AudioPlayerStatus.Idle) {
+            return;
         }
+
+        this.queueLock = true;
+
+        setTimeout(async function(self: QueueManager){
+            if(self._isLoop === true) {
+                await self.playSong(self.currentSong);
+            }else {
+                if (self.queue.length === 0) {
+                    self.queueLock = false;
+                    self.currentSong = null;
+                    self.guild.printOutOfSongs();
+                } else {
+                    await self.playSong(self.queue.shift());
+                }
+            }
+        }, 50, this);
     }
 
     public createAudioResource(song: SongInfo): Promise<AudioResource<SongInfo>> {
@@ -236,6 +240,7 @@ export class QueueManager {
             }
             const stream = process.stdout;
             const onError = (error: Error) => {
+                this.queueLock = false;
                 if (!process.killed) process.kill();
                 stream.resume();
                 reject(error);

@@ -2,7 +2,7 @@ import {GuildMember} from "discord.js";
 import {getInfo, ytUidExtract} from "../../utils/utils";
 import {SongDataSource} from "../datasources/song-datasource";
 import {SongDoc} from "../db/schemas/song";
-import {BiliSongEntity, getBasicInfo, bvidExtract, toHms} from "../datasources/bilibili-api";
+import {BiliSongEntity, getBasicInfo, bvidExtract, toHms, getExtraInfo} from "../datasources/bilibili-api";
 import ytdl, {chooseFormat} from "ytdl-core";
 
 export class SongInfo {
@@ -128,7 +128,12 @@ export class SongInfo {
         );
     }
 
-    public static withRecord(record: SongDoc, initiator: GuildMember): SongInfo {
+    public static async withRecord(record: SongDoc, initiator: GuildMember): Promise<SongInfo> {
+        // Update video download urls
+        if(record.type === 'b') {
+            return this.withUrl(record.url, initiator);
+        }
+
         return new SongInfo(
             record.url,
             record.dlurls,
