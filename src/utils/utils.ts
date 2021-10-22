@@ -1,5 +1,5 @@
 import youtubedl, {YtResponse} from "youtube-dl-exec";
-import {MessageEmbed} from "discord.js";
+import {EmbedField, MessageEmbed} from "discord.js";
 import ytdl from "ytdl-core";
 import {BaseCommand} from "../commands/base-command";
 
@@ -69,6 +69,7 @@ export interface EmbedOptions {
     embedFooter: string;
     list: object[];
     delim?: string;
+    fields?: EmbedField[];
 }
 
 export const generateEmbed = (embedOptions: EmbedOptions): MessageEmbed => {
@@ -82,6 +83,7 @@ export const generateEmbed = (embedOptions: EmbedOptions): MessageEmbed => {
         .setTitle(embedOptions.embedTitle)
         .setFooter(embedOptions.embedFooter)
         .setColor(biliblue);
+    if(embedOptions.fields) embed.addFields(embedOptions.fields);
     const resultMessage = current.map(embedOptions.mapFunc(start));
     embed.setDescription(resultMessage.join(delim));
     return embed;

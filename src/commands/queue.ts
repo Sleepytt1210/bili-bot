@@ -19,11 +19,11 @@ export class QueueCommand extends BaseCommand {
 
     public async run(message: Message, guild: GuildManager, _args?: string[]): Promise<void> {
         guild.checkMemberInChannel(message.member);
-        if (guild.queueManager.isListEmpty()) {
-            guild.printEvent(`Pending queue is empty`);
+        const queueM = guild.queueManager;
+        if (queueM.isListEmpty() && queueM.currentSong == null) {
+            guild.printEvent('Nothing is playing and queue is empty!')
         } else {
-            const list = guild.queueManager.queue;
-
+            const list = queueM.queue;
             const resultFunc = function (start): (song: SongInfo, index: number) => string {
                 return (song, index): string => {
                     return `${start + index + 1}. **[${song.title}](${song.url})**`;
@@ -34,7 +34,10 @@ export class QueueCommand extends BaseCommand {
                 embedFooter: '',
                 list: list,
                 mapFunc: resultFunc,
-                start: 0
+                start: 0,
+                fields: [{name: 'Current Song:', value: `> [${queueM.currentSong.title}](${queueM.currentSong.url})`, inline: false},
+                    {name: 'Loop:', value: '> ' + `${queueM.isLoop ? 'On' : 'Off'}`, inline: true},
+                    {name: 'Total Songs:', value: `> ${queueM.queue.length + 1}`, inline: true}]
             }
 
             guild.printFlipPages(list, opt, message);
