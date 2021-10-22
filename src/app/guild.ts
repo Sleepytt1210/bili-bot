@@ -19,7 +19,6 @@ export class GuildManager {
     public currentSearchResult?: Map<string, BiliSongEntity[]>;
     public currentShowlistResult: Map<string, SongDoc[]>;
     public currentPlaylist: Map<string, PlaylistDoc>;
-    public currentPlaylists: Map<string, PlaylistDoc[]>;
     public commandPrefix: string;
     public readonly commandEngine: CommandEngine;
     public readonly dataManager: PlaylistManager;
@@ -32,7 +31,6 @@ export class GuildManager {
         this.queueManager = new QueueManager(this);
         this.currentPlaylist = new Map<string, PlaylistDoc>();
         this.currentShowlistResult = new Map<string, SongDoc[]>();
-        this.currentPlaylists = new Map<string, PlaylistDoc[]>();
         this.currentSearchResult = new Map<string, BiliSongEntity[]>();
         this.commandPrefix = prefix;
         this.commandEngine = new CommandEngine(this);
@@ -65,10 +63,6 @@ export class GuildManager {
 
     public setCurrentPlaylist(result: PlaylistDoc | null, userid: string): void {
         this.currentPlaylist.set(userid, result);
-    }
-
-    public setCurrentPlaylists(result: PlaylistDoc[] | null, userid: string): void {
-        this.currentPlaylists.set(userid, result);
     }
 
     public setPrefix(prefix: string): void {
