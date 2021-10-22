@@ -29,6 +29,11 @@ export class SongDataSource {
         return (uid) ? MongoDB.Song.findOne({uid: uid}) : MongoDB.Song.findOne({_id: _id});
     }
 
+    public async getByUrl(url?: string, _id?: Schema.Types.ObjectId): Promise<SongDoc> {
+        this.logger.verbose(`Querying song with url=${url}`);
+        return (url) ? MongoDB.Song.findOne({url: url}) : MongoDB.Song.findOne({_id: _id});
+    }
+
     public async getFromPlaylist(playlist: PlaylistDoc): Promise<SongDoc[]> {
         this.logger.verbose(`Querying songs from playlist ${playlist.name} in ${playlist.guildId}`);
         const cursor = MongoDB.Song.find({
@@ -54,8 +59,8 @@ export class SongDataSource {
                 description: song.description,
                 ext: song.format,
                 thumbnail: song.thumbnail,
-                cached: song.cached,
                 size: song.size,
+                cached: song.cached,
                 dlurls: song.dlurls,
                 type: song.type
             }).save();

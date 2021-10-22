@@ -2,7 +2,7 @@ import {GuildMember} from "discord.js";
 import {getInfo, ytUidExtract} from "../../utils/utils";
 import {SongDataSource} from "../datasources/song-datasource";
 import {SongDoc} from "../db/schemas/song";
-import {BiliSongEntity, getBasicInfo, bvidExtract, toHms, getExtraInfo} from "../datasources/bilibili-api";
+import {BiliSongEntity, getBasicInfo, bvidExtract, toHms} from "../datasources/bilibili-api";
 import ytdl, {chooseFormat} from "ytdl-core";
 
 export class SongInfo {
@@ -130,10 +130,6 @@ export class SongInfo {
 
     public static async withRecord(record: SongDoc, initiator: GuildMember): Promise<SongInfo> {
         // Update video download urls
-        if(record.type === 'b') {
-            return this.withUrl(record.url, initiator);
-        }
-
         return new SongInfo(
             record.url,
             record.dlurls,
@@ -154,9 +150,13 @@ export class SongInfo {
     }
 
     public static async withUrl(url: string, initiator: GuildMember): Promise<SongInfo> {
+        const song = await SongDataSource.getInstance().getByUrl(url);
+        if(song) {
+            return this.withRecord(song, initiator);
+        }
         if(bvidExtract(url)){
             const entity = await getBasicInfo(url).catch((error): BiliSongEntity => {
-                throw error;
+                throw Error(`Error retrieving song with url ${url}\nError message: ${error}`);
             });
             return SongInfo.withSongEntity(entity, initiator);
         }else if(ytUidExtract(url)){
@@ -165,6 +165,23 @@ export class SongInfo {
         }else{
             return null;
         }
+    }
+
+    public toBiliSongEntity(): BiliSongEntity {
+        const bvid = bvidExtract(this.url)[4];
+        return new BiliSongEntity()
+            .setbvId(bvid)
+            .setCid(this.uid)
+            .setUrl(this.url)
+            .setTitle(this.title)
+            .setDesc(this.description)
+            .setThumbnail(this.thumbnail)
+            .setDurS(this.rawDuration)
+            .setDurHms(this.hmsDuration)
+            .setAuthor(this.author)
+            .setCached(this.cached)
+            .setFormat(this.format)
+            .setContentLength(this.size)
     }
 
     private static trim(desc: string): string {

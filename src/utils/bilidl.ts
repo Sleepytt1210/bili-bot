@@ -3,6 +3,7 @@ import {EventEmitter} from "events";
 import miniget = require('miniget');
 import {SongInfo} from "../data/model/song-info";
 import {Durl} from "../data/model/bilibili-api-types";
+import {BiliSongEntity, getExtraInfo} from "../data/datasources/bilibili-api";
 
 export class Streamer extends EventEmitter{
 
@@ -27,24 +28,25 @@ export class Streamer extends EventEmitter{
         return stream;
     };
 
-    private downloadFromInfoCallback = (stream: PassThrough, info: SongInfo): void => {
-        const options ={
+    private downloadFromInfoCallback = async (stream: PassThrough, info: SongInfo): Promise<void> => {
+        const options = {
             range: undefined,
             requestOptions: undefined
         };
 
-        if (!info.dlurls) {
-            stream.emit('error', Error('This video is unavailable'));
-            return;
-        }
-
-        let format: SongInfo;
+        let format: BiliSongEntity;
         try {
-            format = info;
+            format = await getExtraInfo(info.toBiliSongEntity());
         } catch (e) {
             stream.emit('error', e);
             return;
         }
+
+        if (!format.dlurls) {
+            stream.emit('error', Error('This video is unavailable'));
+            return;
+        }
+
         stream.emit('info', info, format);
         if (stream.destroyed) {
             return;
@@ -71,13 +73,13 @@ export class Streamer extends EventEmitter{
                     stream.emit(event, arg);
                 });
             });
-            req.pipe(stream, { end: end });
+            req.pipe(stream, {end: end});
         };
 
         const requestOptions = Object.assign({}, options.requestOptions, {
             maxReconnects: 6,
             maxRetries: 3,
-            backoff: { inc: 500, max: 10000 },
+            backoff: {inc: 500, max: 10000},
         });
 
         // Manual req
@@ -90,7 +92,7 @@ export class Streamer extends EventEmitter{
 
         const getNextChunk = (): void => {
             const partEnd = Number(dlurls[i].size);
-            const nextPart = (end >= partEnd && i < (parts-1) );
+            const nextPart = (end >= partEnd && i < (parts - 1));
             if (end >= contentLength) end = 0;
             if (nextPart) end = partEnd;
             shouldEnd = !end || end === contentLength;
@@ -108,11 +110,11 @@ export class Streamer extends EventEmitter{
             req.on('end', (): void => {
                 if (stream.destroyed) return;
                 if (end <= contentLength) {
-                    if(nextPart) {
+                    if (nextPart) {
                         i++;
                         start = 0;
                         end = dlChunkSize;
-                    }else {
+                    } else {
                         start = end + 1;
                         end += dlChunkSize;
                     }

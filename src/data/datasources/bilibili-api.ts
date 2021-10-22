@@ -230,7 +230,7 @@ export async function getExtraInfo(info: BiliSongEntity): Promise<BiliSongEntity
 }
 
 export async function getBasicInfo(url: string): Promise<BiliSongEntity> {
-    const fullId = await bvidExtract(url);
+    const fullId = bvidExtract(url);
     let id;
     if (fullId[7]) {
         if (fullId[8] && fullId[8].match(/(BV\w+|av\d+)/)) id = fullId[0].match(/(BV\w+|av\d+)/)[1];
@@ -267,7 +267,7 @@ export async function getBasicInfo(url: string): Promise<BiliSongEntity> {
     const accHms = toHms(duration);
     const title = (rawCids.length > 1) ? rawCids[pg - 1].part : rawData.title;
     const cached = await SongDataSource.getInstance().isCached(cid);
-    return getExtraInfo(new BiliSongEntity()
+    return new BiliSongEntity()
         .setCid(cid)
         .setTitle(title)
         .setMainTitle(mainTitle)
@@ -282,8 +282,7 @@ export async function getBasicInfo(url: string): Promise<BiliSongEntity> {
         .setCached(cached)
         .setUrl(weburl)
         .setPlay(play)
-        .setType()
-    );
+        .setType();
 }
 
 export async function search(keyword: string, limit?: number): Promise<BiliSongEntity[]> {
