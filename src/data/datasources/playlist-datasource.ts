@@ -71,7 +71,7 @@ export class PlaylistDataSource {
                 creator: creator.id
             },
             {
-                $addToSet: {'songs': song.id}
+                $push: {'songs': song.id}
             });
         // returns the modified playlist
         return this.get(creator, playlist.name);
