@@ -16,14 +16,13 @@ export class GuildManager {
     public readonly guild: Guild;
     public readonly queueManager: QueueManager;
     public activeTextChannel: TextChannel;
-    public currentSearchResult?: BiliSongEntity[];
+    public currentSearchResult?: Map<string, BiliSongEntity[]>;
     public currentShowlistResult: Map<string, SongDoc[]>;
     public currentPlaylist: Map<string, PlaylistDoc>;
     public currentPlaylists: Map<string, PlaylistDoc[]>;
     public commandPrefix: string;
     public readonly commandEngine: CommandEngine;
     public readonly dataManager: PlaylistManager;
-    public previousCommand: "search" | "showlist" | "playlists" | "load";
     public inorinBvid: string;
 
     public constructor(guild: Guild, prefix = '~') {
@@ -34,7 +33,7 @@ export class GuildManager {
         this.currentPlaylist = new Map<string, PlaylistDoc>();
         this.currentShowlistResult = new Map<string, SongDoc[]>();
         this.currentPlaylists = new Map<string, PlaylistDoc[]>();
-        this.previousCommand = null;
+        this.currentSearchResult = new Map<string, BiliSongEntity[]>();
         this.commandPrefix = prefix;
         this.commandEngine = new CommandEngine(this);
         this.dataManager = new PlaylistManager(this);
@@ -54,16 +53,14 @@ export class GuildManager {
 
     // HELPER FUNCTIONS
 
-    public setPreviousCommand(command: null | "search" | "showlist" | "playlists" | "load"): void {
-        this.previousCommand = command;
-    }
-
-    public setCurrentSearchResult(result: null | BiliSongEntity[]): void {
-        this.currentSearchResult = result;
+    public setCurrentSearchResult(result: null | BiliSongEntity[], userid: string): void {
+        this.currentSearchResult.set(userid, result);
+        this.currentShowlistResult.set(userid, null);
     }
 
     public setCurrentShowlistResult(result: null | SongDoc[], userid: string): void {
         this.currentShowlistResult.set(userid, result);
+        this.currentSearchResult.set(userid, null);
     }
 
     public setCurrentPlaylist(result: PlaylistDoc | null, userid: string): void {

@@ -20,24 +20,28 @@ export class SelectCommand extends BaseCommand {
 
     public async run(message: Message, guild: GuildManager, args?: string[]): Promise<void> {
         guild.checkMemberInChannel(message.member);
+        const userid = message.author.id;
         if (args.length === 0) {
-            throw CommandException.UserPresentable(this.helpMessage(guild).fields[0].value);
+            guild.printEmbeds(this.helpMessage(guild));
+            return;
         }
-        let index = parseInt(args.shift());
+        const index = parseInt(args.shift());
         if (!Number.isInteger(index)) {
-            throw CommandException.UserPresentable(this.helpMessage(guild).fields[0].value);
+            guild.printEmbeds(this.helpMessage(guild));
+            return;
         }
-        index--;
 
-        if (!guild.previousCommand || (guild.previousCommand != "search" && guild.previousCommand != "showlist")) {
-            throw CommandException.UserPresentable(`Invalid Operation: Please do \`${guild.commandPrefix}search\` or \`${guild.commandPrefix}showlist\` first`);
+        const searchBase = guild.currentSearchResult.get(userid) ? guild.currentSearchResult.get(userid) : guild.currentShowlistResult.get(userid);
+
+        if (!searchBase) {
+            throw CommandException.UserPresentable(`Invalid Operation: Please do \`${guild.commandPrefix}search\` or \`${guild.commandPrefix}pl list\` first`);
         }
-        const searchBase = guild.previousCommand == "search" ? guild.currentSearchResult : guild.currentShowlistResult.get(message.author.id);
         if (searchBase.length === 0) throw CommandException.UserPresentable(`Result is empty! Nothing to select from!`);
-        if (index < 0 || index >= searchBase.length) {
+        if (index < 1 || index > searchBase.length) {
             throw CommandException.OutOfBound(searchBase.length);
         }
-        const songdoc = searchBase[index];
+
+        const songdoc = searchBase[index-1];
         const song = await SongInfo.withUrl(songdoc.url, message.member);
         const sds = SongDataSource.getInstance();
         if (!(await sds.getOne(song.uid))) await sds.insert(song);

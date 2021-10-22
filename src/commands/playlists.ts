@@ -47,7 +47,7 @@ export class PlaylistsCommand extends BaseCommand {
 
     private async listAll(guild: GuildManager, message: Message): Promise<void> {
         const playlists = await guild.dataManager.showPlayLists(message.author);
-
+        const userid = message.author.id;
         const resultFunc = function (start): (playlist: PlaylistDoc, index: number) => string {
             return (playlist, index): string => {
                 const name = (playlist.default) ? playlist.name + " 【Default】" : playlist.name;
@@ -64,12 +64,10 @@ export class PlaylistsCommand extends BaseCommand {
         }
 
         guild.printFlipPages(playlists, opt, message);
-        guild.setPreviousCommand("playlists");
-        guild.setCurrentPlaylists(playlists, message.author.id);
+        guild.setCurrentPlaylists(playlists, userid);
 
         setTimeout(function (): void {
-            guild.setPreviousCommand(null);
-            guild.currentPlaylists.delete(message.author.id);
+            guild.currentPlaylists.delete(userid);
         }, 300000);
     }
 

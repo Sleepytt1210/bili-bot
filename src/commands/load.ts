@@ -41,11 +41,10 @@ export class LoadCommand extends BaseCommand {
             // Read from existing playlist with name
             if(LoadCommand.checkArg(name) == 0) throw CommandException.UserPresentable(`Please provide a name to the playlist!`);
         } else {
-            message.channel.send({embeds: [this.helpMessage(guild)]});
+            guild.printEmbeds(this.helpMessage(guild));
             return;
         }
         await this.load(message, guild, name);
-        guild.setPreviousCommand("load");
     }
 
     private async load(message: Message, guild: GuildManager, collection?: string, type?: string, url?: string): Promise<void> {

@@ -16,7 +16,7 @@ export class PlaylistManager {
     private readonly playlistDataSource: PlaylistDataSource;
 
     public constructor(guild: GuildManager) {
-        this.logger = getLogger(`GuildDataSource-${guild.id}`);
+        this.logger = getLogger(`PlaylistManager-${guild.id}`);
         this.guild = guild;
         this.songDataSource = SongDataSource.getInstance();
         this.playlistDataSource = PlaylistDataSource.getInstance();
@@ -37,12 +37,9 @@ export class PlaylistManager {
 
         if(!listDoc.songs.includes(songDoc.id)) {
             const updated = await this.playlistDataSource.save(songDoc, listDoc, initiator)
-            if(this.guild.previousCommand !== "load") {
-                this.guild.setCurrentPlaylist(updated, initiator.id);
-                this.guild.setCurrentShowlistResult(await this.songDataSource.getFromPlaylist(listDoc), initiator.id);
-            }
+            this.guild.setCurrentPlaylist(updated, initiator.id);
+            this.guild.setCurrentShowlistResult(await this.songDataSource.getFromPlaylist(listDoc), initiator.id);
         }
-
         this.logger.info(`${songDoc.title} saved to ${listDoc.name}`);
     }
 
@@ -55,6 +52,7 @@ export class PlaylistManager {
 
         this.guild.setCurrentPlaylist(await this.playlistDataSource.pull(songDoc, listDoc, initiator), initiator.id);
         this.guild.setCurrentShowlistResult(await this.songDataSource.getFromPlaylist(listDoc), initiator.id);
+
         this.logger.info(`${songDoc.title} deleted from ${listDoc.name}`);
         return songDoc.title;
     }

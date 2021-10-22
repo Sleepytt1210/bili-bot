@@ -23,18 +23,22 @@ export class SearchCommand extends BaseCommand {
 
     public async run(message: Message, guild: GuildManager, args?: string[]): Promise<void> {
         guild.checkMemberInChannel(message.member);
+
+        const userid = message.author.id;
+
         if (args.length === 0) {
-            throw CommandException.UserPresentable(this.helpMessage(guild).fields[0].value);
+            guild.printEmbeds(this.helpMessage(guild));
+            return;
         }
 
         const keyword = args.join(" ");
 
         const entities = await api.search(keyword, 50);
-        guild.setCurrentSearchResult(null);
+        guild.setCurrentSearchResult(null, message.author.id);
         if (entities.length === 0) {
             throw CommandException.UserPresentable("No result found");
         } else {
-            guild.setCurrentSearchResult(entities);
+            guild.setCurrentSearchResult(entities, message.author.id);
 
             const resultFunc = function (start): (entity: BiliSongEntity, index: number) => string {
                 return (entity, index): string => {
@@ -42,7 +46,7 @@ export class SearchCommand extends BaseCommand {
                 };
             }
             const opt: EmbedOptions = {
-                embedTitle: 'Search Result: ',
+                embedTitle: `Search Result for ${keyword}: `,
                 start: 0,
                 mapFunc: resultFunc,
                 embedFooter: `Use ${guild.commandPrefix}select [number] to play a song`,
@@ -50,7 +54,10 @@ export class SearchCommand extends BaseCommand {
                 delim: '',
             }
             guild.printFlipPages(entities, opt, message);
-            guild.setPreviousCommand("search");
+
+            setTimeout(function (): void {
+                guild.currentSearchResult.delete(userid);
+            }, 300000);
         }
     }
 

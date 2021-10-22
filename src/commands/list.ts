@@ -24,7 +24,8 @@ export class ListCommand extends SubCommand {
     public async run(message: Message, guild: GuildManager, args?: string[]): Promise<void> {
         let playlist: PlaylistDoc;
         let switcher = 0;
-        const cur = guild.currentPlaylist.get(message.author.id);
+        const userid = message.author.id;
+        const cur = guild.currentPlaylist.get(userid);
         // Check argument to be index or name
         if (args.length === 1 && isNum(args[0])) {
             playlist = PlaylistsCommand.getPlaylistFromIndex(guild, message, args[0]);
@@ -35,13 +36,14 @@ export class ListCommand extends SubCommand {
             const name = args.join(' ');
             switcher = 2;
             playlist = await PlaylistDataSource.getInstance().get(message.author, name);
-            if (!playlist) throw CommandException.UserPresentable(`Playlist ${name} does not exist!`);
+            if (!playlist) {
+                if(!name) throw CommandException.UserPresentable('No default or selected playlist!');
+                else throw CommandException.UserPresentable(`Playlist ${name} does not exist!`);
+            }
         }
-        guild.setCurrentPlaylist(playlist, message.author.id);
-        guild.setPreviousCommand("showlist");
-
+        guild.setCurrentPlaylist(playlist, userid);
         const songs = await guild.dataManager.loadFromPlaylist(message.author, playlist);
-        guild.setCurrentShowlistResult(songs, message.author.id);
+        guild.setCurrentShowlistResult(songs, userid);
 
         const resultFunc = function (start): (song: SongDoc, index: number) => string {
             return (song, index): string => {
@@ -60,9 +62,8 @@ export class ListCommand extends SubCommand {
         guild.printFlipPages(songs, opt, message);
 
         setTimeout(function (): void {
-            guild.setPreviousCommand(null);
-            guild.currentPlaylist.delete(message.author.id);
-            guild.currentShowlistResult.delete(message.author.id);
+            guild.currentPlaylist.delete(userid);
+            guild.currentShowlistResult.delete(userid);
         }, 300000);
     }
 
