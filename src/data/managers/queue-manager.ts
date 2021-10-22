@@ -4,7 +4,6 @@ import {getLogger, Logger} from "../../utils/logger";
 import {CommandException} from "../../commands/base-command";
 import {shuffle} from "../../utils/utils";
 import * as stream from "../../utils/bilidl";
-import ytdl from 'ytdl-core';
 import {
     AudioPlayer,
     AudioPlayerStatus,
@@ -217,6 +216,10 @@ export class QueueManager {
     public createAudioResource(song: SongInfo): Promise<AudioResource<SongInfo>> {
         return new Promise((resolve, reject) => {
             if(song.type == "b") resolve(createAudioResource(this.stream.ytbdl(song), {metadata: song, inlineVolume: true}));
+            this.stream.on('error', (err: Error) => {
+                this.logger.error(err.message);
+                throw CommandException.UserPresentable(err.message);
+            })
             const process = youtubedl(
                 song.url,
                 {

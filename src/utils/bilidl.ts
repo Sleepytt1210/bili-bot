@@ -33,7 +33,7 @@ export class Streamer extends EventEmitter{
             requestOptions: undefined
         };
 
-        if (!info.format) {
+        if (!info.dlurls) {
             stream.emit('error', Error('This video is unavailable'));
             return;
         }
