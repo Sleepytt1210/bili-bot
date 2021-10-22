@@ -44,10 +44,10 @@ export class SaveCommand extends BaseCommand {
             const type = ytPlIdExtract(url) ? 'y' : (bvidExtract(url) ? 'b' : null);
             if(type == 'y') {
                 this.logger.info('Loading from YouTube playlist');
-                await LoadCommand.loadYouTubeList(message, guild, url, true, this.logger, cur.name);
+                await LoadCommand.loadYouTubeList(message, guild, url, true, this.logger, cur);
             }else if(type == 'b') {
                 this.logger.info('Loading from BiliBili playlist');
-                await LoadCommand.loadBiliBiliList(message, guild, url, true, this.logger, cur.name);
+                await LoadCommand.loadBiliBiliList(message, guild, url, true, this.logger, cur);
             }else {
                 throw CommandException.UserPresentable('Invalid url!');
             }

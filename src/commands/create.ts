@@ -3,9 +3,10 @@ import {CommandType} from "./command-type";
 import {GuildManager} from "../app/guild";
 import {Message, MessageEmbed} from "discord.js";
 import {PlaylistDataSource} from "../data/datasources/playlist-datasource";
-import {helpTemplate, isNum} from "../utils/utils";
+import {helpTemplate} from "../utils/utils";
+import {LoadCommand} from "./load";
 
-export class CreateCommand extends SubCommand {
+export class CreateCommand extends SubCommand{
 
     public alias: string[];
     public readonly parent: string;
@@ -24,13 +25,22 @@ export class CreateCommand extends SubCommand {
 
     public async run(message: Message, guild: GuildManager, args?: string[]): Promise<void> {
         const name = args.join(" ");
-        if (!name) throw CommandException.UserPresentable(`Please provide a name to the playlist!`);
-        else if (isNum(name)) throw CommandException.UserPresentable(`Please do not use number as name!`)
-        else if (name == "c" || name == "current") throw CommandException.UserPresentable(`**c** or **current** are reserved names!`)
-        if (await PlaylistDataSource.getInstance().get(message.author, name))
-            throw CommandException.UserPresentable(`Playlist ${name} already exists!`);
-        await PlaylistDataSource.getInstance().create(name, guild.id, message.author).then((): void => {
-            guild.printEvent(`Playlist ${name} successfully created!`);
+        switch (LoadCommand.checkArg(name)) {
+        case 0: {
+            throw CommandException.UserPresentable(`Please provide a name to the playlist!`);
+        }
+        case 1: {
+            throw CommandException.UserPresentable(`Please do not use playlist url as name!`);
+        }
+        case 2: {
+            throw CommandException.UserPresentable(`Please do not use number as name!`);
+        }
+        }
+        if(await PlaylistDataSource.getInstance().get(message.author, name))
+            throw CommandException.UserPresentable(`Playlist *${name}* already exists!`);
+        await PlaylistDataSource.getInstance().create(name, guild.id, message.author).then((playlist): void => {
+            guild.setCurrentPlaylist(playlist, message.author.id);
+            guild.printEvent(`Playlist *${name}* successfully created and selected!`);
         });
     }
 
