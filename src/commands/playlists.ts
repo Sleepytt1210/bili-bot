@@ -1,14 +1,14 @@
 import {EmbedField, Message, MessageEmbed} from "discord.js";
-import {BaseCommand, SubCommand} from "./base-command";
+import {BaseCommand, CommandException, SubCommand} from "./base-command";
 import {CommandType} from "./command-type";
 import {GuildManager} from "../app/guild";
 import {EmbedOptions, helpTemplate} from "../utils/utils";
-import {ListCommand} from "./list";
 import {CreateCommand} from "./create";
 import {DeleteCommand} from "./delete";
 import {SetDefaultPlaylistCommand} from "./setDefaultPlaylist";
-import {getCommand} from "./commands";
+import {ListCommand} from "./list";
 import {PlaylistDoc} from "../data/db/schemas/playlist";
+import {getCommand} from "./commands";
 
 
 export class PlaylistsCommand extends BaseCommand {
@@ -19,10 +19,10 @@ export class PlaylistsCommand extends BaseCommand {
     public constructor() {
         super(['pl'])
         this.subcommands = new Map<string, SubCommand>([
-            [CommandType.LIST, new ListCommand()],
             [CommandType.CREATE, new CreateCommand()],
             [CommandType.DELETE, new DeleteCommand()],
-            [CommandType.SETDEFAULTPLAYLIST, new SetDefaultPlaylistCommand()]
+            [CommandType.SETDEFAULTPLAYLIST, new SetDefaultPlaylistCommand()],
+            [CommandType.LIST, new ListCommand()]
         ]);
     }
 
@@ -64,8 +64,13 @@ export class PlaylistsCommand extends BaseCommand {
         }
 
         guild.printFlipPages(playlists, opt, message);
-
         guild.setPreviousCommand("playlists");
+        guild.setCurrentPlaylists(playlists, message.author.id);
+
+        setTimeout(function (): void {
+            guild.setPreviousCommand(null);
+            guild.currentPlaylists.delete(message.author.id);
+        }, 300000);
     }
 
     public helpMessage(guild: GuildManager, message: Message): MessageEmbed {
@@ -85,5 +90,13 @@ export class PlaylistsCommand extends BaseCommand {
             .addField('Subcommands:', `${pref} <subcommand>`)
             .addFields(subs);
         return res;
+    }
+
+    public static getPlaylistFromIndex(guild: GuildManager, message: Message, query: string): PlaylistDoc {
+        const lists = guild.currentPlaylists.get(message.author.id);
+        if (!lists) throw CommandException.UserPresentable(`Please use \`${guild.commandPrefix}playlist\` first!`)
+        const index = Number.parseInt(query);
+        if (index < 1 || index > lists.length) throw CommandException.OutOfBound(lists.length);
+        return lists[index - 1];
     }
 }

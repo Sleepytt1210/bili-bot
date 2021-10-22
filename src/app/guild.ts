@@ -19,19 +19,21 @@ export class GuildManager {
     public currentSearchResult?: BiliSongEntity[];
     public currentShowlistResult: Map<string, SongDoc[]>;
     public currentPlaylist: Map<string, PlaylistDoc>;
+    public currentPlaylists: Map<string, PlaylistDoc[]>;
     public commandPrefix: string;
     public readonly commandEngine: CommandEngine;
     public readonly dataManager: PlaylistManager;
     public previousCommand: "search" | "showlist" | "playlists" | "load";
     public inorinBvid: string;
 
-    public constructor(guild: Guild, prefix: string = '~') {
+    public constructor(guild: Guild, prefix = '~') {
         this.logger = getLogger(`GuildManager-${guild.id}`);
         this.id = guild.id;
         this.guild = guild;
         this.queueManager = new QueueManager(this);
         this.currentPlaylist = new Map<string, PlaylistDoc>();
         this.currentShowlistResult = new Map<string, SongDoc[]>();
+        this.currentPlaylists = new Map<string, PlaylistDoc[]>();
         this.previousCommand = null;
         this.commandPrefix = prefix;
         this.commandEngine = new CommandEngine(this);
@@ -68,11 +70,15 @@ export class GuildManager {
         this.currentPlaylist.set(userid, result);
     }
 
+    public setCurrentPlaylists(result: PlaylistDoc[] | null, userid: string): void {
+        this.currentPlaylists.set(userid, result);
+    }
+
     public setPrefix(prefix: string): void {
         this.commandPrefix = prefix;
     }
 
-    public printEvent(desc: string, isTransient: boolean = false): void {
+    public printEvent(desc: string, isTransient = false): void {
         const embed = new MessageEmbed()
             .setDescription(desc)
             .setColor(biliblue);
@@ -101,17 +107,17 @@ export class GuildManager {
     }
 
     public printEmbeds(embed: MessageEmbed | MessageEmbed[], isTransient?: boolean): void {
-        if (Array.isArray(embed)) {
+        if(Array.isArray(embed)){
             for (const e of embed) {
                 e.setColor(biliblue);
             }
-        } else {
+        }else{
             embed.setColor(biliblue);
         }
         const embedMsg = Array.isArray(embed) ? embed : [embed]
         this.activeTextChannel.send({embeds: embedMsg}).then((msg): void => {
-            if (isTransient) {
-                if (msg.deletable) {
+            if(isTransient) {
+                if(msg.deletable) {
                     setTimeout((): Promise<Message> => msg.delete(), 10000)
                 } else {
                     CommandException.UserPresentable("Message can't be deleted!");
@@ -153,7 +159,7 @@ export class GuildManager {
         });
     }
 
-    public checkMemberInChannel(member: GuildMember, requireSameChannel: boolean = true): void {
+    public checkMemberInChannel(member: GuildMember, requireSameChannel = true): void {
         if (!member.voice || !member.voice.channel) {
             throw CommandException.UserPresentable('You are not in a voice channel');
         } else if (requireSameChannel && this.guild.me.voice.channel && member.voice.channelId != this.guild.me.voice.channelId) {

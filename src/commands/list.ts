@@ -6,6 +6,7 @@ import {EmbedOptions, helpTemplate, isNum} from "../utils/utils";
 import {PlaylistDataSource} from "../data/datasources/playlist-datasource";
 import {PlaylistDoc} from "../data/db/schemas/playlist";
 import {SongDoc} from "../data/db/schemas/song";
+import {PlaylistsCommand} from "./playlists";
 
 export class ListCommand extends SubCommand {
 
@@ -26,11 +27,7 @@ export class ListCommand extends SubCommand {
         const cur = guild.currentPlaylist.get(message.author.id);
         // Check argument to be index or name
         if (args.length === 1 && isNum(args[0])) {
-            const index = Number.parseInt(args.shift());
-            const lists = await guild.dataManager.showPlayLists(message.author);
-            if (!(index > 0 && index <= lists.length))
-                throw CommandException.OutOfBound(lists.length);
-            playlist = lists[index - 1];
+            playlist = PlaylistsCommand.getPlaylistFromIndex(guild, message, args[0]);
         } else if ( (args.length === 0 || (args.length === 1 && args[0] === "current" || args[0] === "c")) && cur) {
             playlist = cur;
             switcher = 1;
@@ -44,9 +41,6 @@ export class ListCommand extends SubCommand {
         guild.setPreviousCommand("showlist");
 
         const songs = await guild.dataManager.loadFromPlaylist(message.author, playlist);
-        if (songs.length === 0) {
-            throw CommandException.UserPresentable(`Playlist ${playlist.name} is empty`)
-        }
         guild.setCurrentShowlistResult(songs, message.author.id);
 
         const resultFunc = function (start): (song: SongDoc, index: number) => string {

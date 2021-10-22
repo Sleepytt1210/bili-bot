@@ -4,6 +4,8 @@ import {GuildManager} from "../app/guild";
 import {Message, MessageEmbed} from "discord.js";
 import {PlaylistDataSource} from "../data/datasources/playlist-datasource";
 import {helpTemplate, isNum} from "../utils/utils";
+import {PlaylistsCommand} from "./playlists";
+import {query} from "winston";
 
 export class DeleteCommand extends SubCommand {
 
@@ -27,15 +29,12 @@ export class DeleteCommand extends SubCommand {
         const creator = message.author;
         let name;
         if (args.length === 1 && isNum(args[0])) {
-            const lists = await guild.dataManager.showPlayLists(creator);
-            const index = Number.parseInt(args[0]);
-            if (index < 1 || index > lists.length) throw CommandException.OutOfBound(lists.length);
-            name = lists[index - 1].name;
+            name = PlaylistsCommand.getPlaylistFromIndex(guild, message, args[0]).name;
         } else {
             name = args.join(" ");
         }
         await dts.delete(creator, name).then((): void => {
-            guild.printEvent(`Playlist ${name} successfully deleted!`);
+            guild.printEvent(`Playlist *${name}* successfully deleted!`);
             if (name == guild.currentPlaylist.get(creator.id).name) guild.setCurrentPlaylist(null, creator.id);
         });
 

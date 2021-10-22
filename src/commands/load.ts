@@ -8,6 +8,7 @@ import * as api from "../data/datasources/bilibili-api";
 import {bvidExtract} from "../data/datasources/bilibili-api";
 import {PlaylistDataSource} from "../data/datasources/playlist-datasource";
 import {Logger} from "winston";
+import {PlaylistsCommand} from "./playlists";
 
 const plArgs = {
     dumpSingleJson: true,
@@ -36,12 +37,7 @@ export class LoadCommand extends BaseCommand {
             await this.load(message, guild, null, type, query);
             return;
         } else if (isNum(query)) {
-            if (guild.previousCommand !== "playlists") throw CommandException.UserPresentable(`Please use \`${guild.commandPrefix}playlist list\` first!`)
-            const lists = await guild.dataManager.showPlayLists(message.author);
-            const index = Number.parseInt(query);
-            if (index < 1 || index > lists.length)
-                throw CommandException.OutOfBound(lists.length);
-            name = lists[index - 1].name;
+            name = PlaylistsCommand.getPlaylistFromIndex(guild, message, query).name;
         } else if (name) {
             // Read from existing playlist with name
             LoadCommand.checkArg(name);
@@ -49,7 +45,7 @@ export class LoadCommand extends BaseCommand {
             message.channel.send({embeds: [this.helpMessage(guild)]});
             return;
         }
-        this.logger.info(`Loading from ${name}`);
+        this.logger.info(`Loading from *${name}*`);
         await this.load(message, guild, name);
         guild.setPreviousCommand("load");
     }
