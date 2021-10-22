@@ -47,7 +47,6 @@ export class PlaylistsCommand extends BaseCommand {
 
     private async listAll(guild: GuildManager, message: Message): Promise<void> {
         const playlists = await guild.dataManager.showPlayLists(message.author);
-        const userid = message.author.id;
         const resultFunc = function (start): (playlist: PlaylistDoc, index: number) => string {
             return (playlist, index): string => {
                 const name = (playlist.default) ? playlist.name + " 【Default】" : playlist.name;
@@ -60,15 +59,11 @@ export class PlaylistsCommand extends BaseCommand {
             embedFooter: `${guild.commandPrefix}pl list <name> or <index> to check songs in list, ${guild.commandPrefix}load <name> or <index> to play the entire playlist`,
             start: 0,
             mapFunc: resultFunc,
-            list: playlists
+            list: playlists,
+            ifEmpty: `It's empty here, use ${guild.commandPrefix}pl create <name> to create a new playlist!`
         }
 
         guild.printFlipPages(playlists, opt, message);
-        guild.setCurrentPlaylists(playlists, userid);
-
-        setTimeout(function (): void {
-            guild.currentPlaylists.delete(userid);
-        }, 300000);
     }
 
     public helpMessage(guild: GuildManager, message: Message): MessageEmbed {
@@ -90,9 +85,9 @@ export class PlaylistsCommand extends BaseCommand {
         return res;
     }
 
-    public static getPlaylistFromIndex(guild: GuildManager, message: Message, query: string): PlaylistDoc {
-        const lists = guild.currentPlaylists.get(message.author.id);
-        if (!lists) throw CommandException.UserPresentable(`Please use \`${guild.commandPrefix}playlist\` first!`)
+    public static async getPlaylistFromIndex(guild: GuildManager, message: Message, query: string): Promise<PlaylistDoc> {
+        const lists = await guild.dataManager.showPlayLists(message.author);
+        if (!lists) throw CommandException.UserPresentable(`It's empty here, use ${guild.commandPrefix}pl create <name> to create a new playlist!`)
         const index = Number.parseInt(query);
         if (index < 1 || index > lists.length) throw CommandException.OutOfBound(lists.length);
         return lists[index - 1];

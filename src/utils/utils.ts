@@ -70,6 +70,7 @@ export interface EmbedOptions {
     list: object[];
     delim?: string;
     fields?: EmbedField[];
+    ifEmpty?: string;
 }
 
 export const generateEmbed = (embedOptions: EmbedOptions): MessageEmbed => {
@@ -84,7 +85,7 @@ export const generateEmbed = (embedOptions: EmbedOptions): MessageEmbed => {
         .setFooter(embedOptions.embedFooter)
         .setColor(biliblue);
     if(embedOptions.fields) embed.addFields(embedOptions.fields);
-    const resultMessage = current.map(embedOptions.mapFunc(start));
+    const resultMessage = current.length > 0 ? current.map(embedOptions.mapFunc(start)) : [embedOptions.ifEmpty];
     embed.setDescription(resultMessage.join(delim));
     return embed;
 }
