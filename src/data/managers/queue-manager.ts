@@ -47,6 +47,10 @@ export class QueueManager {
         this.threshold = threshold;
         this._isLoop = false;
         this.stream = new stream.Streamer();
+        this.stream.on('error', (err: Error) => {
+            this.logger.error(err.message);
+            throw CommandException.UserPresentable(err.message);
+        })
         this.volume = 0.1;
     }
 
@@ -60,6 +64,25 @@ export class QueueManager {
                 guildId: this.guild.id,
                 adapterCreator: this.guild.guild.voiceAdapterCreator,
             });
+            this.activeConnection.on('error', (error): void => console.warn(error));
+            this.activeConnection.on(VoiceConnectionStatus.Disconnected, async (): Promise<void> => {
+                try {
+                    await Promise.race([
+                        entersState(this.activeConnection, VoiceConnectionStatus.Signalling, 5_000),
+                        entersState(this.activeConnection, VoiceConnectionStatus.Connecting, 5_000),
+                    ]);
+                    // Seems to be reconnecting to a new channel - ignore disconnect
+                } catch (error) {
+                    const embed = new MessageEmbed()
+                        .setTitle(`${this.guild.guild.me.displayName}`)
+                        .setDescription(`has left the voice channel!`)
+                    await this.guild.printEmbeds(embed);
+                    // Seems to be disconnected - destroy
+                    if(this.activeConnection) this.activeConnection.destroy();
+                    this.stop();
+                    this.activeConnection = null;
+                }
+            });
             this.audioPlayer = createAudioPlayer();
             this.logger.info(`Joined channel '${initiator.voice.channel.name}'`)
         } else if (this.guild.guild.me.voice.channelId !== voiceId) {
@@ -69,26 +92,11 @@ export class QueueManager {
         if (initiator.voice.channel instanceof StageChannel) {
             this.guild.guild.me.voice.setChannel(voiceId).then((me): Promise<void> => me.voice.setSuppressed(false));
         }
-        this.activeConnection.on('error', (error): void => console.warn(error));
-        this.activeConnection.on(VoiceConnectionStatus.Disconnected, async (): Promise<void> => {
-            try {
-                await Promise.race([
-                    entersState(this.activeConnection, VoiceConnectionStatus.Signalling, 5_000),
-                    entersState(this.activeConnection, VoiceConnectionStatus.Connecting, 5_000),
-                ]);
-                // Seems to be reconnecting to a new channel - ignore disconnect
-            } catch (error) {
-                const embed = new MessageEmbed()
-                    .setTitle(`${this.guild.guild.me.displayName}`)
-                    .setDescription(`has left the voice channel!`)
-                await this.guild.printEmbeds(embed);
-                // Seems to be disconnected - destroy
-                this.activeConnection.destroy();
-                this.stop();
-                this.activeConnection = null;
-            }
+        this.audioPlayer.on('error', (err): void => {
+            this.logger.error(err);
+            this.guild.printEvent(`<@${this.currentSong.initiator.id}> An error occurred playing ${this.currentSong.title}! Please request again`);
+            this.next();
         });
-
         this.activeConnection.subscribe(this.audioPlayer);
     }
 
@@ -187,11 +195,6 @@ export class QueueManager {
         this.audioResource.playStream.on('finish', (): void => {
             this.next();
         }).on('error', err => this.logger.error(err));
-        this.audioPlayer.on('error', (err): void => {
-            this.logger.error(err);
-            this.guild.printEvent(`<@${song.initiator.id}> An error occurred playing ${this.currentSong.title}! Please request again`);
-            this.next();
-        });
     }
 
     private async playNext(): Promise<void> {
@@ -220,10 +223,6 @@ export class QueueManager {
     public createAudioResource(song: SongInfo): Promise<AudioResource<SongInfo>> {
         return new Promise((resolve, reject) => {
             if(song.type == "b") resolve(createAudioResource(this.stream.ytbdl(song), {metadata: song, inlineVolume: true}));
-            this.stream.on('error', (err: Error) => {
-                this.logger.error(err.message);
-                throw CommandException.UserPresentable(err.message);
-            })
             const process = youtubedl(
                 song.url,
                 {
