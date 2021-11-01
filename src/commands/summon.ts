@@ -1,4 +1,4 @@
-import {BaseCommand, CommandException} from "./base-command";
+import {BaseCommand} from "./base-command";
 import {CommandType} from "./command-type";
 import {Message, MessageEmbed} from "discord.js";
 import {GuildManager} from "../app/guild";
