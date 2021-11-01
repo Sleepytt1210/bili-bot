@@ -19,14 +19,14 @@ export class PromoteCommand extends BaseCommand {
     public async run(message: Message, guild: GuildManager, args?: string[]): Promise<void> {
         guild.checkMemberInChannel(message.member);
         if (args.length === 0) {
-            throw CommandException.UserPresentable(this.helpMessage(guild).fields[0].value);
+            throw CommandException.UserPresentable('', this.helpMessage(guild))
         }
 
         let index = parseInt(args.shift());
         if (!Number.isInteger(index)) {
-            throw CommandException.UserPresentable(this.helpMessage(guild).fields[0].value);
+            throw CommandException.UserPresentable('', this.helpMessage(guild))
         }
-        index -= 1;
+        index--;
 
         const song = guild.queueManager.promoteSong(index);
 

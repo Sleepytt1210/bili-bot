@@ -61,14 +61,16 @@ export class SubCommand extends BaseCommand {
 export class CommandException {
     public userPresentable: boolean;
     public error: string | Error;
+    public messageEmbed: MessageEmbed;
 
-    public constructor(userPresentable: boolean, error: string | Error) {
+    public constructor(userPresentable: boolean, error: string | Error, embed?: MessageEmbed) {
         this.userPresentable = userPresentable;
         this.error = error;
+        this.messageEmbed = embed;
     }
 
-    public static UserPresentable(message: string): CommandException {
-        return new CommandException(true, message);
+    public static UserPresentable(message: string, embed?: MessageEmbed): CommandException {
+        return new CommandException(true, message, embed);
     }
 
     public static OutOfBound(listLength: number): CommandException {

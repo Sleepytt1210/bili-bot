@@ -129,10 +129,10 @@ export class QueueManager {
     }
 
     public promoteSong(index: number): SongInfo {
+        if(this.queue.length === 0) throw CommandException.UserPresentable('Queue is empty!')
         if (index < 0 || index >= this.queue.length) {
             throw CommandException.OutOfBound(this.queue.length);
         }
-
         const song = this.queue.splice(index, 1)[0];
         this.queue.unshift(song);
 

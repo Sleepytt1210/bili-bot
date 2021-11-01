@@ -22,7 +22,7 @@ export class PlayCommand extends BaseCommand {
     public async run(message: Message, guild: GuildManager, args?: string[]): Promise<void> {
         guild.checkMemberInChannel(message.member);
         if (args.length === 0) {
-            throw CommandException.UserPresentable(this.helpMessage(guild).fields[0].value);
+            throw CommandException.UserPresentable('', this.helpMessage(guild));
         }
         const query = args.join(" ");
         const url = args.shift();

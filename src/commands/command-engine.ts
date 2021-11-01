@@ -24,7 +24,8 @@ export class CommandEngine {
             } catch (error) {
                 this.logger.error(error);
                 if (error instanceof CommandException && (error as CommandException).userPresentable) {
-                    this.guild.printEvent(`${error}`);
+                    if(error.messageEmbed) this.guild.printEmbeds(error.messageEmbed);
+                    else this.guild.printEvent(`${error}`);
                 }
             }
         } else if (commandName.length > 0 && commandName.charCodeAt(0) >= 97 && commandName.charCodeAt(0) <= 122) {

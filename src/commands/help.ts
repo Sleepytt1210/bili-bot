@@ -56,15 +56,8 @@ export class HelpCommand extends BaseCommand {
         const commandName = args[0];
         const command = getCommand(commandName, Commands);
         if (command) {
-            try {
-                const help = await command.helpMessage(guild, msg);
-                msg.channel.send({embeds: [help]});
-            } catch (error) {
-                this.logger.error(error);
-                if (error instanceof CommandException && (error as CommandException).userPresentable) {
-                    throw CommandException.UserPresentable(`${error}`);
-                }
-            }
+            const help = await command.helpMessage(guild, msg);
+            guild.printEmbeds(help);
         } else {
             throw CommandException.UserPresentable(`Invalid command ${commandName}`);
         }
