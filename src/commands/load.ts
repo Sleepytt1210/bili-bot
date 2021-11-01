@@ -41,8 +41,7 @@ export class LoadCommand extends BaseCommand {
             // Read from existing playlist with name
             if(LoadCommand.checkArg(name) == 0) throw CommandException.UserPresentable(`Please provide a name to the playlist!`);
         } else {
-            guild.printEmbeds(this.helpMessage(guild));
-            return;
+            throw CommandException.UserPresentable('', this.helpMessage(guild));
         }
         await this.load(message, guild, name);
     }

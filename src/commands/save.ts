@@ -52,7 +52,7 @@ export class SaveCommand extends BaseCommand {
                 throw CommandException.UserPresentable('Invalid url!');
             }
         } else {
-            guild.printEmbeds(this.helpMessage(guild));
+            throw CommandException.UserPresentable('', this.helpMessage(guild));
         }
     }
 

@@ -30,8 +30,7 @@ export class SearchCommand extends BaseCommand {
         if(timer) clearTimeout(timer)
 
         if (args.length === 0) {
-            guild.printEmbeds(this.helpMessage(guild));
-            return;
+            throw CommandException.UserPresentable('', this.helpMessage(guild));
         }
 
         const keyword = args.join(" ");

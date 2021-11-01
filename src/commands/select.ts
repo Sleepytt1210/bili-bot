@@ -22,13 +22,11 @@ export class SelectCommand extends BaseCommand {
         guild.checkMemberInChannel(message.member);
         const userid = message.author.id;
         if (args.length === 0) {
-            guild.printEmbeds(this.helpMessage(guild));
-            return;
+            throw CommandException.UserPresentable('', this.helpMessage(guild));
         }
         const index = parseInt(args.shift());
         if (!Number.isInteger(index)) {
-            guild.printEmbeds(this.helpMessage(guild));
-            return;
+            throw CommandException.UserPresentable('', this.helpMessage(guild));
         }
 
         const searchBase = guild.currentSearchResult.get(userid) ? guild.currentSearchResult.get(userid) : guild.currentShowlistResult.get(userid);
