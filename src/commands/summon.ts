@@ -18,8 +18,8 @@ export class SummonCommand extends BaseCommand {
 
     public async run(msg: Message, guild: GuildManager, args?: string[]): Promise<void> {
         guild.checkMemberInChannel(msg.member, false);
-        if (guild.queueManager.activeConnection) {
-            throw CommandException.UserPresentable(`I am already in the channel ${guild.guild.me.voice.channel.name}!`);
+        if (msg.member.voice.channelId == guild.guild.me.voice.channelId) {
+            guild.printEvent(`I am already in the channel ${guild.guild.me.voice.channel.name}!`);
         }
     }
 
