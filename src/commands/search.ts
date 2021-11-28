@@ -22,7 +22,6 @@ export class SearchCommand extends BaseCommand {
     }
 
     public async run(message: Message, guild: GuildManager, args?: string[]): Promise<void> {
-        guild.checkMemberInChannel(message.member);
 
         const userid = message.author.id;
 
