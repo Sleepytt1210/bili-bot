@@ -62,8 +62,11 @@ Create a file under root directory named `.env`:
 DiscordToken=your_token
 MONGO_URI=mongodb_url
 DB_NAME=database_name
-YTApiKey=youtubeAPIKey
+YTApiKey=youtube_API_Key
+BILI_COOKIES='DedeUserID=xxxx;DedeUserID__ckMd5=xxxxxxxxxxxxxx;SESSDATA=xxxxxxxxxx'
 ```
+
+Cookies are now required for validation when searching videos via api.bilibili.com. [More info](https://github.com/SocialSisterYi/bilibili-API-collect/blob/master/docs/search/search_request.md)
 
 ## Run
 ```

@@ -1,10 +1,14 @@
-import {SongDataSource} from "./song-datasource";
-import {getLogger} from "../../utils/logger";
-import got, {CancelableRequest, Response} from "got"
-import {CommandException} from "../../commands/base-command";
-import configuration from "../../configuration";
+import {SongDataSource} from "./song-datasource.js";
+import {getLogger} from "../../utils/logger.js";
+import fetch, { AbortError, Response } from "node-fetch"
+import { AbortController } from "abort-controller";
+import {CommandException} from "../../commands/base-command.js";
+import Config from "../../configuration.js";
 import crypto = require("crypto");
-import {Durl, Pages, PlayUrlData, SearchResults, WebInterface} from "../model/bilibili-api-types";
+import {Durl, Pages, PlayUrlData, SearchResults, WebInterface} from "../model/bilibili-api-types.js";
+
+const controller = new AbortController();
+const timeoutLimit = 1500; // 1.5s
 
 const logger = getLogger('BilibiliApi');
 
@@ -158,23 +162,30 @@ const headers = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.111 Safari/537.36'
 }
 
-const baseRequest = (url: string, referrer?: string): CancelableRequest<Response<string>> => {
+const baseRequest = (url: string, referrer?: string): Promise<Response> => {
     if(referrer) headers.Referer = referrer;
-    const opt = {
-        headers: headers,
-        timeout: 1100,
-        retry: {limit: 3}
-    }
+    headers['cookie'] = Config.getBiliCookies();
+
+    const timeout = setTimeout(() => {
+        controller.abort();
+    }, timeoutLimit);
+    
     try{
-        return got(url, opt);
+        return fetch(url, {headers: headers, referrer: referrer || "", signal: controller.signal});
     }catch (e) {
-        logger.error(e.toString());
+        if(e instanceof AbortError) {
+            logger.error(`${e.toString()} - Timeout retrieving data from ${url}`);
+            throw e;
+        }
+        logger.error(`${e.toString()} - Error retrieving from ${url}`);
         throw e;
+    }finally {
+        clearTimeout(timeout);
     }
 }
 
-const jsonRequest = (url: string, referrer?: string): CancelableRequest => {
-    return baseRequest(url, referrer).json()
+const jsonRequest = async (url: string, referrer?: string): Promise<any> => {
+    return (await baseRequest(url, referrer)).json()
 }
 
 export function formatToValue(format): string {
@@ -191,6 +202,11 @@ export function formatToValue(format): string {
         // legacy - late 2017
         'hdmp4': '64', // data-value is still '64' instead of '48'.  '48',
         'mp4': '16',
+        '30280': '192k',
+        '30232': '132k',
+        '30216': '64k',
+        '30250': 'dolby',
+        '30251': 'high-res'
     }
     return dict[format] || null;
 }
@@ -216,10 +232,19 @@ export function toHms(seconds: number, isLive?: boolean): string {
 }
 
 export async function getExtraInfo(info: BiliSongEntity): Promise<BiliSongEntity> {
-    const payload = `appkey=${api._APP_KEY}&cid=${info.uid}&otype=json&qn=80`
+    const payload = `appkey=${api._APP_KEY}&cid=${info.uid}&otype=json&qn=64&fnval=1&platform=html5`
     const sign = crypto.createHash('md5').update(Buffer.from(payload + api._BILIBILI_KEY).toString('utf-8')).digest('hex');
     const dlapi = api.dlApi(payload, sign, info.bvId);
-    const data = (await jsonRequest(dlapi))['data'] as PlayUrlData;
+    let data: PlayUrlData;
+    logger.info(`Fetching video data from ${dlapi}`)
+    try{
+        data = (await jsonRequest(dlapi, "https://www.bilibili.com"))['data'] as PlayUrlData;
+    }catch(error){
+        console.dir(data);
+        logger.error(`Error fetching data from ${dlapi}: ${error}`)
+        throw error;
+    }
+    logger.info(`Successfully fetched video data from  ${dlapi}`)
     const dllink = data.durl;
     const format = formatToValue(data.format);
     const contentLength = dllink.reduce(( sum: number, { size }: {size: number}): number => sum + size , 0);
@@ -231,12 +256,12 @@ export async function getExtraInfo(info: BiliSongEntity): Promise<BiliSongEntity
 
 export async function getBasicInfo(url: string): Promise<BiliSongEntity> {
     const fullId = bvidExtract(url);
-    let id;
+    let id: string;
     if (fullId[7]) {
         if (fullId[8] && fullId[8].match(/(BV\w+|av\d+)/)) id = fullId[0].match(/(BV\w+|av\d+)/)[1];
         else if (fullId[8]) {
             const resp = await baseRequest(`https://${fullId[7]}`, null);
-            const newurl = resp.headers.location;
+            const newurl = resp.headers['location'];
             if (newurl == null) throw CommandException.UserPresentable(`Invalid bilibili url!`);
             id = newurl.match(/(BV\w+|av\d+)/)[1];
         } else {
@@ -249,7 +274,16 @@ export async function getBasicInfo(url: string): Promise<BiliSongEntity> {
     const pg = fullId[6] ? parseInt(fullId[6]) : 1;
     const cidapi = api.webIntApi(path);
     const weburl = `https://www.bilibili.com/video/${id}?p=${pg}`;
-    const response = await jsonRequest(cidapi, weburl);
+    let response: any;
+    logger.info(`Fetching webpage ${cidapi} with referrer: ${weburl}`)
+    try{
+        response = await jsonRequest(cidapi, weburl);
+    }catch(error){
+        console.dir(response);
+        logger.error(`Error fetching data from ${cidapi}: ${error}`)
+        throw error;
+    }
+    logger.info(`Successfully fetched data from web interface ${cidapi}`)
     const rawData = response['data'] as WebInterface;
     if(pg > rawData.pages.length) {
         throw CommandException.UserPresentable(`URL parameter p=${pg} out of bound! Please check again!`)
@@ -289,7 +323,8 @@ export async function search(keyword: string, limit?: number): Promise<BiliSongE
     if (!limit) limit = 20;
     const keyWExt = new RegExp(/<([A-Za-z][A-Za-z0-9]*)\b[^>]*>(.*?)<\/\1>/gm);
     const encoded = encodeURI(api.searchApi(keyword, limit));
-    const response = await jsonRequest(encoded);
+    logger.info(`Searching for keyword :${keyword} with url ${encoded}`)
+    const response = await jsonRequest(encoded, "https://www.bilibili.com");
     const rawSongs = (response['data']['result'] as SearchResults[]).find((result): boolean => result.result_type === 'video').data;
     if (!rawSongs) return [];
     return rawSongs.map((raw): BiliSongEntity => {
@@ -310,17 +345,9 @@ export async function search(keyword: string, limit?: number): Promise<BiliSongE
 }
 
 export const ytSearch = async (keyword: string): Promise<string> => {
-    const searchApi = api.youtubeApi(keyword, configuration.getYTApiKey());
+    const searchApi = api.youtubeApi(keyword, Config.getYTApiKey());
     const url = encodeURI(searchApi);
-    const resp = await got(url, {
-        method: 'GET',
-        headers: {
-            'Accept': 'application/json',
-            'User-Agent': 'Mozilla/5.0 (compatible; Discordbot/2.0; +https://discordapp.com)'
-        },
-        timeout: 1100,
-        retry: {limit: 3}
-    }).json();
+    const resp = await jsonRequest(url);
     if(resp['items'].length === 0) return null;
     return `https://www.youtube.com/watch?v=${resp['items'][0]['id']['videoId']}`;
 }
