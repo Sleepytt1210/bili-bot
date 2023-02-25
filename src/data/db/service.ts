@@ -1,10 +1,10 @@
-import {Logger, getLogger} from "../../utils/logger";
-import Config from "../../configuration";
+import {Logger, getLogger} from "../../utils/logger.js";
+import Config from "../../configuration.js";
 import {Model, Mongoose} from "mongoose";
 import mongoose from "mongoose";
-import {SongDoc, SongSchema} from "./schemas/song";
-import {GuildDoc, GuildSchema} from "./schemas/guild";
-import {PlaylistDoc, PlaylistSchema} from "./schemas/playlist";
+import {SongDoc, SongSchema} from "./schemas/song.js";
+import {GuildDoc, GuildSchema} from "./schemas/guild.js";
+import {PlaylistDoc, PlaylistSchema} from "./schemas/playlist.js";
 
 class MongoDBService {
     private uri: string;

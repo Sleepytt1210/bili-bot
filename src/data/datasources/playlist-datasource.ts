@@ -1,9 +1,9 @@
-import {getLogger, Logger} from "../../utils/logger";
-import {PlaylistDoc} from "../db/schemas/playlist";
-import {SongDoc} from "../db/schemas/song";
-import MongoDB from "../db/service";
+import {getLogger, Logger} from "../../utils/logger.js";
+import {PlaylistDoc} from "../db/schemas/playlist.js";
+import {SongDoc} from "../db/schemas/song.js";
+import MongoDB from "../db/service.js";
 import {User} from "discord.js";
-import {CommandException} from "../../commands/base-command";
+import {CommandException} from "../../commands/base-command.js";
 
 export class PlaylistDataSource {
     private static instance: PlaylistDataSource;

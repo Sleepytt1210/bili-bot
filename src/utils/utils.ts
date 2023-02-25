@@ -1,7 +1,7 @@
-import youtubedl, {YtResponse} from "youtube-dl-exec";
-import {EmbedField, MessageEmbed} from "discord.js";
+import youtubeDl from "youtube-dl-exec";
+import {EmbedField, EmbedBuilder, EmbedFooterOptions} from "discord.js";
 import ytdl from "ytdl-core";
-import {BaseCommand} from "../commands/base-command";
+import {BaseCommand} from "../commands/base-command.js";
 
 export const biliblue = 0x0ACDFF;
 
@@ -9,9 +9,100 @@ export const biliblue = 0x0ACDFF;
  * Api Tools
  */
 
+
+type YtFormat = {
+    asr: number,
+    filesize: number,
+    format_id: string,
+    format_note: string,
+    fps: number,
+    height: number,
+    quality: number,
+    tbr: number,
+    vbr?: number,
+    url: string,
+      manifest_url: string,
+    width: number,
+    ext: string,
+    vcodec: string,
+    acodec: string,
+    abr: number,
+    downloader_options: unknown,
+    container: string,
+    format: string,
+    protocol: string,
+    http_headers: unknown
+}
+
+type YtThumbnail = {
+    height: number,
+    url: string,
+    width: number,
+    resolution: string,
+    id: string,
+}
+
+type YtResponse = {
+    id: string,
+    title: string,
+    formats: YtFormat[],
+    thumbnails: YtThumbnail[],
+    description: string,
+    upload_date: string,
+    uploader: string,
+    uploader_id: string,
+    uploader_url: string,
+    channel_id: string,
+    channel_url: string,
+    duration: number,
+    view_count: number,
+    average_rating: number,
+    age_limit: number,
+    webpage_url: string,
+    categories: string[],
+    tags: string[],
+    is_live: boolean,
+    like_count: number,
+    dislike_count: number,
+    channel: string,
+    track: string,
+    artist: string,
+    creator: string,
+    alt_title: string,
+    extractor: string,
+    webpage_url_basename: string,
+    extractor_key: string,
+    playlist: string,
+    playlist_index: number,
+    thumbnail: string,
+    display_id: string,
+    requested_subtitles: unknown,
+    asr: number,
+    filesize: number,
+    format_id: string,
+    format_note: string,
+    fps: number,
+    height: number,
+    quality: number,
+    tbr: number,
+    url: string,
+    width: number,
+    ext: string,
+    vcodec: string,
+    acodec: string,
+    abr: number,
+    downloader_options: { http_chunk_size: number },
+    container: string,
+    format: string,
+    protocol: string,
+    http_headers: unknown,
+    fulltitle: string,
+    _filename: string
+}
+
 export const getInfo = ytdl.getInfo;
 
-export const getInfoWithArg = (url: string, args: object): Promise<YtResponse> => youtubedl(url, args);
+export const getInfoWithArg = (url: string, args: object): Promise<YtResponse> => youtubeDl(url, args);
 
 export const ytUidExtract = (url: string): string => {
     // youtube
@@ -47,13 +138,13 @@ export const isNum = (num: string): boolean => {
  * Help Menu Generator
  */
 
-export const helpTemplate = (command: BaseCommand): MessageEmbed => {
-    const embed = new MessageEmbed();
+export const helpTemplate = (command: BaseCommand): EmbedBuilder => {
+    const embed = new EmbedBuilder();
     embed.setTitle(`**${command.name().toUpperCase()}**`)
         .setColor(biliblue)
     if(command.alias && command.alias.length > 0) {
         const aliases = command.alias.join(', ');
-        embed.addField('Alias', aliases)
+        embed.addFields({name: 'Alias', value: aliases})
     }
     return embed;
 }
@@ -66,21 +157,21 @@ export interface EmbedOptions {
     embedTitle: string;
     start: number;
     mapFunc: (start) => (entity, index) => string;
-    embedFooter: string;
+    embedFooter: EmbedFooterOptions;
     list: object[];
     delim?: string;
     fields?: EmbedField[];
     ifEmpty?: string;
 }
 
-export const generateEmbed = (embedOptions: EmbedOptions): MessageEmbed => {
+export const generateEmbed = (embedOptions: EmbedOptions): EmbedBuilder => {
     const songs = embedOptions.list;
     const start = embedOptions.start;
     const delim = embedOptions.delim ? embedOptions.delim : ( embedOptions.delim !== undefined && embedOptions.delim !== null ? embedOptions.delim : '\n');
     const end = songs.length < 10 ? songs.length : start + 10;
     const current = songs.slice(start, end);
 
-    const embed = new MessageEmbed()
+    const embed = new EmbedBuilder()
         .setTitle(embedOptions.embedTitle)
         .setFooter(embedOptions.embedFooter)
         .setColor(biliblue);

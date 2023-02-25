@@ -1,9 +1,9 @@
-import {getLogger, Logger} from "../../utils/logger";
-import {SongDoc} from "../db/schemas/song";
-import {PlaylistDoc} from "../db/schemas/playlist";
-import {SongInfo} from "../model/song-info";
-import MongoDB from "../db/service";
-import {BiliSongEntity} from "./bilibili-api";
+import {getLogger, Logger} from "../../utils/logger.js";
+import {SongDoc} from "../db/schemas/song.js";
+import {PlaylistDoc} from "../db/schemas/playlist.js";
+import {SongInfo} from "../model/song-info.js";
+import MongoDB from "../db/service.js";
+import {BiliSongEntity} from "./bilibili-api.js";
 import {Schema} from "mongoose";
 
 export class SongDataSource {

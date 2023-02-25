@@ -1,13 +1,13 @@
-import {GuildManager} from "../../app/guild";
-import {getLogger, Logger} from "../../utils/logger";
-import {SongInfo} from "../model/song-info";
-import {CommandException} from "../../commands/base-command";
+import {GuildManager} from "../../app/guild.js";
+import {getLogger, Logger} from "../../utils/logger.js";
+import {SongInfo} from "../model/song-info.js";
+import {CommandException} from "../../commands/base-command.js";
 import {User} from "discord.js";
-import {SongDoc} from "../db/schemas/song";
-import {SongDataSource} from "../datasources/song-datasource";
-import {PlaylistDataSource} from "../datasources/playlist-datasource";
-import {PlaylistDoc} from "../db/schemas/playlist";
-import {BiliSongEntity} from "../datasources/bilibili-api";
+import {SongDoc} from "../db/schemas/song.js";
+import {SongDataSource} from "../datasources/song-datasource.js";
+import {PlaylistDataSource} from "../datasources/playlist-datasource.js";
+import {PlaylistDoc} from "../db/schemas/playlist.js";
+import {BiliSongEntity} from "../datasources/bilibili-api.js";
 
 export class PlaylistManager {
     protected readonly logger: Logger;

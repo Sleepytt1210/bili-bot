@@ -1,9 +1,9 @@
-import {GuildManager} from "../../app/guild";
-import {SongInfo} from "../model/song-info";
-import {getLogger, Logger} from "../../utils/logger";
-import {CommandException} from "../../commands/base-command";
-import {shuffle} from "../../utils/utils";
-import * as stream from "../../utils/bilidl";
+import { GuildManager } from "../../app/guild.js";
+import { SongInfo } from "../model/song-info.js";
+import { getLogger, Logger } from "../../utils/logger.js";
+import { CommandException } from "../../commands/base-command.js";
+import { shuffle } from "../../utils/utils.js";
+import * as stream from "../../utils/bilidl.js";
 import {
     AudioPlayer,
     AudioPlayerStatus,
@@ -12,8 +12,9 @@ import {
     VoiceConnection,
     VoiceConnectionStatus
 } from "@discordjs/voice";
-import {GuildMember, MessageEmbed, StageChannel} from "discord.js";
-import {raw as youtubedl} from "youtube-dl-exec";
+import { GuildMember, EmbedBuilder, StageChannel, VoiceState } from "discord.js";
+import youtubdeDl from "youtube-dl-exec";
+import ytdl from "ytdl-core";
 
 export class QueueManager {
     protected readonly logger: Logger;
@@ -48,7 +49,7 @@ export class QueueManager {
         this._isLoop = false;
         this.stream = new stream.Streamer();
         this.stream.on('error', (err: Error) => {
-            this.logger.error(err.message);
+            this.logger.error(`Streamer error: ${err.message}`);
             throw CommandException.UserPresentable(err.message);
         })
         this.volume = 0.1;
@@ -73,27 +74,27 @@ export class QueueManager {
                     ]);
                     // Seems to be reconnecting to a new channel - ignore disconnect
                 } catch (error) {
-                    const embed = new MessageEmbed()
-                        .setTitle(`${this.guild.guild.me.displayName}`)
+                    this.stop(true);
+                    const embed = new EmbedBuilder()
+                        .setTitle(`${this.guild.guild.members.me.displayName}`)
                         .setDescription(`has left the voice channel!`)
-                    await this.guild.printEmbeds(embed);
+                    this.guild.printEmbeds(embed);
                     // Seems to be disconnected - destroy
-                    if(this.activeConnection) this.activeConnection.destroy();
-                    this.stop();
+                    if (this.activeConnection) this.activeConnection.destroy();
                     this.activeConnection = null;
                 }
             });
             this.audioPlayer = createAudioPlayer();
             this.logger.info(`Joined channel '${initiator.voice.channel.name}'`)
-        } else if (this.guild.guild.me.voice.channelId !== voiceId) {
+        } else if (this.guild.guild.members.me.voice.channelId !== voiceId) {
             this.logger.info(`Rejoin channel ${initiator.voice.channel.name}`);
-            this.activeConnection.rejoin({channelId: voiceId, selfMute: false, selfDeaf: true});
+            this.activeConnection.rejoin({ channelId: voiceId, selfMute: false, selfDeaf: true });
         }
         if (initiator.voice.channel instanceof StageChannel) {
-            this.guild.guild.me.voice.setChannel(voiceId).then((me): Promise<void> => me.voice.setSuppressed(false));
+            this.guild.guild.members.me.voice.setChannel(voiceId).then((me): Promise<VoiceState> => me.voice.setSuppressed(false));
         }
         this.audioPlayer.on('error', (err): void => {
-            this.logger.error(err);
+            this.logger.error(`Audio Player error: ${err} - Error playing ${this.currentSong.title}! ${this.currentSong}`);
             this.guild.printEvent(`<@${this.currentSong.initiator.id}> An error occurred playing ${this.currentSong.title}! Please request again`);
             this.next();
         });
@@ -114,11 +115,12 @@ export class QueueManager {
 
     public setVol(vol: number): void {
         this.volume = vol;
-        if(this.audioResource) this.audioResource.volume.setVolumeLogarithmic(vol);
+        if (this.audioResource) this.audioResource.volume.setVolumeLogarithmic(vol);
     }
 
     public pushSong(song: SongInfo, isPlaylist?: boolean): void {
         this.queue.push(song);
+        this.logger.info(`${song.title} added to the queue!`)
         if (!this.isPlaying() && !this.queueLock) {
             void this.playNext();
         } else {
@@ -137,7 +139,7 @@ export class QueueManager {
     }
 
     public promoteSong(index: number): SongInfo {
-        if(this.queue.length === 0) throw CommandException.UserPresentable('Queue is empty!')
+        if (this.queue.length === 0) throw CommandException.UserPresentable('Queue is empty!')
         if (index < 0 || index >= this.queue.length) {
             throw CommandException.OutOfBound(this.queue.length);
         }
@@ -167,34 +169,41 @@ export class QueueManager {
         return false;
     }
 
-    public stop(): void {
+    public stop(leave?: boolean): void {
         if (this.audioPlayer) {
             this.audioPlayer.stop(true);
         }
         this.clear();
-        this.guild.printEvent('Player stopped and the queue is cleared!')
+        if(!leave)
+            this.guild.printEvent('Player stopped and the queue is cleared!')
     }
 
     public next(): void {
-        this.audioPlayer.stop(true);
+        if (this.audioPlayer) {
+            this.audioPlayer.stop(true);
+        }
         void this.playNext();
     }
 
     private async playSong(song: SongInfo): Promise<void> {
         this.currentSong = song;
 
-        if(!this._isLoop){
+        if (!this._isLoop) {
             this.guild.printPlaying(song);
         }
 
-        this.audioResource = await this.createAudioResource(song);
+        this.audioResource = this.createAudioResource(song);
         this.queueLock = false;
-        this.audioPlayer.play(this.audioResource);
+        try {
+            this.audioPlayer.play(this.audioResource);
+        } catch (error) {
+            this.logger.error(`Error playing ${song.title}! ${error}`)
+        }
         this.logger.info(`Playing: ${song.title}`);
         this.audioResource.volume.setVolumeLogarithmic(this.volume);
         this.audioResource.playStream.on('finish', (): void => {
             this.next();
-        }).on('error', err => this.logger.error(err));
+        }).on('error', err => this.logger.error(`${err} - Error occurs while playing song!`));
     }
 
     private async playNext(): Promise<void> {
@@ -205,52 +214,55 @@ export class QueueManager {
 
         this.queueLock = true;
 
-        setTimeout(async function(self: QueueManager){
-            if(self._isLoop === true) {
-                await self.playSong(self.currentSong);
-            }else {
+        setTimeout(function (self: QueueManager) {
+            if (self._isLoop === true) {
+                self.playSong(self.currentSong);
+            } else {
                 if (self.queue.length === 0) {
                     self.queueLock = false;
                     self.currentSong = null;
                     self.guild.printOutOfSongs();
                 } else {
-                    await self.playSong(self.queue.shift());
+                    self.playSong(self.queue.shift());
                 }
             }
         }, 50, this);
     }
 
-    public createAudioResource(song: SongInfo): Promise<AudioResource<SongInfo>> {
-        return new Promise((resolve, reject) => {
-            if(song.type == "b") resolve(createAudioResource(this.stream.ytbdl(song), {metadata: song, inlineVolume: true}));
-            const process = youtubedl(
-                song.url,
-                {
-                    o: '-',
-                    q: '',
-                    f: 'bestaudio[ext=webm+acodec=opus+asr=48000]/bestaudio/best',
-                    r: '100K',
-                },
-                { stdio: ['ignore', 'pipe', 'ignore'] },
-            );
-            if (!process.stdout) {
-                reject(new Error('No stdout'));
-                return;
-            }
-            const stream = process.stdout;
-            const onError = (error: Error) => {
-                this.queueLock = false;
-                if (!process.killed) process.kill();
-                stream.resume();
-                reject(error);
-            };
-            process
-                .once('spawn', () => {
-                    demuxProbe(stream)
-                        .then((probe) => resolve(createAudioResource(probe.stream, { metadata: song, inputType: probe.type, inlineVolume: true })))
-                        .catch(onError);
-                })
-                .catch(onError);
-        });
+    public createAudioResource(song: SongInfo): AudioResource<SongInfo> {
+        if (song.type == "b")
+            this.audioResource = createAudioResource(this.stream.ytbdl(song), { metadata: song, inlineVolume: true });
+        else
+            this.audioResource = (createAudioResource(ytdl(song.url), { metadata: song, inlineVolume: true }))
+        return this.audioResource
+        //     const process = youtubdeDl.exec(
+        //         song.url,
+        //         {
+        //             output: '-',
+        //             quiet: true,
+        //             format: 'bestaudio[ext=webm+acodec=opus+asr=48000]/bestaudio/best',
+        //             limitRate: '500K',
+        //         },
+        //         { stdio: ['ignore', 'pipe', 'ignore'] },
+        //     );
+        //     if (!process.stdout) {
+        //         reject(new Error('No stdout'));
+        //         return;
+        //     }
+        //     const stream = process.stdout;
+        //     const onError = (error: Error) => {
+        //         this.queueLock = false;
+        //         if (!process.killed) process.kill();
+        //         stream.resume();
+        //         reject(error);
+        //     };
+        //     process
+        //         .once('spawn', () => {
+        //             demuxProbe(stream)
+        //                 .then((probe) => resolve(createAudioResource(probe.stream, { metadata: song, inputType: probe.type, inlineVolume: true })))
+        //                 .catch(onError);
+        //         })
+        //         .catch(onError);
+        // });
     }
 }

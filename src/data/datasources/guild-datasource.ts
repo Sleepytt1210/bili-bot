@@ -1,7 +1,8 @@
-import MongoDB from "../db/service";
-import {getLogger, Logger} from "../../utils/logger";
-import {GuildDoc} from "../db/schemas/guild";
-import {GuildManager} from "../../app/guild";
+import MongoDB from "../db/service.js";
+import {getLogger, Logger} from "../../utils/logger.js";
+import {GuildDoc} from "../db/schemas/guild.js";
+import {GuildManager} from "../../app/guild.js";
+import { Schema } from "mongoose";
 
 export class GuildDataSource {
     private static instance: GuildDataSource;
@@ -24,6 +25,11 @@ export class GuildDataSource {
     public async load(): Promise<GuildDoc[]> {
         this.logger.verbose(`Querying all guilds`);
         return MongoDB.Guild.find({});
+    }
+
+    public async getOne(uid?: string, _id?: Schema.Types.ObjectId): Promise<GuildDoc> {
+        this.logger.verbose(`Querying guild with id=${uid}`);
+        return (uid) ? MongoDB.Guild.findOne({uid: uid}) : MongoDB.Guild.findOne({_id: _id});
     }
 
     public async insert(guildManager: GuildManager): Promise<void> {

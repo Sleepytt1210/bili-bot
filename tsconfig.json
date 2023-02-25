@@ -1,8 +1,9 @@
 {
   "compilerOptions": {
     "outDir": "./built/src",
-    "module": "commonjs",
-    "target": "es2020",
+    "module": "Node16",
+    "moduleResolution": "node16",
+    "target": "ES2020",
     "allowJs": true,
     "sourceMap": true,
     "resolveJsonModule": true,

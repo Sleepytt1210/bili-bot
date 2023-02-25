@@ -1,9 +1,9 @@
 import {GuildMember} from "discord.js";
-import {getInfo, ytUidExtract} from "../../utils/utils";
-import {SongDataSource} from "../datasources/song-datasource";
-import {SongDoc} from "../db/schemas/song";
-import {BiliSongEntity, getBasicInfo, bvidExtract, toHms} from "../datasources/bilibili-api";
-import ytdl, {chooseFormat} from "ytdl-core";
+import {getInfo, ytUidExtract} from "../../utils/utils.js";
+import {SongDataSource} from "../datasources/song-datasource.js";
+import {SongDoc} from "../db/schemas/song.js";
+import {BiliSongEntity, getBasicInfo, bvidExtract, toHms} from "../datasources/bilibili-api.js";
+import ytdl from "ytdl-core";
 
 export class SongInfo {
     public readonly url: string;
@@ -62,7 +62,7 @@ export class SongInfo {
      */
     public static async withInfo(info: ytdl.videoInfo, initiator: GuildMember): Promise<SongInfo> {
         const details = info.videoDetails;
-        const format = chooseFormat(info.formats, {filter: 'audioonly'});
+        const format = ytdl.chooseFormat(info.formats, {filter: 'audioonly'});
         const tmbarr = info.videoDetails.thumbnails;
         // tmbarr.sort((a, b) => {
         //     return (a.height + a.width) - (b.height - b.width);

@@ -1,6 +1,8 @@
-import { createLogger, format, transports, Logger } from 'winston';
+import winston, { createLogger, format, transports } from 'winston';
 
-export function getLogger(moduleName: string): Logger {
+type Logger = winston.Logger;
+
+export const getLogger = (moduleName: string): Logger => {
     return createLogger({
         level: 'info',
         format: format.combine(
@@ -16,5 +18,4 @@ export function getLogger(moduleName: string): Logger {
         ]
     });
 }
-
-export { Logger } from 'winston';
+export { Logger };

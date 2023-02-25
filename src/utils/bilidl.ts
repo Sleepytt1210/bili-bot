@@ -1,9 +1,12 @@
 import {PassThrough, Readable} from 'stream';
 import {EventEmitter} from "events";
 import miniget = require('miniget');
-import {SongInfo} from "../data/model/song-info";
-import {Durl} from "../data/model/bilibili-api-types";
-import {BiliSongEntity, getExtraInfo} from "../data/datasources/bilibili-api";
+import {SongInfo} from "../data/model/song-info.js";
+import {Durl} from "../data/model/bilibili-api-types.js";
+import {BiliSongEntity, getExtraInfo} from "../data/datasources/bilibili-api.js";
+import { getLogger } from './logger.js';
+
+const logger = getLogger('BiliBili-DL');
 
 export class Streamer extends EventEmitter{
 
@@ -38,7 +41,8 @@ export class Streamer extends EventEmitter{
         try {
             format = await getExtraInfo(info.toBiliSongEntity());
         } catch (e) {
-            stream.emit('error', e);
+            logger.error(`${e.toString()} - Error retrieving from ${info.url}`)
+            stream.emit('error', `${e} for ${info}`);
             return;
         }
 
