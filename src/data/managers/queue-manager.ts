@@ -174,6 +174,7 @@ export class QueueManager {
             this.audioPlayer.stop(true);
         }
         this.clear();
+        this.currentSong = null;
         if(!leave)
             this.guild.printEvent('Player stopped and the queue is cleared!')
     }
@@ -233,7 +234,7 @@ export class QueueManager {
         if (song.type == "b")
             this.audioResource = createAudioResource(this.stream.ytbdl(song), { metadata: song, inlineVolume: true });
         else
-            this.audioResource = (createAudioResource(ytdl(song.url), { metadata: song, inlineVolume: true }))
+            this.audioResource = (createAudioResource(ytdl(song.url, {filter: 'audioonly'}), { metadata: song, inlineVolume: true }))
         return this.audioResource
         //     const process = youtubdeDl.exec(
         //         song.url,
