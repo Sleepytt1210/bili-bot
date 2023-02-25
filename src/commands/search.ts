@@ -1,13 +1,11 @@
-import {BaseCommand, CommandException} from "./base-command";
-import {CommandType} from "./command-type";
-import {GuildManager} from "../app/guild";
-import {Message, MessageEmbed} from "discord.js";
-import * as api from "../data/datasources/bilibili-api";
-import {BiliSongEntity} from "../data/datasources/bilibili-api";
-import {EmbedOptions, helpTemplate} from "../utils/utils";
-import {XmlEntities} from 'html-entities';
-
-const decoder = new XmlEntities();
+import {BaseCommand, CommandException} from "./base-command.js";
+import {CommandType} from "./command-type.js";
+import {GuildManager} from "../app/guild.js";
+import {Message, EmbedBuilder} from "discord.js";
+import * as api from "../data/datasources/bilibili-api.js";
+import {BiliSongEntity} from "../data/datasources/bilibili-api.js";
+import {EmbedOptions, helpTemplate} from "../utils/utils.js";
+import {decode} from 'html-entities';
 
 export class SearchCommand extends BaseCommand {
 
@@ -43,14 +41,14 @@ export class SearchCommand extends BaseCommand {
 
             const resultFunc = function (start): (entity: BiliSongEntity, index: number) => string {
                 return (entity, index): string => {
-                    return decoder.decode(`\`\`\`${start + index + 1}. ${entity.title} - ${entity.play} plays\`\`\``);
+                    return decode(`\`\`\`${start + index + 1}. ${entity.title} - ${entity.play} plays\`\`\``, {level: 'xml'});
                 };
             }
             const opt: EmbedOptions = {
                 embedTitle: `Search Result for ${keyword}: `,
                 start: 0,
                 mapFunc: resultFunc,
-                embedFooter: `Use ${guild.commandPrefix}select [number] to play a song`,
+                embedFooter: {text: `Use ${guild.commandPrefix}select [number] to play a song`},
                 list: entities,
                 delim: '',
             }
@@ -62,9 +60,9 @@ export class SearchCommand extends BaseCommand {
         }
     }
 
-    public helpMessage(guild: GuildManager): MessageEmbed {
+    public helpMessage(guild: GuildManager): EmbedBuilder {
         const res = helpTemplate(this);
-        res.addField('Usage: ', `${guild.commandPrefix}${this.name()} <keyword>`);
+        res.addFields({name: 'Usage: ', value: `${guild.commandPrefix}${this.name()} <keyword>`});
         return res;
     }
 }

@@ -1,6 +1,6 @@
 import {Document, Schema} from "mongoose";
 
-const guildSchema = new Schema({
+const guildSchema = new Schema<GuildDoc>({
     uid: {type: String, required: true, unique: true},
     serverName: {type: String, required: true},
     joinedAt: {type: Schema.Types.Date, required: true},

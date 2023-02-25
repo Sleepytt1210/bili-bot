@@ -1,8 +1,8 @@
-import {DiscordBot} from "./app/discord-bot";
-import Config from "./configuration";
-import {getLogger} from "./utils/logger";
-import MongoDB from "./data/db/service";
-import exitHook = require("exit-hook");
+import {DiscordBot} from "./app/discord-bot.js";
+import Config from "./configuration.js";
+import {getLogger} from "./utils/logger.js";
+import MongoDB from "./data/db/service.js";
+import exitHook from "exit-hook";
 
 const logger = getLogger("app.js");
 

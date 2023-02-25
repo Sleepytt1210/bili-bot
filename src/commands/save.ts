@@ -1,12 +1,12 @@
-import {BaseCommand, CommandException} from "./base-command";
-import {CommandType} from "./command-type";
-import {GuildManager} from "../app/guild";
-import {Message, MessageEmbed, User} from "discord.js";
-import {helpTemplate, ytPlIdExtract} from "../utils/utils";
-import {SongInfo} from "../data/model/song-info";
-import {PlaylistDoc} from "../data/db/schemas/playlist";
-import {LoadCommand} from "./load";
-import {bvidExtract} from "../data/datasources/bilibili-api";
+import {BaseCommand, CommandException} from "./base-command.js";
+import {CommandType} from "./command-type.js";
+import {GuildManager} from "../app/guild.js";
+import {Message, EmbedBuilder, User} from "discord.js";
+import {helpTemplate, ytPlIdExtract} from "../utils/utils.js";
+import {SongInfo} from "../data/model/song-info.js";
+import {PlaylistDoc} from "../data/db/schemas/playlist.js";
+import {LoadCommand} from "./load.js";
+import {bvidExtract} from "../data/datasources/bilibili-api.js";
 
 export class SaveCommand extends BaseCommand {
 
@@ -64,12 +64,12 @@ export class SaveCommand extends BaseCommand {
         guild.printEvent(`**[${song.title}](${song.url})** saved to *${cur.name}*`);
     }
 
-    public helpMessage(guild: GuildManager): MessageEmbed {
+    public helpMessage(guild: GuildManager): EmbedBuilder {
         const res = helpTemplate(this);
         const pref = guild.commandPrefix + this.name()
-        res.addField('Usage: ', `${pref} <url>
+        res.addFields({name: 'Usage: ', value: `${pref} <url>
                     ${pref} current/c (Save playing song into selected playlist)
-                    ${pref} -list/-l <list-url> (Append a playlist into selected playlist)`)
+                    ${pref} -list/-l <list-url> (Append a playlist into selected playlist)`})
         return res;
     }
 }

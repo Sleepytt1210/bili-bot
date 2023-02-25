@@ -1,14 +1,14 @@
-import {getLogger, Logger} from "../utils/logger";
-import {SongInfo} from "../data/model/song-info";
-import {Guild, GuildMember, Message, MessageEmbed, MessageReaction, TextChannel} from "discord.js";
-import {BiliSongEntity} from "../data/datasources/bilibili-api";
-import {CommandEngine} from "../commands/command-engine";
-import {CommandException} from "../commands/base-command";
-import {PlaylistManager} from "../data/managers/playlist-manager";
-import {QueueManager} from "../data/managers/queue-manager";
-import {SongDoc} from "../data/db/schemas/song";
-import {PlaylistDoc} from "../data/db/schemas/playlist";
-import {biliblue, EmbedOptions, generateEmbed} from "../utils/utils";
+import {getLogger, Logger} from "../utils/logger.js";
+import {SongInfo} from "../data/model/song-info.js";
+import {Guild, GuildMember, Message, EmbedBuilder, MessageReaction, TextChannel} from "discord.js";
+import {BiliSongEntity} from "../data/datasources/bilibili-api.js";
+import {CommandEngine} from "../commands/command-engine.js";
+import {CommandException} from "../commands/base-command.js";
+import {PlaylistManager} from "../data/managers/playlist-manager.js";
+import {QueueManager} from "../data/managers/queue-manager.js";
+import {SongDoc} from "../data/db/schemas/song.js";
+import {PlaylistDoc} from "../data/db/schemas/playlist.js";
+import {biliblue, EmbedOptions, generateEmbed} from "../utils/utils.js";
 import Timeout = NodeJS.Timeout;
 
 export class GuildManager {
@@ -83,34 +83,34 @@ export class GuildManager {
     }
 
     public printEvent(desc: string, isTransient = false): void {
-        const embed = new MessageEmbed()
+        const embed = new EmbedBuilder()
             .setDescription(desc)
             .setColor(biliblue);
         this.printEmbeds(embed, isTransient);
     }
 
     public printPlaying(song: SongInfo): void {
-        const embed = new MessageEmbed()
+        const embed = new EmbedBuilder()
             .setTitle(`Now playing: `)
             .setDescription(`**[${song.title}](${song.url})** --> *Requested by:* <@${song.initiator.id}>`)
-            .setFooter(`Duration: ${song.hmsDuration}`, song.initiator.user.avatarURL())
+            .setFooter({text: `Duration: ${song.hmsDuration}`, iconURL: song.initiator.user.avatarURL()})
             .setColor(biliblue);
         this.printEmbeds(embed);
     }
 
     public printOutOfSongs(): void {
-        const embed = new MessageEmbed().setDescription("Running out of songs")
+        const embed = new EmbedBuilder().setDescription("Running out of songs")
             .setColor(biliblue);
         this.printEmbeds(embed);
     }
 
     public printAddToQueue(song: SongInfo, queueLength: number, isPlaylist?: boolean): void {
-        const embed = new MessageEmbed()
+        const embed = new EmbedBuilder()
             .setDescription(`**[${song.title}](${song.url})** is added to queue, current number of songs in the list: ${queueLength}`);
         this.printEmbeds(embed, isPlaylist);
     }
 
-    public printEmbeds(embed: MessageEmbed | MessageEmbed[], isTransient?: boolean): void {
+    public printEmbeds(embed: EmbedBuilder | EmbedBuilder[], isTransient?: boolean): void {
         if(Array.isArray(embed)){
             for (const e of embed) {
                 e.setColor(biliblue);
@@ -166,7 +166,7 @@ export class GuildManager {
     public checkMemberInChannel(member: GuildMember, requireSameChannel = true): void {
         if (!member.voice || !member.voice.channel) {
             throw CommandException.UserPresentable('You are not in a voice channel');
-        } else if (requireSameChannel && this.guild.me.voice.channel && member.voice.channelId != this.guild.me.voice.channelId) {
+        } else if (requireSameChannel && this.guild.members.me.voice.channel && member.voice.channelId != this.guild.members.me.voice.channelId) {
             throw CommandException.UserPresentable("You cannot use this command if you are not in the channel I'm playing");
         } else {
             this.queueManager.joinChannel(member);

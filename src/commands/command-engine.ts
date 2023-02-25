@@ -1,8 +1,8 @@
-import {GuildManager} from "../app/guild";
-import {Command, CommandException} from "./base-command";
-import {Commands, getCommand} from "./commands";
+import {GuildManager} from "../app/guild.js";
+import {Command, CommandException} from "./base-command.js";
+import {Commands, getCommand} from "./commands.js";
 import {Message} from "discord.js";
-import {getLogger, Logger} from "../utils/logger";
+import {getLogger, Logger} from "../utils/logger.js";
 
 export class CommandEngine {
     protected guild: GuildManager;
@@ -24,7 +24,7 @@ export class CommandEngine {
             } catch (error) {
                 this.logger.error(error);
                 if (error instanceof CommandException && (error as CommandException).userPresentable) {
-                    if(error.messageEmbed) this.guild.printEmbeds(error.messageEmbed);
+                    if(error.EmbedBuilder) this.guild.printEmbeds(error.EmbedBuilder);
                     else this.guild.printEvent(`${error}`);
                 }
             }

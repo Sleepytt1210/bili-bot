@@ -1,8 +1,8 @@
 import {Document, Schema} from "mongoose";
-import {SongInfo} from "../../model/song-info";
+import {SongInfo} from "../../model/song-info.js";
 import {User} from "discord.js";
 
-const songSchema = new Schema({
+const songSchema = new Schema<SongDoc>({
     uid: {type: String, required: true, unique: true},
     url: {type: String, required: true},
     title: {type: String, required: true},
@@ -12,7 +12,7 @@ const songSchema = new Schema({
     description: String,
     thumbnail: String,
     cached: Boolean,
-    dlurls: {type: Array, required: true},
+    dlurls: {type: [Object], required: true},
     type: {type: String, required: true}
 }, {
     writeConcern: {

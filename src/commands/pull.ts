@@ -1,9 +1,9 @@
-import {BaseCommand, CommandException} from "./base-command";
-import {CommandType} from "./command-type";
-import {GuildManager} from "../app/guild";
-import {Message, MessageEmbed, User} from "discord.js";
-import {helpTemplate, isNum} from "../utils/utils";
-import {PlaylistDoc} from "../data/db/schemas/playlist";
+import {BaseCommand, CommandException} from "./base-command.js";
+import {CommandType} from "./command-type.js";
+import {GuildManager} from "../app/guild.js";
+import {Message, EmbedBuilder, User} from "discord.js";
+import {helpTemplate, isNum} from "../utils/utils.js";
+import {PlaylistDoc} from "../data/db/schemas/playlist.js";
 
 export class PullCommand extends BaseCommand {
 
@@ -43,9 +43,9 @@ export class PullCommand extends BaseCommand {
         guild.printEvent(`${name} deleted from ${playlist.name}`);
     }
 
-    public helpMessage(guild: GuildManager): MessageEmbed {
+    public helpMessage(guild: GuildManager): EmbedBuilder {
         const res = helpTemplate(this);
-        res.addField('Usage: ', `${guild.commandPrefix}${this.name()} <name>/<index>`)
+        res.addFields({name: 'Usage: ', value: `${guild.commandPrefix}${this.name()} <name>/<index>`})
         return res;
     }
 }

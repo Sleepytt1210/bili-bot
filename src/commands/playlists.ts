@@ -1,14 +1,14 @@
-import {EmbedField, Message, MessageEmbed} from "discord.js";
-import {BaseCommand, CommandException, SubCommand} from "./base-command";
-import {CommandType} from "./command-type";
-import {GuildManager} from "../app/guild";
-import {EmbedOptions, helpTemplate} from "../utils/utils";
-import {CreateCommand} from "./create";
-import {DeleteCommand} from "./delete";
-import {SetDefaultPlaylistCommand} from "./setDefaultPlaylist";
-import {ListCommand} from "./list";
-import {PlaylistDoc} from "../data/db/schemas/playlist";
-import {getCommand} from "./commands";
+import { Message, EmbedBuilder, APIEmbedField } from "discord.js";
+import { BaseCommand, CommandException, SubCommand } from "./base-command.js";
+import { CommandType } from "./command-type.js";
+import { GuildManager } from "../app/guild.js";
+import { EmbedOptions, helpTemplate } from "../utils/utils.js";
+import { CreateCommand } from "./create.js";
+import { DeleteCommand } from "./delete.js";
+import { SetDefaultPlaylistCommand } from "./setDefaultPlaylist.js";
+import { ListCommand } from "./list.js";
+import { PlaylistDoc } from "../data/db/schemas/playlist.js";
+import { getCommand } from "./commands.js";
 
 
 export class PlaylistsCommand extends BaseCommand {
@@ -56,7 +56,10 @@ export class PlaylistsCommand extends BaseCommand {
 
         const opt: EmbedOptions = {
             embedTitle: 'Your playlists: ',
-            embedFooter: `${guild.commandPrefix}pl list <name> or <index> to check songs in list, ${guild.commandPrefix}load <name> or <index> to play the entire playlist`,
+            embedFooter: {
+                text: `${guild.commandPrefix}pl list <name> or <index> to check songs in list, 
+            ${guild.commandPrefix}load <name> or <index> to play the entire playlist`
+            },
             start: 0,
             mapFunc: resultFunc,
             list: playlists,
@@ -66,21 +69,20 @@ export class PlaylistsCommand extends BaseCommand {
         guild.printFlipPages(playlists, opt, message);
     }
 
-    public helpMessage(guild: GuildManager, message: Message): MessageEmbed {
+    public helpMessage(guild: GuildManager, message: Message): EmbedBuilder {
         const res = helpTemplate(this);
-        const subs: EmbedField[] = [];
+        const subs: APIEmbedField[] = [];
         const pref = guild.commandPrefix + this.name();
         const entries = this.subcommands.entries();
         for (const entry of entries) {
-            const field: EmbedField = {name: entry[0], value: `> ${entry[1].helpMessage(guild, message).fields[1].value}`, inline: true}
+            const field: APIEmbedField = { name: entry[0], value: `> ${entry[1].helpMessage(guild, message).toJSON().fields[1].value}`, inline: true }
             subs.push(field);
         }
         const cur = guild.currentPlaylist.get(message.author.id);
         if (cur) {
-            res.addField('Current selected playlist:', `${cur.name}`);
+            res.addFields({ name: 'Current selected playlist:', value: `${cur.name}` });
         }
-        res.addField('Usage:', `${pref}`)
-            .addField('Subcommands:', `${pref} <subcommand>`)
+        res.addFields({ name: 'Usage:', value: `${pref}` }, { name: 'Subcommands:', value: `${pref} <subcommand>` })
             .addFields(subs);
         return res;
     }

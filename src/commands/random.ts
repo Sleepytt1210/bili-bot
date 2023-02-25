@@ -47,7 +47,7 @@
 //         category = category || 'music';
 //
 //         const entity = await api.randomRanking(category, 'all');
-//         const embed = new MessageEmbed()
+//         const embed = new EmbedBuilder()
 //             .setTitle('Random result:')
 //             .setDescription(`${entity.title} - ${entity.play} plays`)
 //             .setColor(biliblue);

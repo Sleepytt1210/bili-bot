@@ -1,8 +1,8 @@
-import {BaseCommand} from "./base-command";
-import {CommandType} from "./command-type";
-import {GuildManager} from "../app/guild";
-import {Message, MessageEmbed} from "discord.js";
-import {helpTemplate} from "../utils/utils";
+import {BaseCommand} from "./base-command.js";
+import {CommandType} from "./command-type.js";
+import {GuildManager} from "../app/guild.js";
+import {Message, EmbedBuilder} from "discord.js";
+import {helpTemplate} from "../utils/utils.js";
 
 
 export class LoopCommand extends BaseCommand {
@@ -19,14 +19,14 @@ export class LoopCommand extends BaseCommand {
         guild.checkMemberInChannel(message.member)
         guild.queueManager.isLoop = !guild.queueManager.isLoop;
         const onOff = (guild.queueManager.isLoop) ? "on" : "off";
-        const embed = new MessageEmbed()
+        const embed = new EmbedBuilder()
             .setTitle(`Loop is turned ${onOff}!`);
         guild.printEmbeds(embed);
     }
 
-    public helpMessage(guild: GuildManager): MessageEmbed {
+    public helpMessage(guild: GuildManager): EmbedBuilder {
         const res = helpTemplate(this);
-        res.addField('Usage: ', `${guild.commandPrefix}${this.name()}`);
+        res.addFields({name: 'Usage: ', value: `${guild.commandPrefix}${this.name()}`});
         return res;
     }
 }

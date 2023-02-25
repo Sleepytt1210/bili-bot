@@ -1,6 +1,6 @@
 import {Document, Schema} from "mongoose";
 
-const playlistSchema = new Schema({
+const playlistSchema = new Schema<PlaylistDoc>({
     name: {type: String, required: true},
     creator: {type: String, required: true},
     songs: {

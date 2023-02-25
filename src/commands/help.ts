@@ -1,8 +1,8 @@
-import {BaseCommand, CommandException} from "./base-command";
-import {CommandType} from "./command-type";
-import {Message, MessageEmbed} from "discord.js";
-import {GuildManager} from "../app/guild";
-import {Commands, getCommand} from "./commands";
+import {BaseCommand, CommandException} from "./base-command.js";
+import {CommandType} from "./command-type.js";
+import {Message, EmbedBuilder} from "discord.js";
+import {GuildManager} from "../app/guild.js";
+import {Commands, getCommand} from "./commands.js";
 
 export class HelpCommand extends BaseCommand {
 
@@ -19,10 +19,10 @@ export class HelpCommand extends BaseCommand {
     public async run(msg: Message, guild: GuildManager, args?: string[]): Promise<void> {
         const dev = guild.guild.members.resolve("293762535675527168")
         if (args.length === 0) {
-            const embed = new MessageEmbed().setTitle(`Bilibili Player (Modified by: ${dev.displayName})`)
+            const embed = new EmbedBuilder().setTitle(`Bilibili Player (Modified by: ${dev.displayName})`)
                 .setThumbnail(guild.guild.client.user.avatarURL())
-                .addField(guild.guild.name, `\`\`\`properties\nPrefix: ${guild.commandPrefix}\n\`\`\``)
-                .addField("Commands (Use help <command> for more detail)",
+                .addFields({name: guild.guild.name, value: `\`\`\`properties\nPrefix: ${guild.commandPrefix}\n\`\`\``})
+                .addFields({name: "Commands (Use help <command> for more detail)", value:
                     "\t``clear``: Clear the queue\n" +
                     "\t``help``: Show this help menu\n" +
                     "\t``info``: Show info of a song\n" +
@@ -44,12 +44,12 @@ export class HelpCommand extends BaseCommand {
                     "\t``summon``: Summon the bot to your voice channel\n" +
                     "\t``stop``: Stop playing\n" +
                     "\t``volume``: Check and set volume\n" +
-                    "\t``leave``: Leave the channel\n")
-                .addField('Playlist Commands: ',
+                    "\t``leave``: Leave the channel\n"})
+                .addFields({name: 'Playlist Commands: ', value:
                     "\t``pl create``: Create a new playlist\n" +
                     "\t``pl delete``: Delete an existing playlist\n" +
                     "\t``pl setdpl``: Set a default playlist\n" +
-                    "\t``pl list``: Select and show the info of a playlist\n" );
+                    "\t``pl list``: Select and show the info of a playlist\n"});
             guild.printEmbeds(embed);
             return;
         }
@@ -63,10 +63,10 @@ export class HelpCommand extends BaseCommand {
         }
     }
 
-    public helpMessage(guild: GuildManager): MessageEmbed {
-        const res = new MessageEmbed();
+    public helpMessage(guild: GuildManager): EmbedBuilder {
+        const res = new EmbedBuilder();
         res.setTitle(this.name())
-            .addField('Usage: ', `${guild.commandPrefix}${this.name()}`);
+            .addFields({name: 'Usage: ', value: `${guild.commandPrefix}${this.name()}`});
         return res;
     }
 }

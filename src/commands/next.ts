@@ -1,8 +1,8 @@
-import {BaseCommand, CommandException} from "./base-command";
-import {CommandType} from "./command-type";
-import {GuildManager} from "../app/guild";
-import {Message, MessageEmbed} from "discord.js";
-import {helpTemplate} from "../utils/utils";
+import {BaseCommand, CommandException} from "./base-command.js";
+import {CommandType} from "./command-type.js";
+import {GuildManager} from "../app/guild.js";
+import {Message, EmbedBuilder} from "discord.js";
+import {helpTemplate} from "../utils/utils.js";
 
 export class NextCommand extends BaseCommand {
 
@@ -27,9 +27,9 @@ export class NextCommand extends BaseCommand {
         }
     }
 
-    public helpMessage(guild: GuildManager): MessageEmbed {
+    public helpMessage(guild: GuildManager): EmbedBuilder {
         const res = helpTemplate(this);
-        res.addField('Usage: ', `${guild.commandPrefix}${this.name()}`);
+        res.addFields({name: 'Usage: ', value: `${guild.commandPrefix}${this.name()}`});
         return res;
     }
 }

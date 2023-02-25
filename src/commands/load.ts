@@ -1,15 +1,15 @@
-import {BaseCommand, CommandException} from "./base-command";
-import {CommandType} from "./command-type";
-import {GuildManager} from "../app/guild";
-import {Message, MessageEmbed} from "discord.js";
-import {getInfoWithArg, helpTemplate, isNum, ytPlIdExtract} from "../utils/utils";
-import {SongInfo} from "../data/model/song-info";
-import * as api from "../data/datasources/bilibili-api";
-import {bvidExtract} from "../data/datasources/bilibili-api";
-import {PlaylistDataSource} from "../data/datasources/playlist-datasource";
+import {BaseCommand, CommandException} from "./base-command.js";
+import {CommandType} from "./command-type.js";
+import {GuildManager} from "../app/guild.js";
+import {Message, EmbedBuilder} from "discord.js";
+import {getInfoWithArg, helpTemplate, isNum, ytPlIdExtract} from "../utils/utils.js";
+import {SongInfo} from "../data/model/song-info.js";
+import * as api from "../data/datasources/bilibili-api.js";
+import {bvidExtract} from "../data/datasources/bilibili-api.js";
+import {PlaylistDataSource} from "../data/datasources/playlist-datasource.js";
 import {Logger} from "winston";
-import {PlaylistsCommand} from "./playlists";
-import {PlaylistDoc} from "../data/db/schemas/playlist";
+import {PlaylistsCommand} from "./playlists.js";
+import {PlaylistDoc} from "../data/db/schemas/playlist.js";
 
 const plArgs = {
     dumpSingleJson: true,
@@ -171,11 +171,11 @@ export class LoadCommand extends BaseCommand {
         else if(isNum(name)) return 2;
     }
 
-    public helpMessage(guild: GuildManager): MessageEmbed {
+    public helpMessage(guild: GuildManager): EmbedBuilder {
         const res = helpTemplate(this);
         const pref = `${guild.commandPrefix}${this.name()}`;
-        res.addField('Usage: ', `${pref} <list-name>/<list-url> (To just play the playlist)
-                ${pref} <index> (To play an entire playlist)`);
+        res.addFields({name: 'Usage: ', value: `${pref} <list-name>/<list-url> (To just play the playlist)
+                ${pref} <index> (To play an entire playlist)`});
         return res;
     }
 }

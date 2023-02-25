@@ -1,10 +1,10 @@
-import {BaseCommand, CommandException} from "./base-command";
-import {CommandType} from "./command-type";
-import {GuildManager} from "../app/guild";
-import {Message, MessageEmbed} from "discord.js";
-import {SongInfo} from "../data/model/song-info";
-import {helpTemplate} from "../utils/utils";
-import {SongDataSource} from "../data/datasources/song-datasource";
+import {BaseCommand, CommandException} from "./base-command.js";
+import {CommandType} from "./command-type.js";
+import {GuildManager} from "../app/guild.js";
+import {Message, EmbedBuilder} from "discord.js";
+import {SongInfo} from "../data/model/song-info.js";
+import {helpTemplate} from "../utils/utils.js";
+import {SongDataSource} from "../data/datasources/song-datasource.js";
 
 export class SelectCommand extends BaseCommand {
 
@@ -46,9 +46,9 @@ export class SelectCommand extends BaseCommand {
         guild.queueManager.pushSong(song);
     }
 
-    public helpMessage(guild: GuildManager): MessageEmbed {
+    public helpMessage(guild: GuildManager): EmbedBuilder {
         const res = helpTemplate(this);
-        res.addField('Usage: ', `${guild.commandPrefix}${this.name()} <index>`);
+        res.addFields({name: 'Usage: ', value: `${guild.commandPrefix}${this.name()} <index>`});
         return res;
     }
 }

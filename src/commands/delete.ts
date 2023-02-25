@@ -1,10 +1,10 @@
-import {CommandException, SubCommand} from "./base-command";
-import {CommandType} from "./command-type";
-import {GuildManager} from "../app/guild";
-import {Message, MessageEmbed} from "discord.js";
-import {PlaylistDataSource} from "../data/datasources/playlist-datasource";
-import {helpTemplate, isNum} from "../utils/utils";
-import {PlaylistsCommand} from "./playlists";
+import {CommandException, SubCommand} from "./base-command.js";
+import {CommandType} from "./command-type.js";
+import {GuildManager} from "../app/guild.js";
+import {Message, EmbedBuilder} from "discord.js";
+import {PlaylistDataSource} from "../data/datasources/playlist-datasource.js";
+import {helpTemplate, isNum} from "../utils/utils.js";
+import {PlaylistsCommand} from "./playlists.js";
 import {query} from "winston";
 
 export class DeleteCommand extends SubCommand {
@@ -40,9 +40,9 @@ export class DeleteCommand extends SubCommand {
 
     }
 
-    public helpMessage(guild: GuildManager): MessageEmbed {
+    public helpMessage(guild: GuildManager): EmbedBuilder {
         const res = helpTemplate(this);
-        res.addField('Usage: ', `${guild.commandPrefix}${this.parent} ${this.name()} <name>/<index>`);
+        res.addFields({name: 'Usage: ', value: `${guild.commandPrefix}${this.parent} ${this.name()} <name>/<index>`});
         return res;
     }
 }

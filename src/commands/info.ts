@@ -1,12 +1,12 @@
-import {BaseCommand, CommandException} from "./base-command";
-import {CommandType} from "./command-type";
-import {Message, MessageEmbed} from "discord.js";
-import {GuildManager} from "../app/guild";
-import {helpTemplate} from "../utils/utils";
-import {bvidExtract, toHms} from "../data/datasources/bilibili-api";
+import { BaseCommand, CommandException } from "./base-command.js";
+import { CommandType } from "./command-type.js";
+import { Message, EmbedBuilder } from "discord.js";
+import { GuildManager } from "../app/guild.js";
+import { helpTemplate } from "../utils/utils.js";
+import { bvidExtract, toHms } from "../data/datasources/bilibili-api.js";
 import ytdl from "ytdl-core";
-import {SongInfo} from "../data/model/song-info";
-import {AudioPlayerState, AudioPlayerStatus} from "@discordjs/voice";
+import { SongInfo } from "../data/model/song-info.js";
+import { AudioPlayerState, AudioPlayerStatus } from "@discordjs/voice";
 
 export class InfoCommand extends BaseCommand {
 
@@ -50,27 +50,29 @@ export class InfoCommand extends BaseCommand {
             show[playTime] = "<a:WoopWoop:640863532866469888>";
             show.push(" " + stHms + "/" + currentSong.hmsDuration);
             const showString = show.join("");
-            embed.addField('Progress: ', showString)
+            embed.addFields({ name: 'Progress: ', value: showString })
         } else {
-            embed.addField('Duration: ', currentSong.hmsDuration);
+            embed.addFields({ name: 'Duration: ', value: currentSong.hmsDuration });
         }
         guild.printEmbeds(embed);
     }
 
-    private async urlInfo(song?: SongInfo): Promise<MessageEmbed> {
-        return new MessageEmbed()
+    private async urlInfo(song?: SongInfo): Promise<EmbedBuilder> {
+        return new EmbedBuilder()
             .setTitle(song.title)
             .setTimestamp()
             .setThumbnail(song.thumbnail)
-            .addField("Requested by: ", `<@${song.initiator.id}>`, true)
-            .addField("Author: ", `${song.author}`, true)
+            .addFields([{ name: "Requested by: ", value: `<@${song.initiator.id}>` },
+            { name: "Author: ", value: `${song.author}` }])
             .setURL(song.url);
     }
 
-    public helpMessage(guild: GuildManager): MessageEmbed {
+    public helpMessage(guild: GuildManager): EmbedBuilder {
         const res = helpTemplate(this);
-        res.addField('Usage: ', `${guild.commandPrefix}${this.name()}
-                                            ${guild.commandPrefix}${this.name()} <url>`);
+        res.addFields({
+            name: 'Usage: ', value: `${guild.commandPrefix}${this.name()}
+                                            ${guild.commandPrefix}${this.name()} <url>`
+        });
         return res;
     }
 }

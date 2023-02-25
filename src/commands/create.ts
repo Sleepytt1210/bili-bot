@@ -1,10 +1,10 @@
-import {CommandException, SubCommand} from "./base-command";
-import {CommandType} from "./command-type";
-import {GuildManager} from "../app/guild";
-import {Message, MessageEmbed} from "discord.js";
-import {PlaylistDataSource} from "../data/datasources/playlist-datasource";
-import {helpTemplate} from "../utils/utils";
-import {LoadCommand} from "./load";
+import {CommandException, SubCommand} from "./base-command.js";
+import {CommandType} from "./command-type.js";
+import {GuildManager} from "../app/guild.js";
+import {Message, EmbedBuilder} from "discord.js";
+import {PlaylistDataSource} from "../data/datasources/playlist-datasource.js";
+import {helpTemplate} from "../utils/utils.js";
+import {LoadCommand} from "./load.js";
 
 export class CreateCommand extends SubCommand{
 
@@ -44,9 +44,9 @@ export class CreateCommand extends SubCommand{
         });
     }
 
-    public helpMessage(guild: GuildManager): MessageEmbed {
+    public helpMessage(guild: GuildManager): EmbedBuilder {
         const res = helpTemplate(this);
-        res.addField('Usage: ', `${guild.commandPrefix}${this.parent} ${this.name()} <name>`);
+        res.addFields({name: 'Usage: ', value: `${guild.commandPrefix}${this.parent} ${this.name()} <name>`});
         return res;
     }
 }

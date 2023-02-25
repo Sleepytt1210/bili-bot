@@ -1,12 +1,12 @@
-import {CommandException, SubCommand} from "./base-command";
-import {CommandType} from "./command-type";
-import {GuildManager} from "../app/guild";
-import {Message, MessageEmbed} from "discord.js";
-import {EmbedOptions, helpTemplate, isNum} from "../utils/utils";
-import {PlaylistDataSource} from "../data/datasources/playlist-datasource";
-import {PlaylistDoc} from "../data/db/schemas/playlist";
-import {SongDoc} from "../data/db/schemas/song";
-import {PlaylistsCommand} from "./playlists";
+import { CommandException, SubCommand } from "./base-command.js";
+import { CommandType } from "./command-type.js";
+import { GuildManager } from "../app/guild.js";
+import { Message, EmbedBuilder } from "discord.js";
+import { EmbedOptions, helpTemplate, isNum } from "../utils/utils.js";
+import { PlaylistDataSource } from "../data/datasources/playlist-datasource.js";
+import { PlaylistDoc } from "../data/db/schemas/playlist.js";
+import { SongDoc } from "../data/db/schemas/song.js";
+import { PlaylistsCommand } from "./playlists.js";
 
 export class ListCommand extends SubCommand {
 
@@ -28,12 +28,12 @@ export class ListCommand extends SubCommand {
         const cur = guild.currentPlaylist.get(userid);
 
         const timer = guild.currentShowlistTimer.get(userid);
-        if(timer) clearTimeout(timer)
+        if (timer) clearTimeout(timer)
 
         // Check argument to be index or name
         if (args.length === 1 && isNum(args[0])) {
             playlist = await PlaylistsCommand.getPlaylistFromIndex(guild, message, args[0]);
-        } else if ( (args.length === 0 || (args.length === 1 && args[0] === "current" || args[0] === "c")) && cur) {
+        } else if ((args.length === 0 || (args.length === 1 && args[0] === "current" || args[0] === "c")) && cur) {
             playlist = cur;
             switcher = 1;
         } else {
@@ -41,7 +41,7 @@ export class ListCommand extends SubCommand {
             switcher = 2;
             playlist = await PlaylistDataSource.getInstance().get(message.author, name);
             if (!playlist) {
-                if(!name) throw CommandException.UserPresentable('No default or selected playlist!');
+                if (!name) throw CommandException.UserPresentable('No default or selected playlist!');
                 else throw CommandException.UserPresentable(`Playlist ${name} does not exist!`);
             }
         }
@@ -57,7 +57,7 @@ export class ListCommand extends SubCommand {
 
         const opt: EmbedOptions = {
             embedTitle: `${switcher == 2 ? 'Showing default playlist - ' : (switcher == 1 ? 'Showing current playlist - ' : 'Showing playlist - ')}${playlist.name}:`,
-            embedFooter: `Use ${guild.commandPrefix}select <index> to play a song, ~save <url> to save a song, ~pull <name>/<index> to remove a song`,
+            embedFooter: {text: `Use ${guild.commandPrefix}select <index> to play a song, ~save <url> to save a song, ~pull <name>/<index> to remove a song`},
             list: songs,
             mapFunc: resultFunc,
             start: 0
@@ -71,13 +71,14 @@ export class ListCommand extends SubCommand {
         }, 300000);
     }
 
-    public helpMessage(guild: GuildManager): MessageEmbed {
+    public helpMessage(guild: GuildManager): EmbedBuilder {
         const res = helpTemplate(this);
         const pref = guild.commandPrefix;
-        res.addField('Usage: ', `${pref}${this.parent} ${this.name()} <name>/<index>`)
-            .addField('Following commands: ', `${pref}select <index> to play a song
+        res.addFields([{ name: 'Usage: ', value: `${pref}${this.parent} ${this.name()} <name>/<index>` }, {
+            name: 'Following commands: ', value: `${pref}select <index> to play a song
                                                             ${pref}save <url> to save a song
-                                                            ${pref}pull <name>/<index> to remove a song`);
+                                                            ${pref}pull <name>/<index> to remove a song`
+        }]);
         return res;
     }
 }

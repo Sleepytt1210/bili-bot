@@ -1,8 +1,8 @@
-import {BaseCommand} from "./base-command";
-import {CommandType} from "./command-type";
-import {Message, MessageEmbed} from "discord.js";
-import {GuildManager} from "../app/guild";
-import {helpTemplate} from "../utils/utils";
+import {BaseCommand} from "./base-command.js";
+import {CommandType} from "./command-type.js";
+import {Message, EmbedBuilder} from "discord.js";
+import {GuildManager} from "../app/guild.js";
+import {helpTemplate} from "../utils/utils.js";
 
 export class SummonCommand extends BaseCommand {
 
@@ -18,14 +18,14 @@ export class SummonCommand extends BaseCommand {
 
     public async run(msg: Message, guild: GuildManager, args?: string[]): Promise<void> {
         guild.checkMemberInChannel(msg.member, false);
-        if (msg.member.voice.channelId == guild.guild.me.voice.channelId) {
-            guild.printEvent(`I am already in the channel ${guild.guild.me.voice.channel.name}!`);
+        if (msg.member.voice.channelId == guild.guild.members.me.voice.channelId) {
+            guild.printEvent(`I am already in the channel ${guild.guild.members.me.voice.channel.name}!`);
         }
     }
 
-    public helpMessage(guild: GuildManager): MessageEmbed {
+    public helpMessage(guild: GuildManager): EmbedBuilder {
         const res = helpTemplate(this);
-        res.addField('Usage: ', `${guild.commandPrefix}${this.name()}`);
+        res.addFields({name: 'Usage: ', value: `${guild.commandPrefix}${this.name()}`});
         return res;
     }
 }

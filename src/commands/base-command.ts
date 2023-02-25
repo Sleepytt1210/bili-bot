@@ -1,7 +1,7 @@
-import {getLogger, Logger} from "../utils/logger";
-import {Message, MessageEmbed} from "discord.js";
-import {GuildManager} from "../app/guild";
-import {CommandType} from "./command-type";
+import {getLogger, Logger} from "../utils/logger.js";
+import {Message, EmbedBuilder} from "discord.js";
+import {GuildManager} from "../app/guild.js";
+import {CommandType} from "./command-type.js";
 
 export interface Command {
     alias: string[];
@@ -10,7 +10,7 @@ export interface Command {
 
     run(message: Message, guild: GuildManager, args?: string[]): Promise<void>;
 
-    helpMessage(guild: GuildManager, message?: Message): MessageEmbed;
+    helpMessage(guild: GuildManager, message?: Message): EmbedBuilder;
 }
 
 export class BaseCommand implements Command {
@@ -30,7 +30,7 @@ export class BaseCommand implements Command {
         return;
     }
 
-    public helpMessage(guild: GuildManager, message?: Message): MessageEmbed {
+    public helpMessage(guild: GuildManager, message?: Message): EmbedBuilder {
         throw new Error('helpMessage() requires override');
     }
 }
@@ -53,7 +53,7 @@ export class SubCommand extends BaseCommand {
         return;
     }
 
-    public helpMessage(guild: GuildManager, message?: Message): MessageEmbed {
+    public helpMessage(guild: GuildManager, message?: Message): EmbedBuilder {
         throw new Error('helpMessage() requires override');
     }
 }
@@ -61,15 +61,15 @@ export class SubCommand extends BaseCommand {
 export class CommandException {
     public userPresentable: boolean;
     public error: string | Error;
-    public messageEmbed: MessageEmbed;
+    public EmbedBuilder: EmbedBuilder;
 
-    public constructor(userPresentable: boolean, error: string | Error, embed?: MessageEmbed) {
+    public constructor(userPresentable: boolean, error: string | Error, embed?: EmbedBuilder) {
         this.userPresentable = userPresentable;
         this.error = error;
-        this.messageEmbed = embed;
+        this.EmbedBuilder = embed;
     }
 
-    public static UserPresentable(message: string, embed?: MessageEmbed): CommandException {
+    public static UserPresentable(message: string, embed?: EmbedBuilder): CommandException {
         return new CommandException(true, message, embed);
     }
 

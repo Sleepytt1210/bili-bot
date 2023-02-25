@@ -1,9 +1,9 @@
-import {BaseCommand} from "./base-command";
-import {CommandType} from "./command-type";
-import {GuildManager} from "../app/guild";
-import {Message, MessageEmbed} from "discord.js";
-import {EmbedOptions, helpTemplate} from "../utils/utils";
-import {SongInfo} from "../data/model/song-info";
+import {BaseCommand} from "./base-command.js";
+import {CommandType} from "./command-type.js";
+import {GuildManager} from "../app/guild.js";
+import {Message, EmbedBuilder} from "discord.js";
+import {EmbedOptions, helpTemplate} from "../utils/utils.js";
+import {SongInfo} from "../data/model/song-info.js";
 
 export class QueueCommand extends BaseCommand {
 
@@ -31,7 +31,7 @@ export class QueueCommand extends BaseCommand {
             }
             const opt: EmbedOptions = {
                 embedTitle: 'Queue:',
-                embedFooter: '',
+                embedFooter: {text: ''},
                 list: list,
                 mapFunc: resultFunc,
                 start: 0,
@@ -44,9 +44,9 @@ export class QueueCommand extends BaseCommand {
         }
     }
 
-    public helpMessage(guild: GuildManager): MessageEmbed {
+    public helpMessage(guild: GuildManager): EmbedBuilder {
         const res = helpTemplate(this);
-        res.addField('Usage: ', `${guild.commandPrefix}${this.name()}`);
+        res.addFields({name: 'Usage: ', value: `${guild.commandPrefix}${this.name()}`});
         return res;
     }
 }

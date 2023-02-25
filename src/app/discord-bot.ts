@@ -1,7 +1,7 @@
-import {Client, Intents, Message} from 'discord.js';
-import {Logger, getLogger} from "../utils/logger";
-import {GuildManager} from "./guild";
-import {GuildDataSource} from "../data/datasources/guild-datasource";
+import {ActivityType, Client, IntentsBitField, Message} from 'discord.js';
+import {Logger, getLogger} from "../utils/logger.js";
+import {GuildManager} from "./guild.js";
+import {GuildDataSource} from "../data/datasources/guild-datasource.js";
 
 
 export class DiscordBot {
@@ -11,12 +11,13 @@ export class DiscordBot {
     private guilds: Map<string, GuildManager>;
 
     public constructor(token: string) {
-        const intents = [Intents.FLAGS.GUILDS,
-            Intents.FLAGS.GUILD_EMOJIS_AND_STICKERS,
-            Intents.FLAGS.GUILD_MESSAGE_REACTIONS,
-            Intents.FLAGS.GUILD_MESSAGES,
-            Intents.FLAGS.GUILD_MESSAGE_TYPING,
-            Intents.FLAGS.GUILD_VOICE_STATES]
+        const intents = [IntentsBitField.Flags.Guilds,
+            IntentsBitField.Flags.GuildEmojisAndStickers,
+            IntentsBitField.Flags.GuildMessageReactions,
+            IntentsBitField.Flags.GuildMessages,
+            IntentsBitField.Flags.GuildMessageTyping,
+            IntentsBitField.Flags.MessageContent,
+            IntentsBitField.Flags.GuildVoiceStates]
         this.logger = getLogger('DiscordBot');
         this.token = token;
         this.client = new Client({intents: intents});
@@ -27,7 +28,7 @@ export class DiscordBot {
         this.client.login(this.token);
         this.client.once('ready', async (): Promise<void> => {
             await this.clientReady();
-            await this.client.user.setActivity("BiliBili", {type: "WATCHING"});
+            this.client.user.setActivity("BiliBili", {type: ActivityType.Watching});
             this.client.on('messageCreate', async (msg): Promise<void> => {
                 await this.handleMessage(msg)
             });
@@ -51,7 +52,8 @@ export class DiscordBot {
         if (!this.guilds.has(guildId)) {
             const newManager = new GuildManager(msg.guild);
             this.guilds.set(guildId, newManager);
-            await GuildDataSource.getInstance().insert(newManager);
+            const gds = GuildDataSource.getInstance();
+            if(!await gds.getOne(guildId)) await GuildDataSource.getInstance().insert(newManager);
         }
         await this.guilds.get(guildId).processMessage(msg);
     }

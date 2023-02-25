@@ -1,11 +1,11 @@
-import {BaseCommand, CommandException} from "./base-command";
-import {CommandType} from "./command-type";
-import {GuildManager} from "../app/guild";
-import {Message, MessageEmbed} from "discord.js";
-import {SongInfo} from "../data/model/song-info";
-import {SongDataSource} from "../data/datasources/song-datasource";
-import {helpTemplate, ytPlIdExtract} from "../utils/utils";
-import {ytSearch} from "../data/datasources/bilibili-api";
+import {BaseCommand, CommandException} from "./base-command.js";
+import {CommandType} from "./command-type.js";
+import {GuildManager} from "../app/guild.js";
+import {Message, EmbedBuilder} from "discord.js";
+import {SongInfo} from "../data/model/song-info.js";
+import {SongDataSource} from "../data/datasources/song-datasource.js";
+import {helpTemplate, ytPlIdExtract} from "../utils/utils.js";
+import {ytSearch} from "../data/datasources/bilibili-api.js";
 
 export class PlayCommand extends BaseCommand {
 
@@ -45,9 +45,9 @@ export class PlayCommand extends BaseCommand {
         guild.queueManager.pushSong(song);
     }
 
-    public helpMessage(guild: GuildManager): MessageEmbed {
+    public helpMessage(guild: GuildManager): EmbedBuilder {
         const res = helpTemplate(this);
-        res.addField('Usage: ', `${guild.commandPrefix}${this.name()} <videourl>`);
+        res.addFields({name: 'Usage: ', value: `${guild.commandPrefix}${this.name()} <videourl>`});
         return res;
     }
 }
