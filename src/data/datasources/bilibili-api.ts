@@ -29,7 +29,7 @@ const api = {
         return `https://api.bilibili.com/x/player/pagelist?bvid=${bvid}&jsonp=jsonp`
     },
     searchApi: (keyword, limit): string => {
-        return `https://api.bilibili.com/x/web-interface/search/all/v2?keyword=${keyword}&page=1&order=totalrank&pagesize=${limit}&search_type=video`
+        return `https://api.bilibili.com/x/web-interface/search/type?keyword=${keyword}&page=1&order=totalrank&page_size=${limit}&search_type=video`
     },
     youtubeApi: (keyword, apiKey): string => {
         return `https://youtube.googleapis.com/youtube/v3/search?part=snippet&maxResults=25&q=${keyword}&key=${apiKey}`
@@ -324,8 +324,9 @@ export async function search(keyword: string, limit?: number): Promise<BiliSongE
     const keyWExt = new RegExp(/<([A-Za-z][A-Za-z0-9]*)\b[^>]*>(.*?)<\/\1>/gm);
     const encoded = encodeURI(api.searchApi(keyword, limit));
     logger.info(`Searching for keyword :${keyword} with url ${encoded}`)
-    const response = await jsonRequest(encoded, "https://www.bilibili.com");
-    const rawSongs = (response['data']['result'] as SearchResults[]).find((result): boolean => result.result_type === 'video').data;
+    const response = await jsonRequest(encoded, `https://search.bilibili.com/video?keyword=${keyword.replace(' ', '+')}`);
+    logger.info(`Retrieved results from searching keyword ${keyword}`);
+    const rawSongs = (response['data']['result'] as SearchResults[]);
     if (!rawSongs) return [];
     return rawSongs.map((raw): BiliSongEntity => {
         let title = raw.title;

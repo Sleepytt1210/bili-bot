@@ -155,11 +155,6 @@ export interface Durl{
 }
 
 export interface SearchResults {
-    result_type: string;
-    data: SearchResultData[];
-}
-
-export interface SearchResultData {
     type: string;
     id: string;
     author: string;
