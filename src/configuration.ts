@@ -1,4 +1,4 @@
-import {getLogger, Logger} from "./utils/logger";
+import {getLogger, Logger} from "./utils/logger.js";
 import * as dotenv from "dotenv";
 dotenv.config();
 
