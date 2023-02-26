@@ -118,6 +118,13 @@ export interface UserGarb {
     url_image_ani_cut: string;
 }
 
+export interface PlayUrlResult {
+    code: number
+    message: string
+    ttl: number
+    data: PlayUrlData | DashData;
+}
+
 export interface PlayUrlData {
     from: string;
     result: string;
@@ -152,7 +159,106 @@ export interface Durl{
     vhead: string;
     url: string;
     backup_url: string;
+    baseUrl: string;
 }
+
+export interface DashData{
+    from: string;
+    result: string;
+    message: string;
+    quality: number;
+    format: string;
+    timelength: number;
+    accept_format: string;
+    accept_description: string[];
+    accept_quality: number[];
+    video_codecid: number;
+    seek_param: string;
+    seek_type: string;
+    dash: DashDash;
+    support_formats: DashSupportFormat[];
+    high_format: any;
+    last_play_time: number;
+    last_play_cid: number;
+}
+
+export interface DashDash {
+    duration: number
+    minBufferTime: number
+    min_buffer_time: number
+    video: DashVideo[]
+    audio: DashAudio[]
+    dolby: DashDolby
+    flac: any
+  }
+
+  export interface DashVideo {
+    id: number
+    baseUrl: string
+    base_url: string
+    backupUrl: any
+    backup_url: any
+    bandwidth: number
+    mimeType: string
+    mime_type: string
+    codecs: string
+    width: number
+    height: number
+    frameRate: string
+    frame_rate: string
+    sar: string
+    startWithSap: number
+    start_with_sap: number
+    SegmentBase: DashSegmentBase
+    segment_base: DashSegmentBase2
+    codecid: number
+  }
+  
+  export interface DashSegmentBase {
+    Initialization: string
+    indexRange: string
+  }
+  
+  export interface DashSegmentBase2 {
+    initialization: string
+    index_range: string
+  }
+  
+  export interface DashAudio {
+    id: number;
+    baseUrl: string;
+    base_url: string;
+    backupUrl: any;
+    backup_url: any;
+    bandwidth: number;
+    mimeType: string;
+    mime_type: string;
+    codecs: string;
+    width: number;
+    height: number;
+    frameRate: string;
+    frame_rate: string;
+    sar: string;
+    startWithSap: number;
+    start_with_sap: number;
+    SegmentBase: DashSegmentBase;
+    segment_base: DashSegmentBase2;
+    codecid: number;
+  }
+  
+  export interface DashDolby {
+    type: number
+    audio: any
+  }
+  
+  export interface DashSupportFormat {
+    quality: number
+    format: string
+    new_description: string
+    display_desc: string
+    superscript: string
+    codecs: string[]
+  }
 
 export interface SearchResults {
     type: string;

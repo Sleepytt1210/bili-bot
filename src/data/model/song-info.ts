@@ -2,12 +2,16 @@ import {GuildMember} from "discord.js";
 import {getInfo, ytUidExtract} from "../../utils/utils.js";
 import {SongDataSource} from "../datasources/song-datasource.js";
 import {SongDoc} from "../db/schemas/song.js";
-import {BiliSongEntity, getBasicInfo, bvidExtract, toHms} from "../datasources/bilibili-api.js";
+import {BiliSongEntity, getBiliInfo, bvidExtract, toHms} from "../datasources/bilibili-api.js";
 import ytdl from "ytdl-core";
+import { getLogger } from "../../utils/logger.js";
+import { DashAudio, Durl } from "./bilibili-api-types.js";
+
+const logger = getLogger("Song-Info")
 
 export class SongInfo {
     public readonly url: string;
-    public readonly dlurls: object[];
+    public readonly dlobj: Durl | DashAudio;
     public readonly title: string;
     public readonly author: string;
     public readonly description: string;
@@ -24,7 +28,7 @@ export class SongInfo {
 
     private constructor(
         url: string,
-        dlurls: object[],
+        dlobj: Durl | DashAudio,
         title: string,
         author: string,
         description: string,
@@ -39,7 +43,7 @@ export class SongInfo {
         cached: boolean,
         type: 'y' | 'b') {
         this.url = url;
-        this.dlurls = dlurls;
+        this.dlobj = dlobj;
         this.title = title;
         this.author = author;
         this.description = description;
@@ -71,7 +75,7 @@ export class SongInfo {
         const isLive = format.isLive;
         const title = details.title;
         const thumbnailUrl = tmbarr[tmbarr.length-1].url;
-        const dlurl = [{url: format.url}];
+        const dlurl = {url: format.url, baseUrl: format.url} as Durl;
         const author = details.author.name;
         const description = SongInfo.trim(info.videoDetails.description);
         const uid = details.videoId;
@@ -111,7 +115,7 @@ export class SongInfo {
         const uid = songEntity.uid;
         return new SongInfo(
             url,
-            songEntity.dlurls,
+            songEntity.dlobj,
             title,
             songEntity.author,
             songEntity.description,
@@ -132,7 +136,7 @@ export class SongInfo {
         // Update video download urls
         return new SongInfo(
             record.url,
-            record.dlurls,
+            record.dlobj,
             record.title,
             record.author,
             record.description,
@@ -155,8 +159,9 @@ export class SongInfo {
             return this.withRecord(song, initiator);
         }
         if(bvidExtract(url)){
-            const entity = await getBasicInfo(url).catch((error): BiliSongEntity => {
-                throw Error(`Error retrieving song with url ${url}\nError message: ${error}`);
+            const entity = await getBiliInfo(url).catch((error): BiliSongEntity => {
+                logger.error(`Error retrieving song with url ${url}\nError message: ${error}`)
+                throw error;
             });
             return SongInfo.withSongEntity(entity, initiator);
         }else if(ytUidExtract(url)){

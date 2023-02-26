@@ -1,6 +1,7 @@
 import {Document, Schema} from "mongoose";
 import {SongInfo} from "../../model/song-info.js";
 import {User} from "discord.js";
+import { DashAudio, Durl } from "../../model/bilibili-api-types.js";
 
 const songSchema = new Schema<SongDoc>({
     uid: {type: String, required: true, unique: true},
@@ -12,7 +13,7 @@ const songSchema = new Schema<SongDoc>({
     description: String,
     thumbnail: String,
     cached: Boolean,
-    dlurls: {type: [Object], required: true},
+    dlobj: {type: Object, required: true},
     type: {type: String, required: true}
 }, {
     writeConcern: {
@@ -34,7 +35,7 @@ export interface SongDoc extends Document {
     ext: string;
     size: number;
     cached: boolean|null;
-    dlurls: object[];
+    dlobj: Durl | DashAudio;
     type: 'y' | 'b';
     toSong(initiator: User): SongInfo;
 }

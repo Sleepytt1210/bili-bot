@@ -141,7 +141,7 @@ export class LoadCommand extends BaseCommand {
         playlistDoc?: PlaylistDoc
     ): Promise<void> {
         // Collect playlist information
-        const songs = await api.getBasicInfo(url);
+        const songs = await api.getBiliInfo(url);
         if (!songs) throw CommandException.UserPresentable(`Invalid BiliBili playlist url!`);
 
         // Start loading the song from playlist

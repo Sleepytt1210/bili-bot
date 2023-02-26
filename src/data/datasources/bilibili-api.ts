@@ -5,7 +5,7 @@ import { AbortController } from "abort-controller";
 import {CommandException} from "../../commands/base-command.js";
 import Config from "../../configuration.js";
 import crypto = require("crypto");
-import {Durl, Pages, PlayUrlData, SearchResults, WebInterface} from "../model/bilibili-api-types.js";
+import {DashAudio, PlayUrlResult, Durl, Pages, PlayUrlData, SearchResults, WebInterface, DashData} from "../model/bilibili-api-types.js";
 
 const controller = new AbortController();
 const timeoutLimit = 1500; // 1.5s
@@ -51,7 +51,7 @@ export class BiliSongEntity {
     public play: number;
     public size: number;
     public url: string;
-    public dlurls: Durl[];
+    public dlobj: Durl | DashAudio;
     public cached: boolean;
     public format: string;
     public rawDuration: number;
@@ -118,8 +118,8 @@ export class BiliSongEntity {
         return this;
     }
 
-    public setDlurl(dlurls: Durl[]): this {
-        this.dlurls = dlurls;
+    public setDlobj(dlobj: Durl | DashAudio): this {
+        this.dlobj = dlobj;
         return this;
     }
 
@@ -232,29 +232,43 @@ export function toHms(seconds: number, isLive?: boolean): string {
 }
 
 export async function getExtraInfo(info: BiliSongEntity): Promise<BiliSongEntity> {
-    const payload = `appkey=${api._APP_KEY}&cid=${info.uid}&otype=json&qn=64&fnval=1&platform=html5`
+    const payload = `appkey=${api._APP_KEY}&cid=${info.uid}&otype=json&qn=80&fnval=16&fnver=0`
     const sign = crypto.createHash('md5').update(Buffer.from(payload + api._BILIBILI_KEY).toString('utf-8')).digest('hex');
     const dlapi = api.dlApi(payload, sign, info.bvId);
-    let data: PlayUrlData;
+    let data: PlayUrlResult;
     logger.info(`Fetching video data from ${dlapi}`)
     try{
-        data = (await jsonRequest(dlapi, "https://www.bilibili.com"))['data'] as PlayUrlData;
+        data = (await jsonRequest(dlapi, "https://www.bilibili.com"))
     }catch(error){
         console.dir(data);
         logger.error(`Error fetching data from ${dlapi}: ${error}`)
         throw error;
     }
+    let dlobj: Durl | DashAudio, format: string, contentLength: number;
+    if(data.data['dash']){
+        const res: DashData = data.data as DashData
+        dlobj = res.dash.audio[0];
+        format = res.format;
+        contentLength = Number((await fetch(dlobj.baseUrl, {headers: headers})).headers.get('content-length'));
+    }
+    else if(data.data['durl']){
+        const res: PlayUrlData = data.data as PlayUrlData
+        res.durl = res.durl.map((obj) => {
+            obj.baseUrl = obj.url
+            return obj
+        })
+        dlobj = res.durl[0];
+        format = res.format
+        contentLength = dlobj.size;
+    }
     logger.info(`Successfully fetched video data from  ${dlapi}`)
-    const dllink = data.durl;
-    const format = formatToValue(data.format);
-    const contentLength = dllink.reduce(( sum: number, { size }: {size: number}): number => sum + size , 0);
     return info
-        .setDlurl(dllink)
+        .setDlobj(dlobj)
         .setFormat(format)
         .setContentLength(contentLength);
 }
 
-export async function getBasicInfo(url: string): Promise<BiliSongEntity> {
+export async function getBiliInfo(url: string): Promise<BiliSongEntity> {
     const fullId = bvidExtract(url);
     let id: string;
     if (fullId[7]) {
@@ -301,7 +315,7 @@ export async function getBasicInfo(url: string): Promise<BiliSongEntity> {
     const accHms = toHms(duration);
     const title = (rawCids.length > 1) ? rawCids[pg - 1].part : rawData.title;
     const cached = await SongDataSource.getInstance().isCached(cid);
-    return new BiliSongEntity()
+    return getExtraInfo(new BiliSongEntity()
         .setCid(cid)
         .setTitle(title)
         .setMainTitle(mainTitle)
@@ -316,7 +330,7 @@ export async function getBasicInfo(url: string): Promise<BiliSongEntity> {
         .setCached(cached)
         .setUrl(weburl)
         .setPlay(play)
-        .setType();
+        .setType());
 }
 
 export async function search(keyword: string, limit?: number): Promise<BiliSongEntity[]> {
