@@ -33,7 +33,7 @@ export class InfoCommand extends BaseCommand {
     private async processResult(message: Message, guild: GuildManager, url?: string): Promise<void> {
         const currentSong = (url) ? await SongInfo.withUrl(url, message.member) : guild.queueManager.currentSong;
         if (!currentSong && !guild.queueManager.currentSong) {
-            throw CommandException.UserPresentable('No song is playing!');
+            guild.printEvent('No song is playing!');
         }
         this.logger.info(`Queried song: ${currentSong.title}`);
         const embed = await this.urlInfo(currentSong);
