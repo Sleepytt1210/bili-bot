@@ -20,6 +20,7 @@ export class QueueCommand extends BaseCommand {
     public async run(message: Message, guild: GuildManager, _args?: string[]): Promise<void> {
         guild.checkMemberInChannel(message.member);
         const queueM = guild.queueManager;
+        this.logger.info("Retrieved queue manager.")
         if (queueM.isListEmpty() && queueM.currentSong == null) {
             guild.printEvent('Nothing is playing and queue is empty!')
         } else {
@@ -39,7 +40,7 @@ export class QueueCommand extends BaseCommand {
                     {name: 'Loop:', value: '> ' + `${queueM.isLoop ? 'On' : 'Off'}`, inline: true},
                     {name: 'Total Songs:', value: `> ${queueM.queue.length + 1}`, inline: true}]
             }
-
+            this.logger.info("Printing flip page for queue.")
             guild.printFlipPages(list, opt, message);
         }
     }

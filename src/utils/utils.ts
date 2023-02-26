@@ -173,8 +173,9 @@ export const generateEmbed = (embedOptions: EmbedOptions): EmbedBuilder => {
 
     const embed = new EmbedBuilder()
         .setTitle(embedOptions.embedTitle)
-        .setFooter(embedOptions.embedFooter)
         .setColor(biliblue);
+    
+    if(embedOptions.embedFooter.text || embedOptions.embedFooter.iconURL) embed.setFooter(embedOptions.embedFooter);
     if(embedOptions.fields) embed.addFields(embedOptions.fields);
     const resultMessage = current.length > 0 ? current.map(embedOptions.mapFunc(start)) : [embedOptions.ifEmpty];
     embed.setDescription(resultMessage.join(delim));
