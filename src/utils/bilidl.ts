@@ -1,150 +1,83 @@
-import {PassThrough, Readable} from 'stream';
-import {EventEmitter} from "events";
-import miniget = require('miniget');
 import {SongInfo} from "../data/model/song-info.js";
-import {Durl} from "../data/model/bilibili-api-types.js";
-import {BiliSongEntity, getExtraInfo} from "../data/datasources/bilibili-api.js";
+import {DashAudio, Durl} from "../data/model/bilibili-api-types.js";
 import { getLogger } from './logger.js';
+import { StreamType } from '@discordjs/voice';
+import pm from 'prism-media';
+import { Readable } from "stream";
+
+const { FFmpeg } = pm;
+
+interface StreamOptions {
+    seek?: number;
+    ffmpegArgs?: string[];
+    isLive?: boolean;
+    type?: StreamType;
+}
 
 const logger = getLogger('BiliBili-DL');
 
-export class Streamer extends EventEmitter{
+export class Streamer{
 
-    public constructor() {
-        super();
+    type: StreamType;
+    stream: pm.FFmpeg;
+    url: string;
 
+    constructor(dlurl: Durl | DashAudio, options: StreamOptions) {
+        /**
+         * Stream URL
+         * @type {string}
+         */
+        if(!dlurl || !dlurl.baseUrl) throw new Error("This video is unavailable!");
+        
+        this.url = dlurl.baseUrl;
+        /**
+         * Stream type
+         * @type {DiscordVoice.StreamType}
+         */
+        this.type = !options.type ? StreamType.OggOpus : StreamType.Raw;
+        console.log(`Download url: ${this.url}`)
+        const args = [
+          "-reconnect",
+          "1",
+          "-reconnect_streamed",
+          "1",
+          "-reconnect_delay_max",
+          "5",
+          "-i",
+          dlurl.baseUrl,
+          "-analyzeduration",
+          "0",
+          "-loglevel",
+          "0",
+          "-ar",
+          "48000",
+          "-ac",
+          "2",
+          "-f",
+        ];
+        if (!options.type) {
+          args.push("opus", "-acodec", "libopus");
+        } else {
+          args.push("s16le");
+        }
+        if (typeof options.seek === "number" && options.seek > 0) {
+          args.unshift("-ss", options.seek.toString());
+        }
+        if (Array.isArray(options.ffmpegArgs)) {
+          args.push(...options.ffmpegArgs);
+        }
+        /**
+         * FFmpeg stream
+         * @type {FFmpeg}
+         */
+
+        this.stream = new FFmpeg({ args, shell: false });
+        (<any>this.stream)._readableState && ((<any>this.stream)._readableState.highWaterMark = 1 << 25);
+      }
+
+    static createStream (info: SongInfo): Readable {
+        logger.info(`Start to stream ${info.title}`);
+        return new Streamer(info.dlobj, {}).stream;
     }
-
-    private createStream (): PassThrough {
-        const stream = new PassThrough({
-            highWaterMark: 1 << 25
-        });
-        stream._destroy = (): void => {
-            stream.destroyed = true;
-        };
-        return stream;
-    }
-
-    public ytbdl = (info: SongInfo): Readable => {
-        const stream = this.createStream();
-        this.downloadFromInfoCallback(stream, info);
-        return stream;
-    };
-
-    private downloadFromInfoCallback = async (stream: PassThrough, info: SongInfo): Promise<void> => {
-        const options = {
-            range: undefined,
-            requestOptions: undefined
-        };
-
-        let format: BiliSongEntity;
-        try {
-            format = await getExtraInfo(info.toBiliSongEntity());
-        } catch (e) {
-            logger.error(`${e.toString()} - Error retrieving from ${info.url}`)
-            stream.emit('error', `${e} for ${info}`);
-            return;
-        }
-
-        if (!format.dlurls) {
-            stream.emit('error', Error('This video is unavailable'));
-            return;
-        }
-
-        stream.emit('info', info, format);
-        if (stream.destroyed) {
-            return;
-        }
-
-        // eslint-disable-next-line prefer-const
-        let contentLength, downloaded = 0;
-        const ondata = (chunk): void => {
-            downloaded += chunk.length;
-            stream.emit('progress', chunk.length, downloaded, contentLength);
-        };
-
-        // Download the file in chunks, in this case the default is 10MB,
-        // anything over this will cause youtube to throttle the download
-        const dlChunkSize = 1024 * 1024;
-        let req;
-        let shouldEnd = true;
-        const pipeAndSetEvents = (req, stream, end): void => {
-            // Forward events from the request to the stream.
-            [
-                'abort', 'request', 'response', 'error', 'redirect', 'retry', 'reconnect',
-            ].forEach((event): void => {
-                req.prependListener(event, (arg): void => {
-                    stream.emit(event, arg);
-                });
-            });
-            req.pipe(stream, {end: end});
-        };
-
-        const requestOptions = Object.assign({}, options.requestOptions, {
-            maxReconnects: 6,
-            maxRetries: 3,
-            backoff: {inc: 500, max: 10000},
-        });
-
-        // Manual req
-        let i = 0;
-        let start = 0;
-        let end = start + dlChunkSize;
-        const dlurls = format.dlurls as Durl[];
-        const parts = dlurls.length;
-        contentLength = format.size;
-
-        const getNextChunk = (): void => {
-            const partEnd = Number(dlurls[i].size);
-            const nextPart = (end >= partEnd && i < (parts - 1));
-            if (end >= contentLength) end = 0;
-            if (nextPart) end = partEnd;
-            shouldEnd = !end || end === contentLength;
-
-            requestOptions.headers = Object.assign({}, requestOptions.headers, {
-                Range: `bytes=${start}-${end || ''}`,
-            });
-
-            requestOptions.headers = Object.assign({}, requestOptions.headers, {
-                Host: format.dlurls[i]["url"].match(/.*:\/\/(\S+)\/[a-zA-Z]+\/\d+\/\d+\/\d+\/(\S+)\?/)[1],
-            });
-
-            req = miniget(format.dlurls[i]["url"], requestOptions);
-            req.on('data', ondata);
-            req.on('end', (): void => {
-                if (stream.destroyed) return;
-                if (end <= contentLength) {
-                    if (nextPart) {
-                        i++;
-                        start = 0;
-                        end = dlChunkSize;
-                    } else {
-                        start = end + 1;
-                        end += dlChunkSize;
-                    }
-                    getNextChunk();
-                }
-            });
-            pipeAndSetEvents(req, stream, shouldEnd);
-        };
-        getNextChunk();
-
-        // req = miniget(format.dlurl, requestOptions);
-        // req.on('response', res => {
-        //     if (stream['_isDestroyed']) {
-        //         return;
-        //     }
-        //     if (!contentLength) {
-        //         contentLength = parseInt(res.headers['content-length'], 10);
-        //     }
-        // });
-        // req.on('data', ondata);
-        // pipeAndSetEvents();
-
-        stream._destroy = (): void => {
-            stream.destroyed = true;
-            req.destroy();
-            req.end()
-        };
-    };
+    
 }

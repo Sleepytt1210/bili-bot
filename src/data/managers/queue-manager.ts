@@ -3,7 +3,7 @@ import { SongInfo } from "../model/song-info.js";
 import { getLogger, Logger } from "../../utils/logger.js";
 import { CommandException } from "../../commands/base-command.js";
 import { shuffle } from "../../utils/utils.js";
-import * as stream from "../../utils/bilidl.js";
+import { Streamer } from "../../utils/bilidl.js";
 import {
     AudioPlayer,
     AudioPlayerStatus,
@@ -27,7 +27,6 @@ export class QueueManager {
     public activeConnection: VoiceConnection;
     public audioPlayer: AudioPlayer;
     public audioResource: AudioResource<SongInfo>;
-    private readonly stream: stream.Streamer;
     private _isLoop: boolean;
 
     // eslint-disable-next-line @typescript-eslint/explicit-member-accessibility
@@ -47,11 +46,6 @@ export class QueueManager {
         this.queueLock = false;
         this.threshold = threshold;
         this._isLoop = false;
-        this.stream = new stream.Streamer();
-        this.stream.on('error', (err: Error) => {
-            this.logger.error(`Streamer error: ${err.message}`);
-            throw CommandException.UserPresentable(err.message);
-        })
         this.volume = 0.1;
     }
 
@@ -183,7 +177,9 @@ export class QueueManager {
         if (this.audioPlayer) {
             this.audioPlayer.stop(true);
         }
-        void this.playNext();
+        setTimeout(() => { 
+            void this.playNext();
+        }, 500)
     }
 
     private async playSong(song: SongInfo): Promise<void> {
@@ -231,39 +227,7 @@ export class QueueManager {
     }
 
     public createAudioResource(song: SongInfo): AudioResource<SongInfo> {
-        if (song.type == "b")
-            this.audioResource = createAudioResource(this.stream.ytbdl(song), { metadata: song, inlineVolume: true });
-        else
-            this.audioResource = (createAudioResource(ytdl(song.url, {filter: 'audioonly'}), { metadata: song, inlineVolume: true }))
-        return this.audioResource
-        //     const process = youtubdeDl.exec(
-        //         song.url,
-        //         {
-        //             output: '-',
-        //             quiet: true,
-        //             format: 'bestaudio[ext=webm+acodec=opus+asr=48000]/bestaudio/best',
-        //             limitRate: '500K',
-        //         },
-        //         { stdio: ['ignore', 'pipe', 'ignore'] },
-        //     );
-        //     if (!process.stdout) {
-        //         reject(new Error('No stdout'));
-        //         return;
-        //     }
-        //     const stream = process.stdout;
-        //     const onError = (error: Error) => {
-        //         this.queueLock = false;
-        //         if (!process.killed) process.kill();
-        //         stream.resume();
-        //         reject(error);
-        //     };
-        //     process
-        //         .once('spawn', () => {
-        //             demuxProbe(stream)
-        //                 .then((probe) => resolve(createAudioResource(probe.stream, { metadata: song, inputType: probe.type, inlineVolume: true })))
-        //                 .catch(onError);
-        //         })
-        //         .catch(onError);
-        // });
+        this.audioResource = createAudioResource(Streamer.createStream(song), { metadata: song, inlineVolume: true });
+        return this.audioResource;
     }
 }
