@@ -70,8 +70,8 @@ export class Streamer{
          * FFmpeg stream
          * @type {FFmpeg}
          */
-
         this.stream = new FFmpeg({ args, shell: false });
+        logger.info(`Created FFmpeg stream with command ffmpeg ${args.join(' ')}`);
         (<any>this.stream)._readableState && ((<any>this.stream)._readableState.highWaterMark = 1 << 25);
       }
 

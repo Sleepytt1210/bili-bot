@@ -2,8 +2,10 @@ import youtubeDl from "youtube-dl-exec";
 import {EmbedField, EmbedBuilder, EmbedFooterOptions} from "discord.js";
 import ytdl from "ytdl-core";
 import {BaseCommand} from "../commands/base-command.js";
+import { getLogger } from "./logger.js";
 
 export const biliblue = 0x0ACDFF;
+const logger = getLogger("utils");
 
 /**
  * Api Tools
@@ -174,10 +176,13 @@ export const generateEmbed = (embedOptions: EmbedOptions): EmbedBuilder => {
     const embed = new EmbedBuilder()
         .setTitle(embedOptions.embedTitle)
         .setColor(biliblue);
-    
-    if(embedOptions.embedFooter.text || embedOptions.embedFooter.iconURL) embed.setFooter(embedOptions.embedFooter);
-    if(embedOptions.fields) embed.addFields(embedOptions.fields);
-    const resultMessage = current.length > 0 ? current.map(embedOptions.mapFunc(start)) : [embedOptions.ifEmpty];
-    embed.setDescription(resultMessage.join(delim));
+    try{
+        if(embedOptions.embedFooter.text || embedOptions.embedFooter.iconURL) embed.setFooter(embedOptions.embedFooter);
+        if(embedOptions.fields) embed.addFields(embedOptions.fields);
+        const resultMessage = current.length > 0 ? current.map(embedOptions.mapFunc(start)) : [embedOptions.ifEmpty || "Empty!"];
+        embed.setDescription(resultMessage.join(delim));
+    }catch(error){
+        logger.error(`Error occured while setting embed flip pages: ${error}`)
+    }
     return embed;
 }

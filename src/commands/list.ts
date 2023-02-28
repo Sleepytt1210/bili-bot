@@ -60,7 +60,8 @@ export class ListCommand extends SubCommand {
             embedFooter: {text: `Use ${guild.commandPrefix}select <index> to play a song, ~save <url> to save a song, ~pull <name>/<index> to remove a song`},
             list: songs,
             mapFunc: resultFunc,
-            start: 0
+            start: 0,
+            ifEmpty: `The playlist ${playlist.name} is empty! Please add some songs using the <save> command.` 
         }
 
         guild.printFlipPages(songs, opt, message);
