@@ -162,7 +162,7 @@ const headers = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.111 Safari/537.36'
 }
 
-const baseRequest = (url: string, referrer?: string): Promise<Response> => {
+const baseRequest = async (url: string, referrer?: string): Promise<Response> => {
     if(referrer) headers.Referer = referrer;
     headers['cookie'] = Config.getBiliCookies();
 
@@ -171,7 +171,7 @@ const baseRequest = (url: string, referrer?: string): Promise<Response> => {
     }, timeoutLimit);
     
     try{
-        return fetch(url, {headers: headers, referrer: referrer || "", signal: controller.signal});
+        return await fetch(url, {method: 'get', headers: headers, referrer: referrer || "", signal: controller.signal});
     }catch (e) {
         if(e instanceof AbortError) {
             logger.error(`${e.toString()} - Timeout retrieving data from ${url}`);
@@ -338,7 +338,8 @@ export async function search(keyword: string, limit?: number): Promise<BiliSongE
     const keyWExt = new RegExp(/<([A-Za-z][A-Za-z0-9]*)\b[^>]*>(.*?)<\/\1>/gm);
     const encoded = encodeURI(api.searchApi(keyword, limit));
     logger.info(`Searching for keyword :${keyword} with url ${encoded}`)
-    const response = await jsonRequest(encoded, `https://search.bilibili.com/video?keyword=${keyword.replace(' ', '+')}`);
+    const encodedKeyword = encodeURI(keyword.replace(' ', '+'));
+    const response = await jsonRequest(encoded, `https://search.bilibili.com/video?keyword=${encodedKeyword}`);
     logger.info(`Retrieved results from searching keyword ${keyword}`);
     const rawSongs = (response['data']['result'] as SearchResults[]);
     if (!rawSongs) return [];
