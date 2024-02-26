@@ -26,8 +26,9 @@ class MongoDBService {
         try {
             this.uri = Config.getMongoUri();
             this.dbName = Config.getMongoDatabaseName();
+            this.logger.info('Connecting to ' + this.dbName);
             this.client = await mongoose.connect(this.uri);
-            this.logger.info('Connected to default');
+            this.logger.info('Connected to ' + this.dbName);
 
             this.Guild = this.client.model('Guild', GuildSchema);
             this.Song = this.client.model('Song', SongSchema);
