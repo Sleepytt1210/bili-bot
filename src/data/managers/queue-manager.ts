@@ -189,7 +189,7 @@ export class QueueManager {
             this.guild.printPlaying(song);
         }
 
-        this.audioResource = this.createAudioResource(song);
+        this.audioResource = await this.createAudioResource(song);
         this.queueLock = false;
         try {
             this.audioPlayer.play(this.audioResource);
@@ -226,8 +226,8 @@ export class QueueManager {
         }, 50, this);
     }
 
-    public createAudioResource(song: SongInfo): AudioResource<SongInfo> {
-        this.audioResource = createAudioResource(Streamer.createStream(song), { metadata: song, inlineVolume: true });
+    public async createAudioResource(song: SongInfo): Promise<AudioResource<SongInfo>> {
+        this.audioResource = createAudioResource((await Streamer.createStream(song)), { metadata: song, inlineVolume: true });
         return this.audioResource;
     }
 }
