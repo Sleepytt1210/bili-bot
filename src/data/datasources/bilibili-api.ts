@@ -6,9 +6,10 @@ import {CommandException} from "../../commands/base-command.js";
 import Config from "../../configuration.js";
 import crypto = require("crypto");
 import {DashAudio, PlayUrlResult, Durl, Pages, PlayUrlData, SearchResults, WebInterface, DashData} from "../model/bilibili-api-types.js";
+import { RequestConfig } from "./interfaces/bilibili-api.interface.js";
 
 const controller = new AbortController();
-const timeoutLimit = 1500; // 1.5s
+const timeoutLimit = 10000; // 10s
 
 const logger = getLogger('BilibiliApi');
 
@@ -154,24 +155,43 @@ export class BiliSongEntity {
 }
 
 const headers = {
-    'Accept-Language': 'en-us,en;q=0.5',
-    Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-    'Accept-Charset': 'ISO-8859-1,utf-8;q=0.7,*;q=0.7',
-    Referer: 'https://www.bilibili.com/',
-    'Accept-Encoding': 'gzip, deflate',
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.111 Safari/537.36'
+    "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+    "accept-language": "en-US,en;q=0.9",
+    "cache-control": "max-age=0",
+    "sec-ch-ua": "\"Chromium\";v=\"122\", \"Not(A:Brand\";v=\"24\", \"Microsoft Edge\";v=\"122\"",
+    "sec-ch-ua-mobile": "?0",
+    "sec-ch-ua-platform": "\"Windows\"",
+    "sec-fetch-dest": "document",
+    "sec-fetch-mode": "navigate",
+    "sec-fetch-site": "same-origin",
+    "sec-fetch-user": "?1",
+    "upgrade-insecure-requests": "1",
+    "Referer": "https://www.bilibili.com/",
+    "Referrer-Policy": "no-referrer-when-downgrade",
+    "user-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36 Edg/122.0.0.0"
 }
 
-const baseRequest = async (url: string, referrer?: string): Promise<Response> => {
-    if(referrer) headers.Referer = referrer;
-    headers['cookie'] = Config.getBiliCookies();
+const defaultOptions: RequestConfig = {
+    headers: headers,
+    referer: 'https://www.bilibili.com/',
+    timeout: 4500,
+}
+
+const baseRequest = async (url: string, options: RequestConfig): Promise<Response> => {
+    defaultOptions.headers.referer = options.referer ? options.referer : headers.Referer;
+    defaultOptions.headers['cookie'] = Config.getBiliCookies();
+
+    const appliedOptions = {
+        ...defaultOptions,
+        ...options,
+    }
 
     const timeout = setTimeout(() => {
         controller.abort();
-    }, timeoutLimit);
+    }, appliedOptions.timeout);
     
     try{
-        return await fetch(url, {method: 'get', headers: headers, referrer: referrer || "", signal: controller.signal});
+        return await fetch(url, {method: 'get', headers: appliedOptions.headers, referrer: appliedOptions.referer, signal: controller.signal});
     }catch (e) {
         if(e instanceof AbortError) {
             logger.error(`${e.toString()} - Timeout retrieving data from ${url}`);
@@ -184,8 +204,8 @@ const baseRequest = async (url: string, referrer?: string): Promise<Response> =>
     }
 }
 
-const jsonRequest = async (url: string, referrer?: string): Promise<any> => {
-    return (await baseRequest(url, referrer)).json()
+const jsonRequest = async (url: string, options: RequestConfig): Promise<any> => {
+    return (await baseRequest(url, options)).json()
 }
 
 export function formatToValue(format): string {
@@ -238,7 +258,7 @@ export async function getExtraInfo(info: BiliSongEntity): Promise<BiliSongEntity
     let data: PlayUrlResult;
     logger.info(`Fetching video data from ${dlapi}`)
     try{
-        data = (await jsonRequest(dlapi, "https://www.bilibili.com"))
+        data = (await jsonRequest(dlapi, { referer: info.url, timeout: 5000 }));
     }catch(error){
         console.dir(data);
         logger.error(`Error fetching data from ${dlapi}: ${error}`)
@@ -274,7 +294,7 @@ export async function getBiliInfo(url: string): Promise<BiliSongEntity> {
     if (fullId[7]) {
         if (fullId[8] && fullId[8].match(/(BV\w+|av\d+)/)) id = fullId[0].match(/(BV\w+|av\d+)/)[1];
         else if (fullId[8]) {
-            const resp = await baseRequest(`https://${fullId[7]}`, null);
+            const resp = await baseRequest(`https://${fullId[7]}`, { timeout: 5000 });
             const newurl = resp.headers['location'];
             if (newurl == null) throw CommandException.UserPresentable(`Invalid bilibili url!`);
             id = newurl.match(/(BV\w+|av\d+)/)[1];
@@ -291,7 +311,7 @@ export async function getBiliInfo(url: string): Promise<BiliSongEntity> {
     let response: any;
     logger.info(`Fetching webpage ${cidapi} with referrer: ${weburl}`)
     try{
-        response = await jsonRequest(cidapi, weburl);
+        response = await jsonRequest(cidapi, { referer: weburl });
     }catch(error){
         console.dir(response);
         logger.error(`Error fetching data from ${cidapi}: ${error}`)
@@ -339,7 +359,7 @@ export async function search(keyword: string, limit?: number): Promise<BiliSongE
     const encoded = encodeURI(api.searchApi(keyword, limit));
     logger.info(`Searching for keyword :${keyword} with url ${encoded}`)
     const encodedKeyword = encodeURI(keyword.replace(' ', '+'));
-    const response = await jsonRequest(encoded, `https://search.bilibili.com/video?keyword=${encodedKeyword}`);
+    const response = await jsonRequest(encoded, { referer: `https://search.bilibili.com/video?keyword=${encodedKeyword}&from_source=webtop_search&spm_id_from=333.1007&search_source=3`, timeout: 5000 });
     logger.info(`Retrieved results from searching keyword ${keyword}`);
     const rawSongs = (response['data']['result'] as SearchResults[]);
     if (!rawSongs) return [];
@@ -363,7 +383,7 @@ export async function search(keyword: string, limit?: number): Promise<BiliSongE
 export const ytSearch = async (keyword: string): Promise<string> => {
     const searchApi = api.youtubeApi(keyword, Config.getYTApiKey());
     const url = encodeURI(searchApi);
-    const resp = await jsonRequest(url);
+    const resp = await jsonRequest(url, {});
     if(resp['items'].length === 0) return null;
     return `https://www.youtube.com/watch?v=${resp['items'][0]['id']['videoId']}`;
 }
