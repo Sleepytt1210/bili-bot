@@ -39,7 +39,12 @@ export class BiliApiSessionDataSource {
 
     public async getCookieOf(_id?: Number): Promise<Cookie[]> {
         this.logger.verbose(`Querying cookie of Bili Api Session with id=${_id}`);
-        return MongoDB.BiliApiSession.findOne({_id: _id}, 'cookies');
+        const session = await MongoDB.BiliApiSession.findOne({_id: _id}, 'cookies').exec();
+
+        if (!session) return [];
+
+        return session.cookies;
+
     }
 
     public async isExpired(_id?: Number): Promise<Boolean> {
@@ -70,7 +75,7 @@ export class BiliApiSessionDataSource {
         return session;
     }
 
-    public async updateCookies(_id: Schema.Types.ObjectId, cookies: Cookie[]): Promise<BiliApiSessionDoc> {
+    public async updateCookies(_id: Number, cookies: Cookie[]): Promise<BiliApiSessionDoc> {
         this.logger.verbose(`Updating cookies for Bili Api Session ${_id}`);
         const updatedSession = await MongoDB.BiliApiSession.findOneAndUpdate(
             {

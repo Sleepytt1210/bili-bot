@@ -11,44 +11,43 @@ export interface CookieOptions {
 export class Cookie {
 	public name: string;
 	public value: string;
-    public maxAge: number;
+	public maxAge: number;
 	public expiresIn?: Date;
 	public path?: string;
 	public domain?: string;
 	public secure?: boolean;
 	public httpOnly?: boolean;
-    public sameSite?: boolean;
+	public sameSite?: boolean;
 
 	constructor(
 		name: string,
 		value: string,
-        maxAge?: number,
+		maxAge?: number,
 		expiresIn?: Date,
 		path?: string,
 		domain?: string,
 		secure?: boolean,
 		httpOnly?: boolean,
-        sameSite?: boolean,
+		sameSite?: boolean
 	) {
 		this.name = name;
 		this.value = value;
-        this.maxAge = maxAge;
+		this.maxAge = maxAge;
 		this.expiresIn = expiresIn;
 		this.path = path;
 		this.domain = domain;
 		this.secure = secure;
 		this.httpOnly = httpOnly;
-        this.sameSite = sameSite;
+		this.sameSite = sameSite;
 	}
 
-    /**
-     * Parse a cookie string into a cookie object.
-     * 
-     * @param cookieString A cookie string of format like that in the `set-cookie` header
-     * @returns Cookie | null
-     */
+	/**
+	 * Parse a cookie string into a cookie object.
+	 *
+	 * @param cookieString A cookie string of format like that in the `set-cookie` header
+	 * @returns Cookie | null
+	 */
 	static from(cookieString: string): Cookie | null {
-		let expirationDays = -1; // Default value for session cookies
 
 		const cookieParts = cookieString.split(";").map((part) => part.trim());
 
@@ -64,25 +63,25 @@ export class Cookie {
 			var [key, attributeValue] = attribute.split("=").map((part) => part.trim());
 			switch (key.toLowerCase()) {
 				case "path":
-                    cookie.path = attributeValue;
-                    break;
+					cookie.path = attributeValue;
+					break;
 				case "domain":
-                    cookie.domain = attributeValue;
-                    break;
+					cookie.domain = attributeValue;
+					break;
 				case "max-age":
-                case "maxage":
-                    cookie.maxAge = parseInt(attributeValue, 10);
-                    break;
-                case "expires":
+				case "maxage":
+					cookie.maxAge = parseInt(attributeValue, 10);
+					break;
+				case "expires":
 				case "rawexpires":
 					// Parse date
 					cookie.expiresIn = new Date(attributeValue);
 					break;
 				case "secure":
-                    cookie.secure = true;
-                    break;
+					cookie.secure = true;
+					break;
 				case "httponly":
-                    cookie.httpOnly = true;
+					cookie.httpOnly = true;
 					break;
 				case "samesite":
 					cookie.sameSite = true;
@@ -94,14 +93,27 @@ export class Cookie {
 	}
 
 	toString(): string {
-		const date = this.expiresIn;
-		const expires = "expires=" + date.toUTCString();
-		var cookieString = `${this.name}=${this.value};${expires};path=/;`;
-		if (this.domain) {
-			cookieString += "domain=" + this.domain;
-		}
-		if (this.secure) cookieString += "secure;";
-		if (this.httpOnly) cookieString += "HttpOnly;";
-		return cookieString;
+		return cookieToString(this);
 	}
 }
+
+export const cookieToString = (cookie: Cookie) => {
+	var cookieString = `${cookie.name}=${cookie.value}; `
+	if (cookie.expiresIn) {
+		const date = cookie.expiresIn;
+		cookieString += "expires=" + date.toUTCString() + "; ";
+	}
+
+	if (cookie.path) {
+		cookieString += "path=" + cookie.path + "; ";
+	}
+
+	if (cookie.domain) {
+		cookieString += "domain=" + cookie.domain + "; ";
+	}
+
+	if (cookie.secure) cookieString += "Secure; ";
+	if (cookie.httpOnly) cookieString += "HttpOnly; ";
+	if (cookie.sameSite) cookieString += "SameSite; ";
+	return cookieString.slice(0, cookieString.length - 2);
+};
