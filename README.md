@@ -1,10 +1,20 @@
-# bili-bot v4.0.0
-[![bilibili](https://img.shields.io/badge/bilibili-API-0ACDFF?logo=bilibili)](https://www.bilibili.com) 
-[![discord-bot](https://img.shields.io/badge/discord-bot-_.svg?colorB=8C9EFF&logo=discord)](https://discord.js.org)
+<p align="center">
+    <img src="./assets/img/icon.png" width="128" height="128">
+</p>
 
-Discord bot for playing Bilibili video
+<h1 align="center">
+    Bili Bot
+</h1>
 
-A fork project from https://github.com/JyaouShingan/bili-bot
+<p align="center">
+<a align="center" href="https://www.bilibili.com"><img src="https://img.shields.io/badge/bilibili-API-0ACDFF?logo=bilibili"></a>
+<a align="center" href="https://discord.js.org"><img src="https://img.shields.io/badge/discord-bot-_.svg?colorB=8C9EFF&logo=discord"></a>
+</p>
+
+<h3 align="center">
+A Discord bot that plays from BiliBili
+</h3>
+<p align="center">*Forked from <a href="https://github.com/JyaouShingan/bili-bot">bili-bot</a></p>
 
 ## Installation
 ### 1. Install `NodeJs` version >= v16.6.x
@@ -63,12 +73,14 @@ DiscordToken=your_token
 MONGO_URI=mongodb_url
 DB_NAME=database_name
 YTApiKey=youtube_API_Key
-BILI_COOKIES='DedeUserID=xxxx;DedeUserID__ckMd5=xxxxxxxxxxxxxx;SESSDATA=xxxxxxxxxx'
 ```
-
-Cookies are now required for validation when searching videos via api.bilibili.com. [More info](https://github.com/SocialSisterYi/bilibili-API-collect/blob/master/docs/search/search_request.md)
 
 ## Run
 ```
 npm start
 ```
+
+## Further Reading
+
+ - [BiliBili API Collections](https://github.com/SocialSisterYi/bilibili-API-collect)
+ - [DiscordJS voice](https://discordjs.guide/voice/)
