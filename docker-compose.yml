@@ -1,0 +1,15 @@
+version: '3.4'
+
+services:
+  bilibot:
+    image: bilibot
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    dns:
+      - 1.1.1.1
+      - 8.8.8.8
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
