@@ -20,17 +20,17 @@ A Discord bot that plays from BiliBili
 ### 1. Install `NodeJs` version >= v16.6.x
 ### 2. Install `FFMpeg` library
 
-On macOS:
-```
+#### macOS:
+```sh
 brew install ffmpeg
 ```
 
-On Debian-Linux:
-```
+#### Debian-Linux:
+```sh
 apt-get install ffmpeg
 ```
 
-On Windows:
+#### Windows:
 
 Refer to https://github.com/m-ab-s/media-autobuild_suite
 
@@ -76,8 +76,14 @@ YTApiKey=youtube_API_Key
 ```
 
 ## Run
-```
+### Directly
+```sh
 npm start
+```
+
+### Docker
+```sh
+docker compose up --build -d
 ```
 
 ## Further Reading
