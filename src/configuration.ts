@@ -18,7 +18,6 @@ class Configuration {
     private mongoUri: string;
     private mongoDatabaseName?: string;
     private ytApiKey: string;
-    private biliCookies: string;
 
     private constructor() {
         this.logger = getLogger('Configuration');
@@ -42,16 +41,10 @@ class Configuration {
             return false;
         }
 
-        if (!process.env.BILI_COOKIES) {
-            this.logger.error('Missing "BILI_COOKIES" in env');
-            return false;
-        }
-
         this.discordToken = process.env.DiscordToken;
         this.mongoUri = process.env.MONGO_URI;
         this.mongoDatabaseName = process.env.DB_NAME;
         this.ytApiKey = process.env.YTApiKey;
-        this.biliCookies = process.env.BILI_COOKIES;
 
         return true;
     }
@@ -70,10 +63,6 @@ class Configuration {
 
     public getYTApiKey(): string {
         return this.ytApiKey;
-    }
-
-    public getBiliCookies(): string {
-        return this.biliCookies;
     }
 }
 
