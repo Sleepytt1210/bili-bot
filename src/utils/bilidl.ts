@@ -65,9 +65,12 @@ export class Streamer {
 				!resp?.headers["content-type"].startsWith("video") ||
 				!resp?.headers["content-type"].startsWith("audio")
 			) {
-				logger.info("Invalid resource url, attempting to retrieve a new resource url!");
+				logger.warn("Invalid resource url, attempting to retrieve a new resource url!");
 				dlobj = (await getExtraInfo(songInfo.toBiliSongEntity())).dlobj;
 			}
+		} catch (error) {
+			logger.warn("Error fetching the resource url, attempting to retrieve a new resource url!");
+			dlobj = (await getExtraInfo(songInfo.toBiliSongEntity())).dlobj;
 		} finally {
 			this.url = dlobj.baseUrl;
 			/**
