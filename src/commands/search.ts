@@ -44,11 +44,14 @@ export class SearchCommand extends BaseCommand {
                     return decode(`\`\`\`${start + index + 1}. ${entity.title} - ${entity.play} plays\`\`\``, {level: 'xml'});
                 };
             }
+
+            const currentPlaylist = guild.currentPlaylist.get(message.author.id);  
+
             const opt: EmbedOptions = {
                 embedTitle: `Search Result for ${keyword}: `,
                 start: 0,
                 mapFunc: resultFunc,
-                embedFooter: {text: `Use ${guild.commandPrefix}select [number] to play a song`},
+                embedFooter: {text: `Use ${guild.commandPrefix}select [number] to play a song, ${guild.commandPrefix}save [number] to save a song into ${currentPlaylist?.name || 'selected playlist'}.`},
                 list: entities,
                 delim: '',
             }

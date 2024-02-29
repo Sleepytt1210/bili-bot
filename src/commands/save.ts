@@ -2,7 +2,7 @@ import {BaseCommand, CommandException} from "./base-command.js";
 import {CommandType} from "./command-type.js";
 import {GuildManager} from "../app/guild.js";
 import {Message, EmbedBuilder, User} from "discord.js";
-import {helpTemplate, ytPlIdExtract} from "../utils/utils.js";
+import {helpTemplate, isNum, ytPlIdExtract} from "../utils/utils.js";
 import {SongInfo} from "../data/model/song-info.js";
 import {PlaylistDoc} from "../data/db/schemas/playlist.js";
 import {LoadCommand} from "./load.js";
@@ -24,15 +24,33 @@ export class SaveCommand extends BaseCommand {
 
         const cur = guild.currentPlaylist.get(message.author.id);
         if (!cur) {
-            throw CommandException.UserPresentable(`No playlist selected! Please do \`${guild.commandPrefix}playlist\` or \`${guild.commandPrefix}showlist <name>/<index>\` first`);
+            throw CommandException.UserPresentable(`No playlist selected! Please do \`${guild.commandPrefix}playlist\` or \`${guild.commandPrefix}playlist list <name>/<index>\` first`);
         }
         const query = args[0];
         if (args.length === 1) {
             // Save as a new playlist // If not a playlist
             const isCurSong = (query === 'c' || query === 'current');
-            const song = isCurSong ? guild.queueManager.currentSong : await SongInfo.withUrl(query, message.member);
+            var song: SongInfo; 
+            var errMsg = "";
+            if (query === 'c' || query === 'current') {
+                song = guild.queueManager.currentSong
+                errMsg = "No song is playing!"
+            } else if (isNum(query)) {
+                const index = Number(query);
+                const list = guild.currentSearchResult.get(message.author.id);
+
+                if (!list || list.length === 0) throw CommandException.UserPresentable('Search result timed out or does not exist. Please do a search first!')
+
+                if (index < 1 || index > list.length) throw CommandException.OutOfBound(list.length).error.toString();
+                song = list[query];
+                errMsg = `Invalid index '${query}'!`
+            } else {
+                song = await SongInfo.withUrl(query, message.member);
+                errMsg = `Invalid url ${query}, song cannot be found!`
+            }
+
             if(!song) {
-                throw CommandException.UserPresentable(`${isCurSong ? 'No song is playing!' : `Invalid url ${query}, song cannot be found!`}`);
+                throw CommandException.UserPresentable(errMsg);
             }
             await this.save(guild, message.author, song, cur);
         } else if (args.length === 2) {
@@ -69,6 +87,7 @@ export class SaveCommand extends BaseCommand {
         const pref = guild.commandPrefix + this.name()
         res.addFields({name: 'Usage: ', value: `${pref} <url>
                     ${pref} current/c (Save playing song into selected playlist)
+                    ${pref} <index> (Save song from search list)
                     ${pref} -list/-l <list-url> (Append a playlist into selected playlist)`})
         return res;
     }
