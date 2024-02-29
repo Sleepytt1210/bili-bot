@@ -37,8 +37,8 @@ export class PlaylistManager {
 
         if(!listDoc.songs.includes(songDoc.id)) {
             const updated = await this.playlistDataSource.save(songDoc, listDoc, initiator)
-            this.guild.setCurrentPlaylist(updated, initiator.id);
-            this.guild.setCurrentShowlistResult(await this.songDataSource.getFromPlaylist(listDoc), initiator.id);
+            await this.guild.setCurrentPlaylist(updated, initiator.id);
+            await this.guild.setCurrentShowlistResult(await this.songDataSource.getFromPlaylist(listDoc), initiator.id);
         }
         this.logger.info(`${songDoc.title} saved to ${listDoc.name}`);
     }
@@ -50,8 +50,8 @@ export class PlaylistManager {
 
         const songDoc = await this.songDataSource.getOne(null, id);
 
-        this.guild.setCurrentPlaylist(await this.playlistDataSource.pull(songDoc, listDoc, initiator), initiator.id);
-        this.guild.setCurrentShowlistResult(await this.songDataSource.getFromPlaylist(listDoc), initiator.id);
+        await this.guild.setCurrentPlaylist(await this.playlistDataSource.pull(songDoc, listDoc, initiator), initiator.id);
+        await this.guild.setCurrentShowlistResult(await this.songDataSource.getFromPlaylist(listDoc), initiator.id);
 
         this.logger.info(`${songDoc.title} deleted from ${listDoc.name}`);
         return songDoc.title;

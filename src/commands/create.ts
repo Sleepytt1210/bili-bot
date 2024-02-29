@@ -35,8 +35,8 @@ export class CreateCommand extends SubCommand{
         }
         if(await PlaylistDataSource.getInstance().get(message.author, name))
             throw CommandException.UserPresentable(`Playlist *${name}* already exists!`);
-        await PlaylistDataSource.getInstance().create(name, guild.id, message.author).then((playlist): void => {
-            guild.setCurrentPlaylist(playlist, message.author.id);
+        await PlaylistDataSource.getInstance().create(name, guild.id, message.author).then(async (playlist): Promise<void> => {
+            await guild.setCurrentPlaylist(playlist, message.author.id);
             guild.printEvent(`Playlist *${name}* successfully created and selected!`);
         });
     }

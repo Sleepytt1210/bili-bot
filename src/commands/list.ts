@@ -39,9 +39,9 @@ export class ListCommand extends SubCommand {
                 else throw CommandException.UserPresentable(`Playlist ${name} does not exist!`);
             }
         }
-        guild.setCurrentPlaylist(playlist, userid);
+        await guild.setCurrentPlaylist(playlist, userid);
         const songs = await guild.dataManager.loadFromPlaylist(message.author, playlist);
-        guild.setCurrentShowlistResult(songs, userid);
+        await guild.setCurrentShowlistResult(songs, userid);
 
         const resultFunc = function (start): (song: SongDoc, index: number) => string {
             return (song, index): string => {

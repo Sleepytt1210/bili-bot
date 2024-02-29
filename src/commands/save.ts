@@ -6,7 +6,7 @@ import {helpTemplate, isNum, ytPlIdExtract} from "../utils/utils.js";
 import {SongInfo} from "../data/model/song-info.js";
 import {PlaylistDoc} from "../data/db/schemas/playlist.js";
 import {LoadCommand} from "./load.js";
-import {bvidExtract} from "../data/datasources/bilibili-api.js";
+import {BiliSongEntity, bvidExtract} from "../data/datasources/bilibili-api.js";
 
 export class SaveCommand extends BaseCommand {
 
@@ -72,7 +72,7 @@ export class SaveCommand extends BaseCommand {
         }
     }
 
-    private async save(guild: GuildManager, user: User, song: SongInfo, cur: PlaylistDoc): Promise<void> {
+    private async save(guild: GuildManager, user: User, song: SongInfo | BiliSongEntity, cur: PlaylistDoc): Promise<void> {
         if (!song) {
             throw CommandException.UserPresentable('Invalid url!');
         }
