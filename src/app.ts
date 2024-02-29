@@ -8,7 +8,7 @@ import Redis from "./utils/redis.js";
 const logger = getLogger("app.js");
 
 async function setup(): Promise<boolean> {
-    return MongoDB.start();
+    return (Redis.start() && MongoDB.start());
 }
 
 async function main(): Promise<void> {

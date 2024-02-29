@@ -9,13 +9,13 @@ dotenv.config();
 
 class RedisFacade {
 	private client: redis.RedisClientType;
-	private getAsync: (arg1: string) => Promise<string | null>;
-	private setAsync: (arg1: string, arg2: string, options?: { EX: number }) => Promise<string>;
-	private delAsync: (arg1: string) => Promise<number>;
 	private logger: Logger;
 
 	constructor() {
 		this.logger = getLogger("RedisClient");
+	}
+
+	async start() {
 
 		const redisOptions = {
 			socket: {
@@ -30,24 +30,28 @@ class RedisFacade {
 				(redisOptions["password"] = configuration.getRedisPassword());
 		}
 
-		this.client = redis.createClient(redisOptions).connect();
-		this.getAsync = promisify(this.client.get).bind(this.client);
-		this.setAsync = promisify(this.client.set).bind(this.client);
-		this.delAsync = promisify(this.client.del).bind(this.client);
+		this.logger.info("Connecting to Redis");
+
+		this.client = redis.createClient(redisOptions);
+		await this.client.connect();
+
+		this.logger.info("Connected to Redis");
 
 		this.client.on("error", (err) => {
 			this.logger.error("Redis error:", err);
 		});
+
+		return this.client.isReady;
 	}
 
 	async set(key: string, value: string, expiry: number = 0): Promise<boolean> {
 		try {
 			if (expiry > 0) {
-				await this.setAsync(key, value, {
+				await this.client.set(key, value, {
 					EX: expiry,
 				});
 			} else {
-				await this.setAsync(key, value);
+				await this.client.set(key, value);
 			}
 			this.logger.info(`Set ${key} to ${value}`);
 			return true;
@@ -59,7 +63,7 @@ class RedisFacade {
 
 	async get(key: string): Promise<string | null> {
 		try {
-			const value = await this.getAsync(key);
+			const value = await this.client.get(key);
 			this.logger.info(`Got ${key}: ${value}`);
 			return value;
 		} catch (error) {
@@ -70,7 +74,7 @@ class RedisFacade {
 
 	async del(key: string): Promise<boolean> {
 		try {
-			await this.delAsync(key);
+			await this.client.del(key);
 			this.logger.info(`Deleted ${key}`);
 			return true;
 		} catch (error) {
