@@ -33,9 +33,9 @@ export class DeleteCommand extends SubCommand {
         } else {
             name = args.join(" ");
         }
-        await dts.delete(creator, name).then((): void => {
+        await dts.delete(creator, name).then(async (): Promise<void> => {
             guild.printEvent(`Playlist *${name}* successfully deleted!`);
-            if (name == guild.currentPlaylist.get(creator.id).name) guild.setCurrentPlaylist(null, creator.id);
+            if (name == (await guild.getCurrentPlaylist(creator.id)).name) await guild.setCurrentPlaylist(null, creator.id);
         });
 
     }

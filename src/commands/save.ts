@@ -22,7 +22,7 @@ export class SaveCommand extends BaseCommand {
 
     public async run(message: Message, guild: GuildManager, args?: string[]): Promise<void> {
 
-        const cur = guild.currentPlaylist.get(message.author.id);
+        const cur = await guild.getCurrentPlaylist(message.author.id);
         if (!cur) {
             throw CommandException.UserPresentable(`No playlist selected! Please do \`${guild.commandPrefix}playlist\` or \`${guild.commandPrefix}playlist list <name>/<index>\` first`);
         }
@@ -37,7 +37,7 @@ export class SaveCommand extends BaseCommand {
                 errMsg = "No song is playing!"
             } else if (isNum(query)) {
                 const index = Number(query);
-                const list = guild.currentSearchResult.get(message.author.id);
+                const list = await guild.getCurrentSearchResult(message.author.id);
 
                 if (!list || list.length === 0) throw CommandException.UserPresentable('Search result timed out or does not exist. Please do a search first!')
 

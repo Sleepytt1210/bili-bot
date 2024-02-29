@@ -78,7 +78,7 @@ export class PlaylistsCommand extends BaseCommand {
             const field: APIEmbedField = { name: entry[0], value: `> ${entry[1].helpMessage(guild, message).toJSON().fields[1].value}`, inline: true }
             subs.push(field);
         }
-        const cur = guild.currentPlaylist.get(message.author.id);
+        const cur = await guild.getCurrentPlaylist(message.author.id);
         if (cur) {
             res.addFields({ name: 'Current selected playlist:', value: `${cur.name}` });
         }

@@ -18,6 +18,9 @@ class Configuration {
     private mongoUri: string;
     private mongoDatabaseName?: string;
     private ytApiKey: string;
+    private redisHost: string;
+    private redisPort: string;
+    private redisPassword: string;
 
     private constructor() {
         this.logger = getLogger('Configuration');
@@ -41,10 +44,23 @@ class Configuration {
             return false;
         }
 
+        if (!process.env.REDIS_HOST) {
+            this.logger.error('Missing "REDIS_HOST" in env');
+            return false;
+        }
+
+        if (!process.env.REDIS_PORT) {
+            this.logger.error('Missing "REDIS_PORT" in env');
+            return false;
+        }
+
         this.discordToken = process.env.DiscordToken;
         this.mongoUri = process.env.MONGO_URI;
         this.mongoDatabaseName = process.env.DB_NAME;
         this.ytApiKey = process.env.YTApiKey;
+        this.redisHost = process.env.REDIS_HOST;
+        this.redisPort = process.env.REDIS_PORT;
+        this.redisPassword = process.env.REDIS_PORT;
 
         return true;
     }
@@ -63,6 +79,18 @@ class Configuration {
 
     public getYTApiKey(): string {
         return this.ytApiKey;
+    }
+
+    public getRedisHost(): string {
+        return this.redisHost;
+    }
+
+    public getRedisPort(): string {
+        return this.redisPort;
+    }
+
+    public getRedisPassword(): string {
+        return this.redisPassword;
     }
 }
 

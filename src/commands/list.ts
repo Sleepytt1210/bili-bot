@@ -25,7 +25,7 @@ export class ListCommand extends SubCommand {
         let playlist: PlaylistDoc;
         let switcher = 0;
         const userid = message.author.id;
-        const cur = guild.currentPlaylist.get(userid);
+        const cur = await guild.getCurrentPlaylist(userid);
 
         const timer = guild.currentShowlistTimer.get(userid);
         if (timer) clearTimeout(timer)

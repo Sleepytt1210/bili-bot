@@ -23,9 +23,6 @@ export class SearchCommand extends BaseCommand {
 
         const userid = message.author.id;
 
-        const timer = guild.currentSearchTimer.get(userid);
-        if(timer) clearTimeout(timer)
-
         if (args.length === 0) {
             throw CommandException.UserPresentable('', this.helpMessage(guild));
         }
@@ -33,19 +30,16 @@ export class SearchCommand extends BaseCommand {
         const keyword = args.join(" ");
 
         const entities = await api.search(keyword, 50);
-        guild.setCurrentSearchResult(null, message.author.id);
-        if (entities.length === 0) {
-            throw CommandException.UserPresentable("No result found");
-        } else {
-            guild.setCurrentSearchResult(entities, message.author.id);
+        if (entities?.length > 0) {
+            await guild.setCurrentSearchResult(entities, userid);
 
-            const resultFunc = function (start): (entity: BiliSongEntity, index: number) => string {
+            const resultFunc = function (start: number): (entity: BiliSongEntity, index: number) => string {
                 return (entity, index): string => {
                     return decode(`\`\`\`${start + index + 1}. ${entity.title} - ${entity.play} plays\`\`\``, {level: 'xml'});
                 };
             }
 
-            const currentPlaylist = guild.currentPlaylist.get(message.author.id);  
+            const currentPlaylist = await guild.getCurrentPlaylist(userid);  
 
             const opt: EmbedOptions = {
                 embedTitle: `Search Result for ${keyword}: `,
@@ -56,11 +50,10 @@ export class SearchCommand extends BaseCommand {
                 delim: '',
             }
             guild.printFlipPages(entities, opt, message);
-
-            guild.setCurrentSearchTimer(setTimeout(function (): void {
-                guild.currentSearchResult.delete(userid);
-            }, 300000), userid);
-        }
+        } else {
+            await guild.setCurrentSearchResult(null, userid);
+            throw CommandException.UserPresentable("No result found");
+        } 
     }
 
     public helpMessage(guild: GuildManager): EmbedBuilder {

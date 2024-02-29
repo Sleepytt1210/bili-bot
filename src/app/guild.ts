@@ -9,7 +9,7 @@ import {QueueManager} from "../data/managers/queue-manager.js";
 import {SongDoc} from "../data/db/schemas/song.js";
 import {PlaylistDoc} from "../data/db/schemas/playlist.js";
 import {biliblue, EmbedOptions, generateEmbed} from "../utils/utils.js";
-import Timeout = NodeJS.Timeout;
+import redis from "../utils/redis.js";
 
 export class GuildManager {
     protected readonly logger: Logger;
@@ -17,11 +17,6 @@ export class GuildManager {
     public readonly guild: Guild;
     public readonly queueManager: QueueManager;
     public activeTextChannel: TextChannel;
-    public currentSearchResult?: Map<string, BiliSongEntity[]>;
-    public currentSearchTimer: Map<string, Timeout>;
-    public currentShowlistResult: Map<string, SongDoc[]>;
-    public currentShowlistTimer: Map<string, Timeout>;
-    public currentPlaylist: Map<string, PlaylistDoc>;
     public commandPrefix: string;
     public readonly commandEngine: CommandEngine;
     public readonly dataManager: PlaylistManager;
@@ -32,11 +27,6 @@ export class GuildManager {
         this.id = guild.id;
         this.guild = guild;
         this.queueManager = new QueueManager(this);
-        this.currentSearchResult = new Map<string, BiliSongEntity[]>();
-        this.currentShowlistResult = new Map<string, SongDoc[]>();
-        this.currentPlaylist = new Map<string, PlaylistDoc>();
-        this.currentSearchTimer = new Map<string, NodeJS.Timeout>();
-        this.currentShowlistTimer = new Map<string, NodeJS.Timeout>();
         this.commandPrefix = prefix;
         this.commandEngine = new CommandEngine(this);
         this.dataManager = new PlaylistManager(this);
@@ -56,26 +46,46 @@ export class GuildManager {
 
     // HELPER FUNCTIONS
 
-    public setCurrentSearchResult(result: null | BiliSongEntity[], userid: string): void {
-        this.currentSearchResult.set(userid, result);
-        this.currentShowlistResult.set(userid, null);
+    public async getCurrentSearchResult(userid: string): Promise<BiliSongEntity[] | null> {
+        const searchCacheKey = `searchrs-${this.guild.id}-${userid}`;
+        return JSON.parse(await redis.get(searchCacheKey)) as BiliSongEntity[];
+    }
+    
+    public async setCurrentSearchResult(result: null | BiliSongEntity[], userid: string): Promise<void> {
+        const searchCacheKey = `searchrs-${this.guild.id}-${userid}`;
+        const showlistCacheKey = `pllrs-${this.guild.id}-${userid}`;
+        await this.setOrDel(searchCacheKey, result);
+        await redis.del(showlistCacheKey); // Delete showlist cache key
     }
 
-    public setCurrentSearchTimer(timer: null | Timeout, userid: string): void {
-        this.currentSearchTimer.set(userid, timer);
+    public async getCurrentShowlistResult(userid: string): Promise<SongDoc[] | null> {
+        const showlistCacheKey = `pllrs-${this.guild.id}-${userid}`;
+        return JSON.parse(await redis.get(showlistCacheKey)) as SongDoc[];
     }
 
-    public setCurrentShowlistResult(result: null | SongDoc[], userid: string): void {
-        this.currentShowlistResult.set(userid, result);
-        this.currentSearchResult.set(userid, null);
+    public async setCurrentShowlistResult(result: null | SongDoc[], userid: string): Promise<void> {
+        const searchCacheKey = `searchrs-${this.guild.id}-${userid}`;
+        const showlistCacheKey = `pllrs-${this.guild.id}-${userid}`;
+        await this.setOrDel(showlistCacheKey, result);
+        await redis.del(searchCacheKey); // Delete search cache key
     }
 
-    public setCurrentShowlistTimer(timer: null | Timeout, userid: string): void {
-        this.currentShowlistTimer.set(userid, timer);
+    public async getCurrentPlaylist(userid: string): Promise<PlaylistDoc | null> {
+        const playlistCacheKey = `cslpl-${this.guild.id}-${userid}`;
+        return JSON.parse(await redis.get(playlistCacheKey)) as PlaylistDoc;
     }
 
-    public setCurrentPlaylist(result: PlaylistDoc | null, userid: string): void {
-        this.currentPlaylist.set(userid, result);
+    public async setCurrentPlaylist(result: null | PlaylistDoc, userid: string): Promise<void> {
+        const playlistCacheKey = `cslpl-${this.guild.id}-${userid}`;
+        await this.setOrDel(playlistCacheKey, result);
+    }
+
+    private async setOrDel(key: string, value: any): Promise<void> {
+        if (value == null) {
+            await redis.del(key);
+        } else {
+            await redis.set(key, JSON.stringify(value), 5 * 60); // Expires after 5 minutes
+        }
     }
 
     public setPrefix(prefix: string): void {

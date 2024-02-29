@@ -29,7 +29,7 @@ export class SelectCommand extends BaseCommand {
             throw CommandException.UserPresentable('', this.helpMessage(guild));
         }
 
-        const searchBase = guild.currentSearchResult.get(userid) ? guild.currentSearchResult.get(userid) : guild.currentShowlistResult.get(userid);
+        const searchBase = (await guild.getCurrentSearchResult(userid)) || (await guild.getCurrentShowlistResult(userid));
 
         if (!searchBase) {
             throw CommandException.UserPresentable(`Invalid Operation: Please do \`${guild.commandPrefix}search\` or \`${guild.commandPrefix}pl list\` first`);

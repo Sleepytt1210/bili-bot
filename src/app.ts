@@ -3,6 +3,7 @@ import Config from "./configuration.js";
 import {getLogger} from "./utils/logger.js";
 import MongoDB from "./data/db/service.js";
 import exitHook from "exit-hook";
+import Redis from "./utils/redis.js";
 
 const logger = getLogger("app.js");
 
@@ -19,6 +20,7 @@ async function main(): Promise<void> {
     // Setup exiting hook
     exitHook((): void => {
         logger.info('Exiting...');
+        Redis.quit()
     });
 
     if (await setup()) {

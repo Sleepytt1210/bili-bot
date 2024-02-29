@@ -18,7 +18,7 @@ export class PullCommand extends BaseCommand {
     }
 
     public async run(message: Message, guild: GuildManager, args?: string[]): Promise<void> {
-        const cur = guild.currentPlaylist.get(message.author.id);
+        const cur = await guild.getCurrentPlaylist(message.author.id);
         if (args.length === 1 && isNum(args[0])) {
             const index = Number(args.shift());
             if (!cur) {
@@ -29,7 +29,7 @@ export class PullCommand extends BaseCommand {
             await this.pull(guild, message.author, cur, (index - 1));
         } else if (args.length >= 1) {
             const name = args.join(" ");
-            const songs = guild.currentShowlistResult.get(message.author.id);
+            const songs = await guild.getCurrentPlaylist(message.author.id);
             const doc = songs.find((song): boolean => song.title === name);
             if (!doc) throw CommandException.UserPresentable(`Song ${name} not found in playlist ${cur.name}!`);
             await this.pull(guild, message.author, cur, songs.indexOf(doc));
