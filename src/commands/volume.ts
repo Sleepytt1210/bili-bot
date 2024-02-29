@@ -13,9 +13,7 @@ export class VolumeCommand extends BaseCommand {
         super(['vol', 'sv', 'setvolume', 'v']);
     }
 
-    public name(): CommandType {
-        return CommandType.VOLUME;
-    }
+    public name: CommandType = CommandType.VOLUME;
 
     public async run(message: Message, guild: GuildManager, args?: string[]): Promise<void> {
         const num = args.shift();
@@ -30,8 +28,8 @@ export class VolumeCommand extends BaseCommand {
 
     public helpMessage(guild: GuildManager): EmbedBuilder {
         const res = helpTemplate(this);
-        res.addFields({name: 'Usage: ', value: `${guild.commandPrefix}${this.name()}
-                                            ${guild.commandPrefix}${this.name()} \`0 ~ 100\``});
+        res.addFields({name: 'Usage: ', value: `${guild.commandPrefix}${this.name}
+                                            ${guild.commandPrefix}${this.name} \`0 ~ 100\``});
         return res;
     }
 }

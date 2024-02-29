@@ -8,13 +8,10 @@ import {helpTemplate} from "../utils/utils.js";
 export class SetPrefixCommand extends BaseCommand {
 
     public alias: string[];
+    public name: CommandType = CommandType.SETPREFIX;
 
     public constructor() {
         super(['pr']);
-    }
-
-    public name(): CommandType {
-        return CommandType.SETPREFIX;
     }
 
     public async run(message: Message, guild: GuildManager, args?: string[]): Promise<void> {
@@ -28,7 +25,7 @@ export class SetPrefixCommand extends BaseCommand {
 
     public helpMessage(guild: GuildManager): EmbedBuilder {
         const res = helpTemplate(this);
-        res.addFields({name: 'Usage: ', value: `${guild.commandPrefix}${this.name()} <new prefix>`});
+        res.addFields({name: 'Usage: ', value: `${guild.commandPrefix}${this.name} <new prefix>`});
         return res;
     }
 }

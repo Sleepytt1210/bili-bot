@@ -7,13 +7,10 @@ import {helpTemplate} from "../utils/utils.js";
 export class LeaveCommand extends BaseCommand {
 
     public alias: string[];
+    public name: CommandType = CommandType.LEAVE;
 
     public constructor() {
         super(['quit', 'fuckoff', 'off', 'sayonara', 'bye', 'goaway', 'disconnect', 'dc']);
-    }
-
-    public name(): CommandType {
-        return CommandType.LEAVE;
     }
 
     public async run(message: Message, guild: GuildManager, _args?: string[]): Promise<void> {
@@ -25,7 +22,7 @@ export class LeaveCommand extends BaseCommand {
 
     public helpMessage(guild: GuildManager): EmbedBuilder {
         const res = helpTemplate(this);
-        res.addFields({name: 'Usage: ', value: `${guild.commandPrefix}${this.name()}`});
+        res.addFields({name: 'Usage: ', value: `${guild.commandPrefix}${this.name}`});
         return res;
     }
 }

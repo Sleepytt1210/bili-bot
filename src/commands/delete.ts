@@ -11,13 +11,10 @@ export class DeleteCommand extends SubCommand {
 
     public alias: string[];
     public readonly parent: string;
+    public name: CommandType = CommandType.DELETE
 
     public constructor() {
         super(['d', 'del'], CommandType.PLAYLISTS);
-    }
-
-    public name(): CommandType {
-        return CommandType.DELETE;
     }
 
     public getParent(): string {
@@ -42,7 +39,7 @@ export class DeleteCommand extends SubCommand {
 
     public helpMessage(guild: GuildManager): EmbedBuilder {
         const res = helpTemplate(this);
-        res.addFields({name: 'Usage: ', value: `${guild.commandPrefix}${this.parent} ${this.name()} <name>/<index>`});
+        res.addFields({name: 'Usage: ', value: `${guild.commandPrefix}${this.parent} ${this.name} <name>/<index>`});
         return res;
     }
 }

@@ -12,9 +12,7 @@ export class ResumeCommand extends BaseCommand {
         super(['r', 'unpause', 'continue']);
     }
 
-    public name(): CommandType {
-        return CommandType.RESUME;
-    }
+    public name: CommandType = CommandType.RESUME;
 
     public async run(message: Message, guild: GuildManager, _args?: string[]): Promise<void> {
         guild.checkMemberInChannel(message.member);
@@ -25,7 +23,7 @@ export class ResumeCommand extends BaseCommand {
 
     public helpMessage(guild: GuildManager): EmbedBuilder {
         const res = helpTemplate(this);
-        res.addFields({name: 'Usage: ', value: `${guild.commandPrefix}${this.name()}`});
+        res.addFields({name: 'Usage: ', value: `${guild.commandPrefix}${this.name}`});
         return res;
     }
 }

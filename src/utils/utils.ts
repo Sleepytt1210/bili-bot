@@ -142,7 +142,7 @@ export const isNum = (num: string): boolean => {
 
 export const helpTemplate = (command: BaseCommand): EmbedBuilder => {
     const embed = new EmbedBuilder();
-    embed.setTitle(`**${command.name().toUpperCase()}**`)
+    embed.setTitle(`**${command.name.toUpperCase()}**`)
         .setColor(biliblue)
     if(command.alias && command.alias.length > 0) {
         const aliases = command.alias.join(', ');

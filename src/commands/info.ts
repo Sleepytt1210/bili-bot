@@ -11,13 +11,10 @@ import { AudioPlayerState, AudioPlayerStatus } from "@discordjs/voice";
 export class InfoCommand extends BaseCommand {
 
     public alias: string[];
+    public name: CommandType = CommandType.INFO;
 
     public constructor() {
         super(['i', 'np', 'nowplaying']);
-    }
-
-    public name(): CommandType {
-        return CommandType.INFO;
     }
 
     public async run(message: Message, guild: GuildManager, args?: string[]): Promise<void> {
@@ -70,8 +67,8 @@ export class InfoCommand extends BaseCommand {
     public helpMessage(guild: GuildManager): EmbedBuilder {
         const res = helpTemplate(this);
         res.addFields({
-            name: 'Usage: ', value: `${guild.commandPrefix}${this.name()}
-                                            ${guild.commandPrefix}${this.name()} <url>`
+            name: 'Usage: ', value: `${guild.commandPrefix}${this.name}
+                                            ${guild.commandPrefix}${this.name} <url>`
         });
         return res;
     }

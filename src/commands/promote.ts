@@ -7,13 +7,10 @@ import {helpTemplate} from "../utils/utils.js";
 export class PromoteCommand extends BaseCommand {
 
     public alias: string[];
+    public name: CommandType = CommandType.PROMOTE;
 
     public constructor() {
         super(['pm']);
-    }
-
-    public name(): CommandType {
-        return CommandType.PROMOTE;
     }
 
     public async run(message: Message, guild: GuildManager, args?: string[]): Promise<void> {
@@ -35,7 +32,7 @@ export class PromoteCommand extends BaseCommand {
 
     public helpMessage(guild: GuildManager): EmbedBuilder {
         const res = helpTemplate(this);
-        res.addFields({name: 'Usage: ', value: `${guild.commandPrefix}${this.name()} <index>`});
+        res.addFields({name: 'Usage: ', value: `${guild.commandPrefix}${this.name} <index>`});
         return res;
     }
 }

@@ -12,9 +12,7 @@ export class StopCommand extends BaseCommand {
         super(['s']);
     }
 
-    public name(): CommandType {
-        return CommandType.STOP;
-    }
+    public name: CommandType = CommandType.STOP;
 
     public async run(message: Message, guild: GuildManager, _args?: string[]): Promise<void> {
         guild.checkMemberInChannel(message.member);
@@ -27,7 +25,7 @@ export class StopCommand extends BaseCommand {
 
     public helpMessage(guild: GuildManager): EmbedBuilder {
         const res = helpTemplate(this);
-        res.addFields({name: 'Usage: ', value: `${guild.commandPrefix}${this.name()}`});
+        res.addFields({name: 'Usage: ', value: `${guild.commandPrefix}${this.name}`});
         return res;
     }
 }

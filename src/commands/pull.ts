@@ -4,17 +4,15 @@ import {GuildManager} from "../app/guild.js";
 import {Message, EmbedBuilder, User} from "discord.js";
 import {helpTemplate, isNum} from "../utils/utils.js";
 import {PlaylistDoc} from "../data/db/schemas/playlist.js";
+import { SongDoc } from "../data/db/schemas/song.js";
 
 export class PullCommand extends BaseCommand {
 
     public alias: string[];
+    public name: CommandType = CommandType.PULL;
 
     public constructor() {
         super(['del']);
-    }
-
-    public name(): CommandType {
-        return CommandType.PULL;
     }
 
     public async run(message: Message, guild: GuildManager, args?: string[]): Promise<void> {
@@ -29,23 +27,32 @@ export class PullCommand extends BaseCommand {
             await this.pull(guild, message.author, cur, (index - 1));
         } else if (args.length >= 1) {
             const name = args.join(" ");
-            const songs = await guild.getCurrentPlaylist(message.author.id);
-            const doc = songs.find((song): boolean => song.title === name);
+
+            // Populate playlist with songs
+            const playlist = await (await guild.getCurrentPlaylist(message.author.id)).populate<{songs: SongDoc[]}>('songs');
+            
+            // Find the song of given name
+            const doc = playlist.songs.find((song): boolean => song.title === name);
+            
+            // Throw error if not found
             if (!doc) throw CommandException.UserPresentable(`Song ${name} not found in playlist ${cur.name}!`);
-            await this.pull(guild, message.author, cur, songs.indexOf(doc));
+            
+            // Delete it
+            await this.pull(guild, message.author, cur, playlist.songs.indexOf(doc));
         } else {
             throw CommandException.UserPresentable(`Invalid argument! Please enter a name or index!`);
         }
     }
 
     private async pull(guild: GuildManager, user: User, playlist: PlaylistDoc, index: number): Promise<void> {
+        
         const name = await guild.dataManager.deleteFromPlaylist(index, user, playlist);
         guild.printEvent(`${name} deleted from ${playlist.name}`);
     }
 
     public helpMessage(guild: GuildManager): EmbedBuilder {
         const res = helpTemplate(this);
-        res.addFields({name: 'Usage: ', value: `${guild.commandPrefix}${this.name()} <name>/<index>`})
+        res.addFields({name: 'Usage: ', value: `${guild.commandPrefix}${this.name} <name>/<index>`})
         return res;
     }
 }

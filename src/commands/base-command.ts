@@ -6,56 +6,42 @@ import {CommandType} from "./command-type.js";
 export interface Command {
     alias: string[];
 
-    name(): CommandType;
+    name: CommandType;
 
     run(message: Message, guild: GuildManager, args?: string[]): Promise<void>;
 
-    helpMessage(guild: GuildManager, message?: Message): EmbedBuilder;
+    helpMessage(guild: GuildManager, message?: Message): Promise<EmbedBuilder> | EmbedBuilder;
 }
 
-export class BaseCommand implements Command {
+export abstract class BaseCommand implements Command {
     public alias: string[];
+    public name: CommandType;
     public readonly logger: Logger;
 
     public constructor(alias: string[]) {
-        this.logger = getLogger(`Command - ${this.name()}`);
+        this.logger = getLogger(`Command - ${this.name}`);
         this.alias = alias;
     }
 
-    public name(): CommandType {
-        return CommandType.INVALID;
-    }
+    public abstract run(_message: Message, _guild: GuildManager, _args?: string[]): Promise<void>;
 
-    public run(_message: Message, _guild: GuildManager, _args?: string[]): Promise<void> {
-        return;
-    }
-
-    public helpMessage(guild: GuildManager, message?: Message): EmbedBuilder {
-        throw new Error('helpMessage() requires override');
-    }
+    public abstract helpMessage(guild: GuildManager, message?: Message): Promise<EmbedBuilder> | EmbedBuilder;
 }
 
-export class SubCommand extends BaseCommand {
+export abstract class SubCommand extends BaseCommand {
 
     public parent: string;
     public alias: string[];
+    public name: CommandType;
 
     public constructor(alias: string[], parent: string) {
         super(alias);
         this.parent = parent;
     }
 
-    public name(): CommandType {
-        return super.name();
-    }
+    abstract run(_message: Message, _guild: GuildManager, _args?: string[]): Promise<void>;
 
-    public run(_message: Message, _guild: GuildManager, _args?: string[]): Promise<void> {
-        return;
-    }
-
-    public helpMessage(guild: GuildManager, message?: Message): EmbedBuilder {
-        throw new Error('helpMessage() requires override');
-    }
+    abstract helpMessage(guild: GuildManager, message?: Message): Promise<EmbedBuilder> | EmbedBuilder;
 }
 
 export class CommandException {

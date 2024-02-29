@@ -16,9 +16,7 @@ export class SaveCommand extends BaseCommand {
         super(['add']);
     }
 
-    public name(): CommandType {
-        return CommandType.SAVE;
-    }
+    public name: CommandType = CommandType.SAVE;
 
     public async run(message: Message, guild: GuildManager, args?: string[]): Promise<void> {
 
@@ -84,7 +82,7 @@ export class SaveCommand extends BaseCommand {
 
     public helpMessage(guild: GuildManager): EmbedBuilder {
         const res = helpTemplate(this);
-        const pref = guild.commandPrefix + this.name()
+        const pref = guild.commandPrefix + this.name
         res.addFields({name: 'Usage: ', value: `${pref} <url>
                     ${pref} current/c (Save playing song into selected playlist)
                     ${pref} <index> (Save song from search list)

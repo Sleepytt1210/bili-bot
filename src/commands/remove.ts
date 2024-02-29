@@ -12,9 +12,7 @@ export class RemoveCommand extends BaseCommand {
         super(['rm']);
     }
 
-    public name(): CommandType {
-        return CommandType.REMOVE;
-    }
+    public name: CommandType = CommandType.REMOVE;
 
     public async run(message: Message, guild: GuildManager, args?: string[]): Promise<void> {
         const queue = guild.queueManager.queue;
@@ -37,7 +35,7 @@ export class RemoveCommand extends BaseCommand {
 
     public helpMessage(guild: GuildManager): EmbedBuilder {
         const res = helpTemplate(this);
-        res.addFields({name: 'Usage: ', value: `${guild.commandPrefix}${this.name()} <index>`})
+        res.addFields({name: 'Usage: ', value: `${guild.commandPrefix}${this.name} <index>`})
         return res;
     }
 }

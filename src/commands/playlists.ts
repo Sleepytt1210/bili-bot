@@ -14,6 +14,7 @@ import { getCommand } from "./commands.js";
 export class PlaylistsCommand extends BaseCommand {
 
     public alias: string[];
+    public name: CommandType = CommandType.PLAYLISTS;
     private readonly subcommands: Map<string, SubCommand>;
 
     public constructor() {
@@ -26,10 +27,6 @@ export class PlaylistsCommand extends BaseCommand {
         ]);
     }
 
-    public name(): CommandType {
-        return CommandType.PLAYLISTS;
-    }
-
     public async run(message: Message, guild: GuildManager, args?: string[]): Promise<void> {
 
         if (args.length === 0) {
@@ -38,7 +35,7 @@ export class PlaylistsCommand extends BaseCommand {
             const subcommandName = args.shift();
             const subcommand = getCommand(subcommandName, this.subcommands);
             if (!subcommand) {
-                guild.printEmbeds(this.helpMessage(guild, message));
+                guild.printEmbeds((await this.helpMessage(guild, message)));
             } else {
                 await subcommand.run(message, guild, args);
             }
@@ -69,13 +66,13 @@ export class PlaylistsCommand extends BaseCommand {
         guild.printFlipPages(playlists, opt, message);
     }
 
-    public helpMessage(guild: GuildManager, message: Message): EmbedBuilder {
+    public async helpMessage(guild: GuildManager, message: Message): Promise<EmbedBuilder> {
         const res = helpTemplate(this);
         const subs: APIEmbedField[] = [];
-        const pref = guild.commandPrefix + this.name();
+        const pref = guild.commandPrefix + this.name;
         const entries = this.subcommands.entries();
         for (const entry of entries) {
-            const field: APIEmbedField = { name: entry[0], value: `> ${entry[1].helpMessage(guild, message).toJSON().fields[1].value}`, inline: true }
+            const field: APIEmbedField = { name: entry[0], value: `> ${(await entry[1].helpMessage(guild, message)).toJSON().fields[1].value}`, inline: true }
             subs.push(field);
         }
         const cur = await guild.getCurrentPlaylist(message.author.id);

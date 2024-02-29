@@ -10,13 +10,10 @@ export class CreateCommand extends SubCommand{
 
     public alias: string[];
     public readonly parent: string;
+    public name: CommandType = CommandType.CREATE;
 
     public constructor() {
         super(['cr','c'], CommandType.PLAYLISTS);
-    }
-
-    public name(): CommandType {
-        return CommandType.CREATE;
     }
 
     public getParent(): string {
@@ -46,7 +43,7 @@ export class CreateCommand extends SubCommand{
 
     public helpMessage(guild: GuildManager): EmbedBuilder {
         const res = helpTemplate(this);
-        res.addFields({name: 'Usage: ', value: `${guild.commandPrefix}${this.parent} ${this.name()} <name>`});
+        res.addFields({name: 'Usage: ', value: `${guild.commandPrefix}${this.parent} ${this.name} <name>`});
         return res;
     }
 }

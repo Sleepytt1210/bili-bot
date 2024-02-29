@@ -7,13 +7,10 @@ import {Commands, getCommand} from "./commands.js";
 export class HelpCommand extends BaseCommand {
 
     public alias: string[];
+    public name: CommandType = CommandType.HELP;
 
     public constructor() {
         super(['h']);
-    }
-
-    public name(): CommandType {
-        return CommandType.HELP;
     }
 
     public async run(msg: Message, guild: GuildManager, args?: string[]): Promise<void> {
@@ -65,8 +62,8 @@ export class HelpCommand extends BaseCommand {
 
     public helpMessage(guild: GuildManager): EmbedBuilder {
         const res = new EmbedBuilder();
-        res.setTitle(this.name())
-            .addFields({name: 'Usage: ', value: `${guild.commandPrefix}${this.name()}`});
+        res.setTitle(this.name)
+            .addFields({name: 'Usage: ', value: `${guild.commandPrefix}${this.name}`});
         return res;
     }
 }

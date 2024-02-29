@@ -10,13 +10,10 @@ import {ytSearch} from "../data/datasources/bilibili-api.js";
 export class PlayCommand extends BaseCommand {
 
     public alias: string[];
+    public name: CommandType = CommandType.PLAY;
 
     public constructor() {
         super(['p']);
-    }
-
-    public name(): CommandType {
-        return CommandType.PLAY;
     }
 
     public async run(message: Message, guild: GuildManager, args?: string[]): Promise<void> {
@@ -47,7 +44,7 @@ export class PlayCommand extends BaseCommand {
 
     public helpMessage(guild: GuildManager): EmbedBuilder {
         const res = helpTemplate(this);
-        res.addFields({name: 'Usage: ', value: `${guild.commandPrefix}${this.name()} <videourl>`});
+        res.addFields({name: 'Usage: ', value: `${guild.commandPrefix}${this.name} <videourl>`});
         return res;
     }
 }

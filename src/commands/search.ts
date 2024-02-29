@@ -15,9 +15,7 @@ export class SearchCommand extends BaseCommand {
         super(['se', 'find']);
     }
 
-    public name(): CommandType {
-        return CommandType.SEARCH;
-    }
+    public name: CommandType = CommandType.SEARCH;
 
     public async run(message: Message, guild: GuildManager, args?: string[]): Promise<void> {
 
@@ -58,7 +56,7 @@ export class SearchCommand extends BaseCommand {
 
     public helpMessage(guild: GuildManager): EmbedBuilder {
         const res = helpTemplate(this);
-        res.addFields({name: 'Usage: ', value: `${guild.commandPrefix}${this.name()} <keyword>`});
+        res.addFields({name: 'Usage: ', value: `${guild.commandPrefix}${this.name} <keyword>`});
         return res;
     }
 }

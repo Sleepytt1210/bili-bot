@@ -12,9 +12,7 @@ export class ShuffleCommand extends BaseCommand {
         super(['sh']);
     }
 
-    public name(): CommandType {
-        return CommandType.SHUFFLE;
-    }
+    public name: CommandType = CommandType.SHUFFLE;
 
     public async run(message: Message, guild: GuildManager, _args?: string[]): Promise<void> {
         guild.checkMemberInChannel(message.member);
@@ -25,7 +23,7 @@ export class ShuffleCommand extends BaseCommand {
 
     public helpMessage(guild: GuildManager): EmbedBuilder {
         const res = helpTemplate(this);
-        res.addFields({name: 'Usage: ', value: `${guild.commandPrefix}${this.name()}`});
+        res.addFields({name: 'Usage: ', value: `${guild.commandPrefix}${this.name}`});
         return res;
     }
 }

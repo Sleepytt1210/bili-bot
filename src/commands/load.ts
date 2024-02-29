@@ -19,12 +19,10 @@ const plArgs = {
 
 export class LoadCommand extends BaseCommand {
 
+    public name: CommandType = CommandType.LOAD;
+
     public constructor() {
         super([]);
-    }
-
-    public name(): CommandType {
-        return CommandType.LOAD;
     }
 
     public async run(message: Message, guild: GuildManager, args?: string[]): Promise<void> {
@@ -173,7 +171,7 @@ export class LoadCommand extends BaseCommand {
 
     public helpMessage(guild: GuildManager): EmbedBuilder {
         const res = helpTemplate(this);
-        const pref = `${guild.commandPrefix}${this.name()}`;
+        const pref = `${guild.commandPrefix}${this.name}`;
         res.addFields({name: 'Usage: ', value: `${pref} <list-name>/<list-url> (To just play the playlist)
                 ${pref} <index> (To play an entire playlist)`});
         return res;

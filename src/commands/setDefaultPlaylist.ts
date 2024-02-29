@@ -14,9 +14,7 @@ export class SetDefaultPlaylistCommand extends SubCommand {
         super(['setdefault'], CommandType.PLAYLISTS);
     }
 
-    public name(): CommandType {
-        return CommandType.SETDEFAULTPLAYLIST;
-    }
+    public name: CommandType = CommandType.SETDEFAULTPLAYLIST;
 
     public getParent(): string {
         return this.parent;
@@ -45,7 +43,7 @@ export class SetDefaultPlaylistCommand extends SubCommand {
 
     public helpMessage(guild: GuildManager): EmbedBuilder {
         const res = helpTemplate(this);
-        res.addFields({name: 'Usage: ', value: `${guild.commandPrefix}${this.parent} ${this.name()} <name>/<index>`});
+        res.addFields({name: 'Usage: ', value: `${guild.commandPrefix}${this.parent} ${this.name} <name>/<index>`});
         return res;
     }
 }

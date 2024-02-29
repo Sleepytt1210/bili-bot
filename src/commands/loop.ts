@@ -7,12 +7,10 @@ import {helpTemplate} from "../utils/utils.js";
 
 export class LoopCommand extends BaseCommand {
 
+    public name: CommandType = CommandType.LOOP;
+
     public constructor() {
         super([]);
-    }
-
-    public name(): CommandType {
-        return CommandType.LOOP;
     }
 
     public async run(message: Message, guild: GuildManager): Promise<void> {
@@ -26,7 +24,7 @@ export class LoopCommand extends BaseCommand {
 
     public helpMessage(guild: GuildManager): EmbedBuilder {
         const res = helpTemplate(this);
-        res.addFields({name: 'Usage: ', value: `${guild.commandPrefix}${this.name()}`});
+        res.addFields({name: 'Usage: ', value: `${guild.commandPrefix}${this.name}`});
         return res;
     }
 }

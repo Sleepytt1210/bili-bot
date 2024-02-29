@@ -12,13 +12,10 @@ export class ListCommand extends SubCommand {
 
     public alias: string[];
     public readonly parent: string;
+    public name: CommandType = CommandType.LIST;
 
     public constructor() {
         super(['shw', 'show', 'l'], CommandType.PLAYLISTS);
-    }
-
-    public name(): CommandType {
-        return CommandType.LIST;
     }
 
     public async run(message: Message, guild: GuildManager, args?: string[]): Promise<void> {
@@ -26,9 +23,6 @@ export class ListCommand extends SubCommand {
         let switcher = 0;
         const userid = message.author.id;
         const cur = await guild.getCurrentPlaylist(userid);
-
-        const timer = guild.currentShowlistTimer.get(userid);
-        if (timer) clearTimeout(timer)
 
         // Check argument to be index or name
         if (args.length === 1 && isNum(args[0])) {
@@ -65,17 +59,12 @@ export class ListCommand extends SubCommand {
         }
 
         guild.printFlipPages(songs, opt, message);
-
-        setTimeout(function (): void {
-            guild.currentPlaylist.delete(userid);
-            guild.currentShowlistResult.delete(userid);
-        }, 300000);
     }
 
     public helpMessage(guild: GuildManager): EmbedBuilder {
         const res = helpTemplate(this);
         const pref = guild.commandPrefix;
-        res.addFields([{ name: 'Usage: ', value: `${pref}${this.parent} ${this.name()} <name>/<index>` }, {
+        res.addFields([{ name: 'Usage: ', value: `${pref}${this.parent} ${this.name} <name>/<index>` }, {
             name: 'Following commands: ', value: `${pref}select <index> to play a song
                                                             ${pref}save <url> to save a song
                                                             ${pref}pull <name>/<index> to remove a song`

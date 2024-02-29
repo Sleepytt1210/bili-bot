@@ -12,9 +12,7 @@ export class SummonCommand extends BaseCommand {
         super(['sm', 'join', 'come', 'connect', 'cn', 'hopin']);
     }
 
-    public name(): CommandType {
-        return CommandType.SUMMON;
-    }
+    public name: CommandType = CommandType.SUMMON;
 
     public async run(msg: Message, guild: GuildManager, args?: string[]): Promise<void> {
         guild.checkMemberInChannel(msg.member, false);
@@ -25,7 +23,7 @@ export class SummonCommand extends BaseCommand {
 
     public helpMessage(guild: GuildManager): EmbedBuilder {
         const res = helpTemplate(this);
-        res.addFields({name: 'Usage: ', value: `${guild.commandPrefix}${this.name()}`});
+        res.addFields({name: 'Usage: ', value: `${guild.commandPrefix}${this.name}`});
         return res;
     }
 }

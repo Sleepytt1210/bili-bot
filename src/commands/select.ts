@@ -14,9 +14,7 @@ export class SelectCommand extends BaseCommand {
         super(['sl', 'sel']);
     }
 
-    public name(): CommandType {
-        return CommandType.SELECT;
-    }
+    public name: CommandType = CommandType.SELECT;
 
     public async run(message: Message, guild: GuildManager, args?: string[]): Promise<void> {
         guild.checkMemberInChannel(message.member);
@@ -48,7 +46,7 @@ export class SelectCommand extends BaseCommand {
 
     public helpMessage(guild: GuildManager): EmbedBuilder {
         const res = helpTemplate(this);
-        res.addFields({name: 'Usage: ', value: `${guild.commandPrefix}${this.name()} <index>`});
+        res.addFields({name: 'Usage: ', value: `${guild.commandPrefix}${this.name} <index>`});
         return res;
     }
 }
