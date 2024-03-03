@@ -109,7 +109,7 @@ export class SongInfo {
      * @param songEntity BiliBili song entity.
      * @param initiator User who initiated the command.
      */
-    public static async withSongEntity(songEntity: BiliSongEntity, initiator: GuildMember): Promise<SongInfo>{
+    public static withSongEntity(songEntity: BiliSongEntity, initiator: GuildMember): SongInfo{
         const url = songEntity.url;
         const title = songEntity.title;
         const uid = songEntity.uid;
@@ -132,7 +132,7 @@ export class SongInfo {
         );
     }
 
-    public static async withRecord(record: SongDoc, initiator: GuildMember): Promise<SongInfo> {
+    public static withRecord(record: SongDoc, initiator: GuildMember): SongInfo {
         // Update video download urls
         return new SongInfo(
             record.url,
