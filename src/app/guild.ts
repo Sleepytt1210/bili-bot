@@ -48,7 +48,7 @@ export class GuildManager {
 
     public async getCurrentSearchResult(userid: string): Promise<BiliSongEntity[] | null> {
         const searchCacheKey = `searchrs-${this.guild.id}-${userid}`;
-        return JSON.parse(await redis.get(searchCacheKey)) as BiliSongEntity[];
+        return (JSON.parse(await redis.get(searchCacheKey)) as BiliSongEntity[]);
     }
     
     public async setCurrentSearchResult(result: null | BiliSongEntity[], userid: string): Promise<void> {

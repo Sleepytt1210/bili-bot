@@ -40,7 +40,7 @@ export class SaveCommand extends BaseCommand {
                 if (!list || list.length === 0) throw CommandException.UserPresentable('Search result timed out or does not exist. Please do a search first!')
 
                 if (index < 1 || index > list.length) throw CommandException.OutOfBound(list.length).error.toString();
-                song = list[query];
+                song = await SongInfo.withUrl(list[index - 1].url, message.member);
                 errMsg = `Invalid index '${query}'!`
             } else {
                 song = await SongInfo.withUrl(query, message.member);
