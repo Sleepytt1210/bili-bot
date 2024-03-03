@@ -54,19 +54,21 @@ export class Streamer {
 		// Test the base url
 		logger.info(`Fetching ${dlobj.baseUrl}`);
 		try {
-			const resp = await fetch(dlobj.baseUrl, {
-				method: "get",
-				headers: headers,
-			});
+			if (songInfo.type == "b") {
+				const resp = await fetch(dlobj.baseUrl, {
+					method: "get",
+					headers: headers,
+				});
 
-			// If failed to get baseUrl, or content is not a video
-			if (
-				resp.status != 200 ||
-				!resp?.headers["content-type"].startsWith("video") ||
-				!resp?.headers["content-type"].startsWith("audio")
-			) {
-				logger.warn("Invalid resource url, attempting to retrieve a new resource url!");
-				dlobj = (await getExtraInfo(songInfo.toBiliSongEntity())).dlobj;
+				// If failed to get baseUrl, or content is not a video
+				if (
+					resp.status != 200 ||
+					!resp?.headers["content-type"].startsWith("video") ||
+					!resp?.headers["content-type"].startsWith("audio")
+				) {
+					logger.warn("Invalid resource url, attempting to retrieve a new resource url!");
+					dlobj = (await getExtraInfo(songInfo.toBiliSongEntity())).dlobj;
+				}
 			}
 		} catch (error) {
 			logger.warn("Error fetching the resource url, attempting to retrieve a new resource url!");
