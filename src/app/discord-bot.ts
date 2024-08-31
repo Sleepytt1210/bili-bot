@@ -2,6 +2,7 @@ import {ActivityType, Client, IntentsBitField, Message} from 'discord.js';
 import {Logger, getLogger} from "../utils/logger.js";
 import {GuildManager} from "./guild.js";
 import {GuildDataSource} from "../data/datasources/guild-datasource.js";
+import Config from 'configuration.js';
 
 
 export class DiscordBot {
@@ -24,11 +25,26 @@ export class DiscordBot {
         this.guilds = new Map<string, GuildManager>();
     }
 
+    private static instance: DiscordBot;
+
+    public static getInstance(): DiscordBot {
+        if (!DiscordBot.instance) {
+            DiscordBot.instance = new DiscordBot(Config.getDiscordToken());
+        }
+        return DiscordBot.instance;
+    }
+
+    public findGuild(guildId: string): GuildManager | null {
+        return this.guilds.get(guildId) ?? null;
+    }
+
     public run(): void {
         this.client.login(this.token);
         this.client.once('ready', async (): Promise<void> => {
             await this.clientReady();
-            this.client.user.setActivity("BiliBili", {type: ActivityType.Watching});
+            if (this.client.user) {
+                this.client.user.setActivity("BiliBili", {type: ActivityType.Watching});
+            }
             this.client.on('messageCreate', async (msg): Promise<void> => {
                 await this.handleMessage(msg)
             });
@@ -36,7 +52,7 @@ export class DiscordBot {
     }
 
     private async clientReady(): Promise<void> {
-        this.logger.info(`BiliBot logged in as ${this.client.user.username}`);
+        this.logger.info(`BiliBot logged in as ${this.client.user?.username}`);
         const guildDocs = await GuildDataSource.getInstance().load();
         for(const guildDoc of guildDocs) {
             const guild = this.client.guilds.resolve(guildDoc.uid);
@@ -55,6 +71,6 @@ export class DiscordBot {
             const gds = GuildDataSource.getInstance();
             if(!await gds.getOne(guildId)) await GuildDataSource.getInstance().insert(newManager);
         }
-        await this.guilds.get(guildId).processMessage(msg);
+        await this.guilds.get(guildId)?.processMessage(msg);
     }
 }

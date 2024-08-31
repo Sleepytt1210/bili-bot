@@ -67,7 +67,8 @@ export class BiliApiSessionDataSource {
 
         const session = await new MongoDB.BiliApiSession({
             _id: _id,
-            cookies: cookies
+            cookies: cookies,
+            updatedAt: (new Date())
         }).save();
 
         if (!session) throw new CommandException(false, `Failed to save session ${_id}`);
@@ -81,7 +82,7 @@ export class BiliApiSessionDataSource {
             {
                 _id: _id
             }, {
-                $set: {"cookies": cookies}
+                $set: {"cookies": cookies, "updatedAt": (new Date())}
             }, {
                 new: true
             }

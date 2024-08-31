@@ -8,7 +8,7 @@ import Redis from "./utils/redis.js";
 const logger = getLogger("app.js");
 
 async function setup(): Promise<boolean> {
-    return (Redis.start() && MongoDB.start());
+    return (await Redis.start() && MongoDB.start());
 }
 
 async function main(): Promise<void> {
@@ -24,7 +24,7 @@ async function main(): Promise<void> {
     });
 
     if (await setup()) {
-        const bot = new DiscordBot(Config.getDiscordToken());
+        const bot = DiscordBot.getInstance();
         bot.run();
     } else {
         logger.error('Setup failed, exiting...');

@@ -14,21 +14,22 @@ class Configuration {
     protected readonly logger: Logger;
 
     // Required
-    private discordToken: string;
-    private mongoUri: string;
+    private discordToken!: string;
+    private mongoUri!: string;
     private mongoDatabaseName?: string;
-    private ytApiKey: string;
-    private redisHost: string;
-    private redisPort: string;
-    private redisPassword: string;
+    private ytApiKey!: string;
+    private redisHost!: string;
+    private redisPort!: string;
+    private redisPassword!: string;
 
     private constructor() {
         this.logger = getLogger('Configuration');
     }
 
     public parse(): boolean {
-        if (!process.env.DiscordToken){
-            this.logger.error('Missing "DiscordToken" in env');
+        if (!process.env.DISCORD_TOKEN){
+            this.logger.error('Missing "DISCORD_TOKEN" in env');
+            return false;
         }
         if (!process.env.MONGO_URI) {
             this.logger.error('Missing "MONGO_URI" in env');
@@ -54,7 +55,7 @@ class Configuration {
             return false;
         }
 
-        this.discordToken = process.env.DiscordToken;
+        this.discordToken = process.env.DISCORD_TOKEN;
         this.mongoUri = process.env.MONGO_URI;
         this.mongoDatabaseName = process.env.DB_NAME;
         this.ytApiKey = process.env.YTApiKey;
@@ -73,7 +74,7 @@ class Configuration {
         return this.mongoUri;
     }
 
-    public getMongoDatabaseName(): string | null {
+    public getMongoDatabaseName(): string | undefined {
         return this.mongoDatabaseName;
     }
 
