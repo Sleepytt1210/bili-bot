@@ -1,30 +1,24 @@
-import {BaseCommand} from "../base-command";
+import {SubCommand} from "../base-command";
 import {CommandType} from "../command-type";
 import {GuildManager} from "../../app/guild";
-import {Message, EmbedBuilder} from "discord.js";
-import {helpTemplate} from "../../utils/utils";
+import {EmbedBuilder, ChatInputCommandInteraction, GuildMember} from "discord.js";
 
-
-export class LoopCommand extends BaseCommand {
-
-    public name: CommandType = CommandType.LOOP;
+interface OptionType {
+    on?: boolean;
+}
+export class LoopCommand extends SubCommand<OptionType> {
 
     public constructor() {
-        super([]);
+        super(CommandType.LOOP, CommandType.QUEUE);
     }
 
-    public async run(message: Message, guild: GuildManager): Promise<void> {
+    public async run(member: GuildMember, guild: GuildManager, option: OptionType, __: ChatInputCommandInteraction): Promise<void> {
+        const on = option.on;
         guild.checkMemberInChannel(member)
-        guild.queueManager.isLoop = !guild.queueManager.isLoop;
+        guild.queueManager.isLoop = on !== undefined ? on : !guild.queueManager.isLoop;
         const onOff = (guild.queueManager.isLoop) ? "on" : "off";
         const embed = new EmbedBuilder()
             .setTitle(`Loop is turned ${onOff}!`);
         guild.printEmbeds(embed);
-    }
-
-    public helpMessage(guild: GuildManager): EmbedBuilder {
-        const res = helpTemplate(this);
-        res.addFields({name: 'Usage: ', value: `${guild.commandPrefix}${this.name}`});
-        return res;
     }
 }
