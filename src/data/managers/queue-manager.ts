@@ -23,7 +23,7 @@ export class QueueManager {
     private queueLock: boolean;
     public queue: SongInfo[];
     public volume: number;
-    public currentSong?: SongInfo;
+    public currentSong: SongInfo | null = null;
     public activeConnection: VoiceConnection;
     public audioPlayer: AudioPlayer;
     public audioResource: AudioResource<SongInfo>;

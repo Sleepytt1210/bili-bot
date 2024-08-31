@@ -77,9 +77,9 @@ export class SongInfo {
         const thumbnailUrl = tmbarr[tmbarr.length-1].url;
         const dlurl = {url: format.url, baseUrl: format.url} as Durl;
         const author = details.author.name;
-        const description = SongInfo.trim(info.videoDetails.description);
+        const description = SongInfo.trim(info.videoDetails.description ?? "");
         const uid = details.videoId;
-        const ext = format.mimeType.substr(format.mimeType.indexOf("codecs=\"")+8, format.mimeType.length-1);
+        const ext = format.mimeType?.substring(format.mimeType.indexOf("codecs=\"")+8, format.mimeType.length-1) ?? "";
         const duration = Number(details.lengthSeconds)
         const hms = toHms(duration, isLive);
         const size = Number(format.contentLength);
@@ -139,8 +139,8 @@ export class SongInfo {
             record.dlobj,
             record.title,
             record.author,
-            record.description,
-            record.thumbnail,
+            record.description ?? "",
+            record.thumbnail ?? "",
             record.rawDuration,
             record.hmsDuration,
             initiator,
@@ -148,12 +148,12 @@ export class SongInfo {
             record.ext,
             false,
             record.size,
-            record.cached,
+            record.cached ?? false,
             record.type
         );
     }
 
-    public static async withUrl(url: string, initiator: GuildMember): Promise<SongInfo> {
+    public static async withUrl(url: string, initiator: GuildMember): Promise<SongInfo | null> {
         const song = await SongDataSource.getInstance().getByUrl(url);
         if(song) {
             return this.withRecord(song, initiator);
