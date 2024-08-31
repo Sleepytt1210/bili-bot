@@ -1,13 +1,12 @@
-import {CommandException, SubCommand} from "./base-command.js";
-import {CommandType} from "./command-type.js";
-import {GuildManager} from "../app/guild.js";
+import {CommandException, SubCommand} from "../base-command";
+import {CommandType} from "../command-type";
+import {GuildManager} from "../../app/guild";
 import {Message, EmbedBuilder} from "discord.js";
-import {helpTemplate, isNum} from "../utils/utils.js";
-import {PlaylistDataSource} from "../data/datasources/playlist-datasource.js";
+import {helpTemplate, isNum} from "../../utils/utils";
+import {PlaylistDataSource} from "../../data/datasources/playlist-datasource.js";
 
 export class SetDefaultPlaylistCommand extends SubCommand {
 
-    public alias: string[];
     public readonly parent: string;
 
     public constructor() {
@@ -20,7 +19,7 @@ export class SetDefaultPlaylistCommand extends SubCommand {
         return this.parent;
     }
 
-    public async run(message: Message, guild: GuildManager, args?: string[]): Promise<void> {
+    public async executeHandler(member: GuildMember, guild: GuildManager, args: Omit<CommandInteractionOptionResolver<CacheType>, "getMessage" | "getFocused">, interaction: ChatInputCommandInteraction): Promise<void> {
         let playlist;
         // Check argument to be index or name
         if (args.length === 0) {

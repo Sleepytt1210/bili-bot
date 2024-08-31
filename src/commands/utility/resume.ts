@@ -1,12 +1,11 @@
-import {BaseCommand} from "./base-command.js";
-import {CommandType} from "./command-type.js";
-import {GuildManager} from "../app/guild.js";
+import {BaseCommand} from "../base-command";
+import {CommandType} from "../command-type";
+import {GuildManager} from "../../app/guild";
 import {Message, EmbedBuilder} from "discord.js";
-import {helpTemplate} from "../utils/utils.js";
+import {helpTemplate} from "../../utils/utils";
 
 export class ResumeCommand extends BaseCommand {
 
-    public alias: string[];
 
     public constructor() {
         super(['r', 'unpause', 'continue']);
@@ -14,8 +13,8 @@ export class ResumeCommand extends BaseCommand {
 
     public name: CommandType = CommandType.RESUME;
 
-    public async run(message: Message, guild: GuildManager, _args?: string[]): Promise<void> {
-        guild.checkMemberInChannel(message.member);
+    public async executeHandler(member: GuildMember, guild: GuildManager, args: Omit<CommandInteractionOptionResolver<CacheType>, "getMessage" | "getFocused">, interaction: ChatInputCommandInteraction): Promise<void> {
+        guild.checkMemberInChannel(member);
         if (guild.queueManager.resume()) {
             guild.printEvent(`Audio resumed`);
         }

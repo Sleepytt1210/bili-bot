@@ -1,19 +1,18 @@
-import {BaseCommand, CommandException} from "./base-command.js";
-import {CommandType} from "./command-type.js";
+import {BaseCommand, CommandException} from "../base-command";
+import {CommandType} from "../command-type";
 import {Message, EmbedBuilder} from "discord.js";
-import {GuildManager} from "../app/guild.js";
+import {GuildManager} from "../../app/guild";
 import {Commands, getCommand} from "./commands.js";
 
 export class HelpCommand extends BaseCommand {
 
-    public alias: string[];
     public name: CommandType = CommandType.HELP;
 
     public constructor() {
         super(['h']);
     }
 
-    public async run(msg: Message, guild: GuildManager, args?: string[]): Promise<void> {
+    public async executeHandler(member: GuildMember, guild: GuildManager, args: Omit<CommandInteractionOptionResolver<CacheType>, "getMessage" | "getFocused">, interaction: ChatInputCommandInteraction): Promise<void> {
         const dev = guild.guild.members.resolve("293762535675527168")
         if (args.length === 0) {
             const embed = new EmbedBuilder().setTitle(`Bilibili Player (Modified by: ${dev.displayName})`)

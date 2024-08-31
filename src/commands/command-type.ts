@@ -27,4 +27,5 @@ export enum CommandType {
     INVALID = 'invalid',
     PULL = 'pull',
     VOLUME = 'volume',
+    TEST = 'test'
 }

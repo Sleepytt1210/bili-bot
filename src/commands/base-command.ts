@@ -1,41 +1,49 @@
-import {getLogger, Logger} from "../utils/logger.js";
-import {Message, EmbedBuilder} from "discord.js";
+import {Message, EmbedBuilder, SlashCommandBuilder, ChatInputCommandInteraction, GuildMember, APIInteractionGuildMember, CommandInteractionOptionResolver, CacheType} from "discord.js";
 import {GuildManager} from "../app/guild.js";
 import {CommandType} from "./command-type.js";
+import { DiscordBot } from "app/discord-bot.js";
+import { getLogger, Logger } from "utils/logger.js";
 
-export interface Command {
-    alias: string[];
-
-    name: CommandType;
-
-    run(message: Message, guild: GuildManager, args?: string[]): Promise<void>;
-
-    helpMessage(guild: GuildManager, message?: Message): Promise<EmbedBuilder> | EmbedBuilder;
-}
-
-export abstract class BaseCommand implements Command {
+export abstract class BaseCommand extends SlashCommandBuilder {
     public alias: string[];
-    public name: CommandType;
-    public readonly logger: Logger;
+    protected logger: Logger;
 
-    public constructor(alias: string[]) {
-        this.logger = getLogger(`Command - ${this.name}`);
+    public constructor(alias: string[], name: CommandType) {
+        super();
         this.alias = alias;
+        this.setName(name);
+        this.logger = getLogger(this.constructor.name);
     }
 
-    public abstract run(_message: Message, _guild: GuildManager, _args?: string[]): Promise<void>;
+    public async execute(interaction: ChatInputCommandInteraction): Promise<void> {
+        if (interaction.member && interaction.guildId) {
+            if (!(interaction.member instanceof GuildMember)) {
+                throw new CommandException(true, "Please interact with a \"real\" valid user!");
+            }
+            
+            const bot = DiscordBot.getInstance()
+            const guild = bot.findGuild(interaction.guildId);
 
-    public abstract helpMessage(guild: GuildManager, message?: Message): Promise<EmbedBuilder> | EmbedBuilder;
+            if (!guild) {
+                throw new CommandException(true, "Bot is not registered to this guild!");
+            }
+
+            this.executeHandler(interaction.member, guild, interaction.options, interaction);
+        } else {
+            throw new CommandException(true, "Error retrieving guild or member info!");
+        }
+
+    }
+
+    public abstract executeHandler(_member: GuildMember, _guild: GuildManager, _args: Omit<CommandInteractionOptionResolver<CacheType>, 'getMessage' | 'getFocused'>, interaction: ChatInputCommandInteraction): Promise<void>;
 }
 
 export abstract class SubCommand extends BaseCommand {
 
     public parent: string;
-    public alias: string[];
-    public name: CommandType;
 
-    public constructor(alias: string[], parent: string) {
-        super(alias);
+    public constructor(alias: string[], name: CommandType, parent: string) {
+        super(alias, name);
         this.parent = parent;
     }
 
@@ -47,7 +55,7 @@ export abstract class SubCommand extends BaseCommand {
 export class CommandException {
     public userPresentable: boolean;
     public error: string | Error;
-    public EmbedBuilder: EmbedBuilder;
+    public EmbedBuilder: EmbedBuilder | undefined;
 
     public constructor(userPresentable: boolean, error: string | Error, embed?: EmbedBuilder) {
         this.userPresentable = userPresentable;

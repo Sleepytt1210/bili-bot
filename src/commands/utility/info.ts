@@ -1,8 +1,8 @@
-import { BaseCommand, CommandException } from "./base-command.js";
-import { CommandType } from "./command-type.js";
+import { BaseCommand, CommandException } from "../base-command";
+import { CommandType } from "../command-type";
 import { Message, EmbedBuilder } from "discord.js";
-import { GuildManager } from "../app/guild.js";
-import { helpTemplate } from "../utils/utils.js";
+import { GuildManager } from "../../app/guild";
+import { helpTemplate } from "../../utils/utils";
 import { bvidExtract, toHms } from "../data/datasources/bilibili-api.js";
 import ytdl from "ytdl-core";
 import { SongInfo } from "../data/model/song-info.js";
@@ -10,14 +10,13 @@ import { AudioPlayerState, AudioPlayerStatus } from "@discordjs/voice";
 
 export class InfoCommand extends BaseCommand {
 
-    public alias: string[];
     public name: CommandType = CommandType.INFO;
 
     public constructor() {
         super(['i', 'np', 'nowplaying']);
     }
 
-    public async run(message: Message, guild: GuildManager, args?: string[]): Promise<void> {
+    public async executeHandler(member: GuildMember, guild: GuildManager, args: Omit<CommandInteractionOptionResolver<CacheType>, "getMessage" | "getFocused">, interaction: ChatInputCommandInteraction): Promise<void> {
         if (args.length === 0) {
             await this.processResult(message, guild);
         } else if (args.length === 1) {
@@ -28,7 +27,7 @@ export class InfoCommand extends BaseCommand {
     }
 
     private async processResult(message: Message, guild: GuildManager, url?: string): Promise<void> {
-        const currentSong = (url) ? await SongInfo.withUrl(url, message.member) : guild.queueManager.currentSong;
+        const currentSong = (url) ? await SongInfo.withUrl(url, member) : guild.queueManager.currentSong;
         if (!currentSong && !guild.queueManager.currentSong) {
             guild.printEvent('No song is playing!');
         }

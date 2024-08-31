@@ -1,8 +1,8 @@
-import { CommandException, SubCommand } from "./base-command.js";
-import { CommandType } from "./command-type.js";
-import { GuildManager } from "../app/guild.js";
+import { CommandException, SubCommand } from "../base-command";
+import { CommandType } from "../command-type";
+import { GuildManager } from "../../app/guild";
 import { Message, EmbedBuilder } from "discord.js";
-import { EmbedOptions, helpTemplate, isNum } from "../utils/utils.js";
+import { EmbedOptions, helpTemplate, isNum } from "../../utils/utils";
 import { PlaylistDataSource } from "../data/datasources/playlist-datasource.js";
 import { PlaylistDoc } from "../data/db/schemas/playlist.js";
 import { SongDoc } from "../data/db/schemas/song.js";
@@ -10,7 +10,6 @@ import { PlaylistsCommand } from "./playlists.js";
 
 export class ListCommand extends SubCommand {
 
-    public alias: string[];
     public readonly parent: string;
     public name: CommandType = CommandType.LIST;
 
@@ -18,7 +17,7 @@ export class ListCommand extends SubCommand {
         super(['shw', 'show', 'l'], CommandType.PLAYLISTS);
     }
 
-    public async run(message: Message, guild: GuildManager, args?: string[]): Promise<void> {
+    public async executeHandler(member: GuildMember, guild: GuildManager, args: Omit<CommandInteractionOptionResolver<CacheType>, "getMessage" | "getFocused">, interaction: ChatInputCommandInteraction): Promise<void> {
         let playlist: PlaylistDoc;
         let switcher = 0;
         const userid = message.author.id;

@@ -1,31 +1,26 @@
-import {BaseCommand, CommandException} from "./base-command.js";
-import {CommandType} from "./command-type.js";
-import {GuildManager} from "../app/guild.js";
-import {Message, EmbedBuilder} from "discord.js";
-import * as api from "../data/datasources/bilibili-api.js";
-import {BiliSongEntity} from "../data/datasources/bilibili-api.js";
-import {EmbedOptions, helpTemplate} from "../utils/utils.js";
+import {BaseCommand, CommandException} from "../base-command";
+import {CommandType} from "../command-type";
+import {GuildManager} from "../../app/guild";
+import {CacheType, ChatInputCommandInteraction, CommandInteractionOptionResolver, EmbedBuilder, GuildMember, TextBasedChannel, TextChannel} from "discord.js";
+import * as api from "../../data/datasources/bilibili-api.js";
+import {BiliSongEntity} from "../../data/datasources/bilibili-api.js";
+import {EmbedOptions, helpTemplate} from "../../utils/utils";
 import {decode} from 'html-entities';
 
 export class SearchCommand extends BaseCommand {
 
-    public alias: string[];
 
     public constructor() {
-        super(['se', 'find']);
+        super(['se', 'find'], CommandType.SEARCH);
     }
 
     public name: CommandType = CommandType.SEARCH;
 
-    public async run(message: Message, guild: GuildManager, args?: string[]): Promise<void> {
+    public async executeHandler(member: GuildMember, guild: GuildManager, args: Omit<CommandInteractionOptionResolver<CacheType>, "getMessage" | "getFocused">, interaction: ChatInputCommandInteraction): Promise<void> {
 
-        const userid = message.author.id;
+        const userid = member.user.id;
 
-        if (args.length === 0) {
-            throw CommandException.UserPresentable('', this.helpMessage(guild));
-        }
-
-        const keyword = args.join(" ");
+        const keyword = args.getString("keyword", true);
 
         const entities = await api.search(keyword, 50);
         if (entities?.length > 0) {
@@ -47,7 +42,7 @@ export class SearchCommand extends BaseCommand {
                 list: entities,
                 delim: '',
             }
-            guild.printFlipPages(entities, opt, message);
+            guild.printFlipPages(entities, opt, interaction.channel as TextChannel, member.user.id);
         } else {
             await guild.setCurrentSearchResult(null, userid);
             throw CommandException.UserPresentable("No result found");

@@ -1,8 +1,8 @@
-import { Message, EmbedBuilder, APIEmbedField } from "discord.js";
-import { BaseCommand, CommandException, SubCommand } from "./base-command.js";
-import { CommandType } from "./command-type.js";
-import { GuildManager } from "../app/guild.js";
-import { EmbedOptions, helpTemplate } from "../utils/utils.js";
+import { Message, EmbedBuilder, APIEmbedField, User } from "discord.js";
+import { BaseCommand, CommandException, SubCommand } from "../base-command";
+import { CommandType } from "../command-type";
+import { GuildManager } from "../../app/guild";
+import { EmbedOptions, helpTemplate } from "../../utils/utils";
 import { CreateCommand } from "./create.js";
 import { DeleteCommand } from "./delete.js";
 import { SetDefaultPlaylistCommand } from "./setDefaultPlaylist.js";
@@ -13,7 +13,6 @@ import { getCommand } from "./commands.js";
 
 export class PlaylistsCommand extends BaseCommand {
 
-    public alias: string[];
     public name: CommandType = CommandType.PLAYLISTS;
     private readonly subcommands: Map<string, SubCommand>;
 
@@ -27,7 +26,7 @@ export class PlaylistsCommand extends BaseCommand {
         ]);
     }
 
-    public async run(message: Message, guild: GuildManager, args?: string[]): Promise<void> {
+    public async executeHandler(member: GuildMember, guild: GuildManager, args: Omit<CommandInteractionOptionResolver<CacheType>, "getMessage" | "getFocused">, interaction: ChatInputCommandInteraction): Promise<void> {
 
         if (args.length === 0) {
             await this.listAll(guild, message);
@@ -84,10 +83,9 @@ export class PlaylistsCommand extends BaseCommand {
         return res;
     }
 
-    public static async getPlaylistFromIndex(guild: GuildManager, message: Message, query: string): Promise<PlaylistDoc> {
-        const lists = await guild.dataManager.showPlayLists(message.author);
+    public static async getPlaylistFromIndex(guild: GuildManager, user: User, index: number): Promise<PlaylistDoc> {
+        const lists = await guild.dataManager.showPlayLists(user);
         if (!lists) throw CommandException.UserPresentable(`It's empty here, use ${guild.commandPrefix}pl create <name> to create a new playlist!`)
-        const index = Number.parseInt(query);
         if (index < 1 || index > lists.length) throw CommandException.OutOfBound(lists.length);
         return lists[index - 1];
     }

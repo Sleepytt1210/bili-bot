@@ -23,6 +23,7 @@ import {SaveCommand} from "./save.js";
 import {PullCommand} from "./pull.js";
 import {RemoveCommand} from "./remove.js";
 import {VolumeCommand} from "./volume.js";
+import { TestCommand } from "./test.js";
 
 const BaseCommands = new Map<string, BaseCommand>([
     [CommandType.HELP, new HelpCommand()],
@@ -47,7 +48,8 @@ const BaseCommands = new Map<string, BaseCommand>([
     [CommandType.SELECT, new SelectCommand()],
     [CommandType.SETPREFIX, new SetPrefixCommand()],
     [CommandType.SUMMON, new SummonCommand()],
-    [CommandType.VOLUME, new VolumeCommand()]
+    [CommandType.VOLUME, new VolumeCommand()],
+    [CommandType.TEST, new TestCommand()]
 ]);
 
 export const Commands = BaseCommands;

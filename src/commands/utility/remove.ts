@@ -1,12 +1,11 @@
-import {BaseCommand, CommandException} from "./base-command.js";
-import {CommandType} from "./command-type.js";
-import {GuildManager} from "../app/guild.js";
+import {BaseCommand, CommandException} from "../base-command";
+import {CommandType} from "../command-type";
+import {GuildManager} from "../../app/guild";
 import {Message, EmbedBuilder} from "discord.js";
-import {helpTemplate, isNum} from "../utils/utils.js";
+import {helpTemplate, isNum} from "../../utils/utils";
 
 export class RemoveCommand extends BaseCommand {
 
-    public alias: string[];
 
     public constructor() {
         super(['rm']);
@@ -14,7 +13,7 @@ export class RemoveCommand extends BaseCommand {
 
     public name: CommandType = CommandType.REMOVE;
 
-    public async run(message: Message, guild: GuildManager, args?: string[]): Promise<void> {
+    public async executeHandler(member: GuildMember, guild: GuildManager, args: Omit<CommandInteractionOptionResolver<CacheType>, "getMessage" | "getFocused">, interaction: ChatInputCommandInteraction): Promise<void> {
         const queue = guild.queueManager.queue;
         if (args.length === 1 && isNum(args[0])) {
             const index = Number(args.shift());

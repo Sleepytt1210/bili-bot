@@ -1,15 +1,14 @@
-import {CommandException, SubCommand} from "./base-command.js";
-import {CommandType} from "./command-type.js";
-import {GuildManager} from "../app/guild.js";
+import {CommandException, SubCommand} from "../base-command";
+import {CommandType} from "../command-type";
+import {GuildManager} from "../../app/guild";
 import {Message, EmbedBuilder} from "discord.js";
 import {PlaylistDataSource} from "../data/datasources/playlist-datasource.js";
-import {helpTemplate, isNum} from "../utils/utils.js";
+import {helpTemplate, isNum} from "../../utils/utils";
 import {PlaylistsCommand} from "./playlists.js";
 import {query} from "winston";
 
 export class DeleteCommand extends SubCommand {
 
-    public alias: string[];
     public readonly parent: string;
     public name: CommandType = CommandType.DELETE
 

@@ -1,20 +1,19 @@
-import {BaseCommand} from "./base-command.js";
-import {CommandType} from "./command-type.js";
-import {GuildManager} from "../app/guild.js";
+import {BaseCommand} from "../base-command";
+import {CommandType} from "../command-type";
+import {GuildManager} from "../../app/guild";
 import {Message, EmbedBuilder} from "discord.js";
-import {helpTemplate} from "../utils/utils.js";
+import {helpTemplate} from "../../utils/utils";
 
 export class LeaveCommand extends BaseCommand {
 
-    public alias: string[];
     public name: CommandType = CommandType.LEAVE;
 
     public constructor() {
         super(['quit', 'fuckoff', 'off', 'sayonara', 'bye', 'goaway', 'disconnect', 'dc']);
     }
 
-    public async run(message: Message, guild: GuildManager, _args?: string[]): Promise<void> {
-        guild.checkMemberInChannel(message.member);
+    public async executeHandler(member: GuildMember, guild: GuildManager, args: Omit<CommandInteractionOptionResolver<CacheType>, "getMessage" | "getFocused">, interaction: ChatInputCommandInteraction): Promise<void> {
+        guild.checkMemberInChannel(member);
         if (!guild.queueManager.activeConnection) return;
         guild.queueManager.stop();
         guild.queueManager.activeConnection.disconnect();

@@ -1,21 +1,20 @@
-import {BaseCommand, CommandException} from "./base-command.js";
-import {CommandType} from "./command-type.js";
-import {GuildManager} from "../app/guild.js";
+import {BaseCommand, CommandException} from "../base-command";
+import {CommandType} from "../command-type";
+import {GuildManager} from "../../app/guild";
 import {Message, EmbedBuilder, User} from "discord.js";
-import {helpTemplate, isNum} from "../utils/utils.js";
+import {helpTemplate, isNum} from "../../utils/utils";
 import {PlaylistDoc} from "../data/db/schemas/playlist.js";
 import { SongDoc } from "../data/db/schemas/song.js";
 
 export class PullCommand extends BaseCommand {
 
-    public alias: string[];
     public name: CommandType = CommandType.PULL;
 
     public constructor() {
         super(['del']);
     }
 
-    public async run(message: Message, guild: GuildManager, args?: string[]): Promise<void> {
+    public async executeHandler(member: GuildMember, guild: GuildManager, args: Omit<CommandInteractionOptionResolver<CacheType>, "getMessage" | "getFocused">, interaction: ChatInputCommandInteraction): Promise<void> {
         const cur = await guild.getCurrentPlaylist(message.author.id);
         if (args.length === 1 && isNum(args[0])) {
             const index = Number(args.shift());

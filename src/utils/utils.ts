@@ -1,8 +1,10 @@
 import youtubeDl from "youtube-dl-exec";
-import {EmbedField, EmbedBuilder, EmbedFooterOptions} from "discord.js";
+import {EmbedField, EmbedBuilder, EmbedFooterOptions, GuildMember, StringSelectMenuOptionBuilder, StringSelectMenuBuilder, ActionRowBuilder, ChatInputCommandInteraction, Interaction, ComponentType, StringSelectMenuInteraction} from "discord.js";
 import ytdl from "ytdl-core";
-import {BaseCommand} from "../commands/base-command.js";
+import {BaseCommand, CommandException} from "../commands/base-command.js";
 import { getLogger } from "./logger.js";
+import { PlaylistDoc } from "data/db/schemas/playlist.js";
+import { PlaylistDataSource } from "data/datasources/playlist-datasource.js";
 
 export const biliblue = 0x0ACDFF;
 const logger = getLogger("utils");
@@ -106,7 +108,7 @@ export const getInfo = ytdl.getInfo;
 
 export const getInfoWithArg = (url: string, args: object): Promise<YtResponse> => youtubeDl(url, args);
 
-export const ytUidExtract = (url: string): string => {
+export const ytUidExtract = (url: string): string | null => {
     // youtube
     // https://stackoverflow.com/questions/3452546/how-do-i-get-the-youtube-video-id-from-a-url
     // Author: tsdorsey
@@ -115,7 +117,7 @@ export const ytUidExtract = (url: string): string => {
     return match ? match[7] : null;
 };
 
-export const ytPlIdExtract = (url: string): string => {
+export const ytPlIdExtract = (url: string): string | null => {
     const re = /^(https?:\/\/)?(([a-z]+\.)?(youtube(-nocookie)?|youtube.googleapis)\.com.*(playlist\?)?|youtu\.be\/)list=([_0-9a-z-]+)/i;
     const match = url.match(re);
     return match ? match[7] : null;
@@ -158,7 +160,7 @@ export const helpTemplate = (command: BaseCommand): EmbedBuilder => {
 export interface EmbedOptions {
     embedTitle: string;
     start: number;
-    mapFunc: (start) => (entity, index) => string;
+    mapFunc: (start: number) => ((entity: any, index: number) => string);
     embedFooter: EmbedFooterOptions;
     list: object[];
     delim?: string;
@@ -185,4 +187,38 @@ export const generateEmbed = (embedOptions: EmbedOptions): EmbedBuilder => {
         logger.error(`Error occured while setting embed flip pages: ${error}`)
     }
     return embed;
+}
+
+export const playlistSelector = async (member: GuildMember, interaction: ChatInputCommandInteraction): Promise<PlaylistDoc> => {
+    const playlistsDocs = await (PlaylistDataSource.getInstance()).getAll(member.user)
+        const playlistOptions = playlistsDocs.map((playlistDoc, idx) => {
+            return new StringSelectMenuOptionBuilder().setDefault(playlistDoc.default).setLabel(playlistDoc.name).setValue(String(idx))
+        });
+
+        const playlistMenu = new StringSelectMenuBuilder()
+			.setCustomId('playlists')
+            .addOptions(...playlistOptions)
+			.setPlaceholder('Select a playlist.')
+			.setMaxValues(1);
+
+		const row1 = new ActionRowBuilder<StringSelectMenuBuilder>()
+			.addComponents(playlistMenu);
+
+		const response = await interaction.reply({
+			content: 'Select playlist to save the song:',
+			components: [row1],
+            ephemeral: true
+		});
+
+        const collectorFilter = (i: StringSelectMenuInteraction) => i.user.id === interaction.user.id && i.customId == "playlists";
+
+        try {
+            const playlistSelection = await response.awaitMessageComponent({ filter: collectorFilter, componentType: ComponentType.StringSelect, time: 10_000 });
+            const playlist_index = playlistSelection.values[0];
+            const playlist = playlistsDocs[Number(playlist_index)];
+            playlistSelection.update({ content: `Selected playlist: ${playlist.name}`, components: [] });
+            return playlist;
+        } catch (e) {
+            throw CommandException.UserPresentable(`Playlist selection expired!`)
+        }
 }

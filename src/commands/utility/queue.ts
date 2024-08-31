@@ -1,13 +1,12 @@
-import {BaseCommand} from "./base-command.js";
-import {CommandType} from "./command-type.js";
-import {GuildManager} from "../app/guild.js";
+import {BaseCommand} from "../base-command";
+import {CommandType} from "../command-type";
+import {GuildManager} from "../../app/guild";
 import {Message, EmbedBuilder} from "discord.js";
-import {EmbedOptions, helpTemplate} from "../utils/utils.js";
+import {EmbedOptions, helpTemplate} from "../../utils/utils";
 import {SongInfo} from "../data/model/song-info.js";
 
 export class QueueCommand extends BaseCommand {
 
-    public alias: string[];
 
     public constructor() {
         super(['q']);
@@ -15,8 +14,8 @@ export class QueueCommand extends BaseCommand {
 
     public name: CommandType = CommandType.QUEUE;
 
-    public async run(message: Message, guild: GuildManager, _args?: string[]): Promise<void> {
-        guild.checkMemberInChannel(message.member);
+    public async executeHandler(member: GuildMember, guild: GuildManager, args: Omit<CommandInteractionOptionResolver<CacheType>, "getMessage" | "getFocused">, interaction: ChatInputCommandInteraction): Promise<void> {
+        guild.checkMemberInChannel(member);
         const queueM = guild.queueManager;
         this.logger.info("Retrieved queue manager.")
         if (queueM.isListEmpty() && queueM.currentSong == null) {

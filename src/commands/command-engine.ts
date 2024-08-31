@@ -1,8 +1,8 @@
-import {GuildManager} from "../app/guild.js";
-import {Command, CommandException} from "./base-command.js";
-import {Commands, getCommand} from "./commands.js";
+import {GuildManager} from "../app/guild";
+import {Command, CommandException} from "./base-command";
+import {Commands, getCommand} from "./commands";
 import {Message} from "discord.js";
-import {getLogger, Logger} from "../utils/logger.js";
+import {getLogger, Logger} from "../utils/logger";
 
 export class CommandEngine {
     protected guild: GuildManager;

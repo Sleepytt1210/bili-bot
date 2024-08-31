@@ -1,20 +1,19 @@
-import {BaseCommand, CommandException} from "./base-command.js";
-import {CommandType} from "./command-type.js";
-import {GuildManager} from "../app/guild.js";
+import {BaseCommand, CommandException} from "../base-command";
+import {CommandType} from "../command-type";
+import {GuildManager} from "../../app/guild";
 import {Message, EmbedBuilder} from "discord.js";
-import {helpTemplate} from "../utils/utils.js";
+import {helpTemplate} from "../../utils/utils";
 
 export class NextCommand extends BaseCommand {
 
-    public alias: string[];
     public name: CommandType = CommandType.NEXT;
 
     public constructor() {
         super(['n', 'skip']);
     }
 
-    public async run(message: Message, guild: GuildManager, _args?: string[]): Promise<void> {
-        guild.checkMemberInChannel(message.member);
+    public async executeHandler(member: GuildMember, guild: GuildManager, args: Omit<CommandInteractionOptionResolver<CacheType>, "getMessage" | "getFocused">, interaction: ChatInputCommandInteraction): Promise<void> {
+        guild.checkMemberInChannel(member);
         if (guild.queueManager.isListEmpty()) {
             if (guild.queueManager.isPlaying()) {
                 guild.queueManager.stop();

@@ -3,8 +3,8 @@
 //         return CommandType.RANDOM;
 //     }
 //
-//     public async run(message: Message, guild: GuildManager, args?: string[]): Promise<void> {
-//         guild.checkMemberInChannel(message.member);
+//     public async executeHandler(member: GuildMember, guild: GuildManager, args: Omit<CommandInteractionOptionResolver<CacheType>, "getMessage" | "getFocused">, interaction: ChatInputCommandInteraction): Promise<void> {
+//         guild.checkMemberInChannel(member);
 //         await this.doRandom(message, guild, args[0], args[1]);
 //     }
 //

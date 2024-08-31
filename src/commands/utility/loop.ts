@@ -1,8 +1,8 @@
-import {BaseCommand} from "./base-command.js";
-import {CommandType} from "./command-type.js";
-import {GuildManager} from "../app/guild.js";
+import {BaseCommand} from "../base-command";
+import {CommandType} from "../command-type";
+import {GuildManager} from "../../app/guild";
 import {Message, EmbedBuilder} from "discord.js";
-import {helpTemplate} from "../utils/utils.js";
+import {helpTemplate} from "../../utils/utils";
 
 
 export class LoopCommand extends BaseCommand {
@@ -14,7 +14,7 @@ export class LoopCommand extends BaseCommand {
     }
 
     public async run(message: Message, guild: GuildManager): Promise<void> {
-        guild.checkMemberInChannel(message.member)
+        guild.checkMemberInChannel(member)
         guild.queueManager.isLoop = !guild.queueManager.isLoop;
         const onOff = (guild.queueManager.isLoop) ? "on" : "off";
         const embed = new EmbedBuilder()
