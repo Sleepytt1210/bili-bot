@@ -1,6 +1,6 @@
 import {getLogger, Logger} from "../utils/logger.js";
 import {SongInfo} from "../data/model/song-info.js";
-import {Guild, GuildMember, Message, EmbedBuilder, MessageReaction, TextChannel} from "discord.js";
+import {Guild, GuildMember, Message, EmbedBuilder, MessageReaction, TextChannel, User} from "discord.js";
 import {BiliSongEntity} from "../data/datasources/bilibili-api.js";
 import {CommandEngine} from "../commands/command-engine.js";
 import {CommandException} from "../commands/base-command.js";
@@ -16,7 +16,7 @@ export class GuildManager {
     public readonly id: string;
     public readonly guild: Guild;
     public readonly queueManager: QueueManager;
-    public activeTextChannel: TextChannel;
+    public activeTextChannel: TextChannel | null;
     public commandPrefix: string;
     public readonly commandEngine: CommandEngine;
     public readonly dataManager: PlaylistManager;
@@ -27,6 +27,7 @@ export class GuildManager {
         this.id = guild.id;
         this.guild = guild;
         this.queueManager = new QueueManager(this);
+        this.activeTextChannel = null;
         this.commandPrefix = prefix;
         this.commandEngine = new CommandEngine(this);
         this.dataManager = new PlaylistManager(this);
@@ -48,7 +49,8 @@ export class GuildManager {
 
     public async getCurrentSearchResult(userid: string): Promise<BiliSongEntity[] | null> {
         const searchCacheKey = `searchrs-${this.guild.id}-${userid}`;
-        return (JSON.parse(await redis.get(searchCacheKey)) as BiliSongEntity[]);
+        const result = await redis.get(searchCacheKey);
+        return result ? (JSON.parse(result) as BiliSongEntity[]) : null;
     }
     
     public async setCurrentSearchResult(result: null | BiliSongEntity[], userid: string): Promise<void> {
@@ -60,7 +62,8 @@ export class GuildManager {
 
     public async getCurrentShowlistResult(userid: string): Promise<SongDoc[] | null> {
         const showlistCacheKey = `pllrs-${this.guild.id}-${userid}`;
-        return JSON.parse(await redis.get(showlistCacheKey)) as SongDoc[];
+        const result = await redis.get(showlistCacheKey);
+        return result ? (JSON.parse(result) as SongDoc[]) : null;
     }
 
     public async setCurrentShowlistResult(result: null | SongDoc[], userid: string): Promise<void> {
@@ -72,7 +75,8 @@ export class GuildManager {
 
     public async getCurrentPlaylist(userid: string): Promise<PlaylistDoc | null> {
         const playlistCacheKey = `cslpl-${this.guild.id}-${userid}`;
-        return JSON.parse(await redis.get(playlistCacheKey)) as PlaylistDoc;
+        const result = await redis.get(playlistCacheKey);
+        return result ? (JSON.parse(result) as PlaylistDoc) : null;
     }
 
     public async setCurrentPlaylist(result: null | PlaylistDoc, userid: string): Promise<void> {
@@ -92,7 +96,7 @@ export class GuildManager {
         this.commandPrefix = prefix;
     }
 
-    public printEvent(desc: string, isTransient = false): void {
+    public printEvent(desc: string, isTransient = false, components = []): void {
         const embed = new EmbedBuilder()
             .setDescription(desc)
             .setColor(biliblue);
@@ -103,7 +107,7 @@ export class GuildManager {
         const embed = new EmbedBuilder()
             .setTitle(`Now playing: `)
             .setDescription(`**[${song.title}](${song.url})** --> *Requested by:* <@${song.initiator.id}>`)
-            .setFooter({text: `Duration: ${song.hmsDuration}`, iconURL: song.initiator.user.avatarURL()})
+            .setFooter({text: `Duration: ${song.hmsDuration}`, iconURL: song.initiator.user.avatarURL() ?? undefined})
             .setColor(biliblue);
         this.printEmbeds(embed);
     }
@@ -129,7 +133,7 @@ export class GuildManager {
             embed.setColor(biliblue);
         }
         const embedMsg = Array.isArray(embed) ? embed : [embed]
-        this.activeTextChannel.send({embeds: embedMsg}).then((msg): void => {
+        this.activeTextChannel?.send({embeds: embedMsg}).then((msg): void => {
             if(isTransient) {
                 if(msg.deletable) {
                     setTimeout((): Promise<Message> => msg.delete(), 10000)
@@ -140,17 +144,17 @@ export class GuildManager {
         });
     }
 
-    public printFlipPages(list: SongInfo[] | PlaylistDoc[] | BiliSongEntity[] | SongDoc[], embedOptions: EmbedOptions, message: Message): void {
+    public printFlipPages(list: SongInfo[] | PlaylistDoc[] | BiliSongEntity[] | SongDoc[], embedOptions: EmbedOptions, channel: TextChannel, userId: string): void {
         let currentPage = 1;
 
-        message.channel.send({embeds: [generateEmbed(embedOptions)]}).then((msg): Promise<void> => {
+        channel.send({embeds: [generateEmbed(embedOptions)]}).then(async (msg): Promise<void> => {
             if (list.length <= 10) return;
 
             msg.react('⬅').then((_): void => {
                 msg.react('➡');
 
-                const prevFilter = (reaction, user): boolean => reaction.emoji.name === '⬅' && user.id === message.author.id;
-                const nextFilter = (reaction, user): boolean => reaction.emoji.name === '➡' && user.id === message.author.id;
+                const prevFilter = (reaction: MessageReaction, user: User): boolean => reaction.emoji.name === '⬅' && user.id === userId;
+                const nextFilter = (reaction: MessageReaction, user: User): boolean => reaction.emoji.name === '➡' && user.id === userId;
 
                 const prevCollector = msg.createReactionCollector({filter: prevFilter, time: 300000});
                 const nextCollector = msg.createReactionCollector({filter: nextFilter, time: 300000});
@@ -176,7 +180,7 @@ export class GuildManager {
     public checkMemberInChannel(member: GuildMember, requireSameChannel = true): void {
         if (!member.voice || !member.voice.channel) {
             throw CommandException.UserPresentable('You are not in a voice channel');
-        } else if (requireSameChannel && this.guild.members.me.voice.channel && member.voice.channelId != this.guild.members.me.voice.channelId) {
+        } else if (requireSameChannel && this.guild.members.me?.voice.channel && member.voice.channelId != this.guild.members.me.voice.channelId) {
             throw CommandException.UserPresentable("You cannot use this command if you are not in the channel I'm playing");
         } else {
             this.queueManager.joinChannel(member);
