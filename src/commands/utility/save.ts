@@ -59,14 +59,14 @@ export class SaveCommand extends BaseCommand {
 		args: Omit<CommandInteractionOptionResolver<CacheType>, "getMessage" | "getFocused">,
 		interaction: ChatInputCommandInteraction
 	): Promise<void> {
-		const playlist = await playlistSelector(member, interaction);
+		const [playlist, _] = await playlistSelector(member, "save the song", interaction);
 		const subcommand = args.getSubcommand(true);
 
 		if (subcommand == "song" || subcommand == "playlist") {
 			if (subcommand == "song") {
 				const url = args.getString("url");
 				// Save as a new playlist // If not a playlist
-				var song: SongInfo | undefined;
+				let song: SongInfo | null = null;
 				var errMsg = "";
 				if (!url) {
 					song = guild.queueManager.currentSong;
