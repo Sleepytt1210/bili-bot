@@ -94,3 +94,6 @@ typings/
 
 # playlist
 playlist/
+
+# redis
+redis.conf
