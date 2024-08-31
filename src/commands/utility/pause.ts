@@ -1,27 +1,19 @@
-import {BaseCommand} from "../base-command";
+import {SubCommand} from "../base-command";
 import {CommandType} from "../command-type";
-import {Message, EmbedBuilder} from "discord.js";
+import {EmbedBuilder, ChatInputCommandInteraction, GuildMember} from "discord.js";
 import {GuildManager} from "../../app/guild";
 import {helpTemplate} from "../../utils/utils";
 
-export class PauseCommand extends BaseCommand {
-
-    public name: CommandType = CommandType.PAUSE;
+export class PauseCommand<T> extends SubCommand<T> {
 
     public constructor() {
-        super(['pa']);
+        super(CommandType.PAUSE, CommandType.QUEUE);
     }
 
-    public async executeHandler(member: GuildMember, guild: GuildManager, args: Omit<CommandInteractionOptionResolver<CacheType>, "getMessage" | "getFocused">, interaction: ChatInputCommandInteraction): Promise<void> {
+    public async run(member: GuildMember, guild: GuildManager, _: T, __: ChatInputCommandInteraction): Promise<void> {
         guild.checkMemberInChannel(member);
         if (guild.queueManager.pause()) {
-            guild.printEvent(`Audio paused`);
+            guild.printEvent(`Queue is paused`);
         }
-    }
-
-    public helpMessage(guild: GuildManager): EmbedBuilder {
-        const res = helpTemplate(this);
-        res.addFields({name: 'Usage: ', value: `${guild.commandPrefix}${this.name}`});
-        return res;
     }
 }

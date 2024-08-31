@@ -1,18 +1,16 @@
-import {BaseCommand, CommandException} from "../base-command";
+import {BaseCommand, CommandException, SubCommand} from "../base-command";
 import {CommandType} from "../command-type";
 import {GuildManager} from "../../app/guild";
-import {Message, EmbedBuilder} from "discord.js";
+import {Message, EmbedBuilder, CacheType, ChatInputCommandInteraction, CommandInteractionOptionResolver, GuildMember} from "discord.js";
 import {helpTemplate} from "../../utils/utils";
 
-export class NextCommand extends BaseCommand {
-
-    public name: CommandType = CommandType.NEXT;
+export class NextCommand<T> extends SubCommand<T> {
 
     public constructor() {
-        super(['n', 'skip']);
+        super(CommandType.NEXT, CommandType.QUEUE);
     }
 
-    public async executeHandler(member: GuildMember, guild: GuildManager, args: Omit<CommandInteractionOptionResolver<CacheType>, "getMessage" | "getFocused">, interaction: ChatInputCommandInteraction): Promise<void> {
+    public async run(member: GuildMember, guild: GuildManager, _: T, __: ChatInputCommandInteraction): Promise<void> {
         guild.checkMemberInChannel(member);
         if (guild.queueManager.isListEmpty()) {
             if (guild.queueManager.isPlaying()) {
@@ -21,11 +19,5 @@ export class NextCommand extends BaseCommand {
         } else {
             guild.queueManager.next();
         }
-    }
-
-    public helpMessage(guild: GuildManager): EmbedBuilder {
-        const res = helpTemplate(this);
-        res.addFields({name: 'Usage: ', value: `${guild.commandPrefix}${this.name}`});
-        return res;
     }
 }

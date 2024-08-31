@@ -1,28 +1,20 @@
-import {BaseCommand} from "../base-command";
+import {SubCommand} from "../base-command";
 import {CommandType} from "../command-type";
 import {GuildManager} from "../../app/guild";
-import {EmbedBuilder, CacheType, CommandInteractionOptionResolver, GuildMember} from "discord.js";
+import {EmbedBuilder, GuildMember, ChatInputCommandInteraction} from "discord.js";
 import {helpTemplate} from "../../utils/utils";
 
-export class ShuffleCommand extends BaseCommand {
+export class ShuffleCommand<T> extends SubCommand<T> {
 
 
     public constructor() {
-        super(['sh'], CommandType.SHUFFLE);
+        super(CommandType.SHUFFLE, CommandType.QUEUE);
     }
 
-    public name: CommandType = CommandType.SHUFFLE;
-
-    public async executeHandler(member: GuildMember, guild: GuildManager, _?: Omit<CommandInteractionOptionResolver<CacheType>, "getMessage" | "getFocused">): Promise<void> {
+    public async run(member: GuildMember, guild: GuildManager, _: T, __: ChatInputCommandInteraction): Promise<void> {
         guild.checkMemberInChannel(member);
         if (!guild.queueManager.isPlaying) return;
         guild.queueManager.doShuffle();
         guild.printEvent('Queue shuffled');
-    }
-
-    public helpMessage(guild: GuildManager): EmbedBuilder {
-        const res = helpTemplate(this);
-        res.addFields({name: 'Usage: ', value: `${guild.commandPrefix}${this.name}`});
-        return res;
     }
 }

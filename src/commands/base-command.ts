@@ -1,4 +1,4 @@
-import {Message, EmbedBuilder, SlashCommandBuilder, ChatInputCommandInteraction, GuildMember, APIInteractionGuildMember, CommandInteractionOptionResolver, CacheType} from "discord.js";
+import { EmbedBuilder, SlashCommandBuilder, ChatInputCommandInteraction, GuildMember, APIInteractionGuildMember, CommandInteractionOptionResolver, CacheType, SlashCommandSubcommandBuilder} from "discord.js";
 import {GuildManager} from "../app/guild.js";
 import {CommandType} from "./command-type.js";
 import { DiscordBot } from "app/discord-bot.js";
@@ -38,18 +38,17 @@ export abstract class BaseCommand extends SlashCommandBuilder {
     public abstract executeHandler(_member: GuildMember, _guild: GuildManager, _args: Omit<CommandInteractionOptionResolver<CacheType>, 'getMessage' | 'getFocused'>, interaction: ChatInputCommandInteraction): Promise<void>;
 }
 
-export abstract class SubCommand extends BaseCommand {
+export abstract class SubCommand<OptionType = {}> extends SlashCommandSubcommandBuilder{
 
-    public parent: string;
+    public parent: CommandType;
 
-    public constructor(alias: string[], name: CommandType, parent: string) {
-        super(alias, name);
+    public constructor(name: CommandType, parent: CommandType) {
+        super();
         this.parent = parent;
+        this.setName(name);
     }
 
-    abstract run(_message: Message, _guild: GuildManager, _args?: string[]): Promise<void>;
-
-    abstract helpMessage(guild: GuildManager, message?: Message): Promise<EmbedBuilder> | EmbedBuilder;
+    abstract run(member: GuildMember, _guild: GuildManager, _args: OptionType, interaction: ChatInputCommandInteraction): Promise<void>;
 }
 
 export class CommandException {

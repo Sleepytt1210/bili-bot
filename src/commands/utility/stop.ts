@@ -1,29 +1,21 @@
-import {BaseCommand, CommandException} from "../base-command";
+import {CommandException, SubCommand} from "../base-command";
 import {CommandType} from "../command-type";
 import {GuildManager} from "../../app/guild";
-import {EmbedBuilder, GuildMember, CacheType, CommandInteractionOptionResolver} from "discord.js";
+import {EmbedBuilder, GuildMember, ChatInputCommandInteraction} from "discord.js";
 import {helpTemplate} from "../../utils/utils";
 
-export class StopCommand extends BaseCommand {
+export class StopCommand<T> extends SubCommand<T> {
 
     public constructor() {
-        super(['s'], CommandType.STOP);
+        super(CommandType.STOP, CommandType.QUEUE);
     }
 
-    public name: CommandType = CommandType.STOP;
-
-    public async executeHandler(member: GuildMember, guild: GuildManager, _?: Omit<CommandInteractionOptionResolver<CacheType>, "getMessage" | "getFocused">): Promise<void> {
+    public async run(member: GuildMember, guild: GuildManager, _: T, __: ChatInputCommandInteraction): Promise<void> {
         guild.checkMemberInChannel(member);
         if (!guild.queueManager.isPlaying()) {
             throw CommandException.UserPresentable("I'm not playing!");
         } else {
             guild.queueManager.stop();
         }
-    }
-
-    public helpMessage(guild: GuildManager): EmbedBuilder {
-        const res = helpTemplate(this);
-        res.addFields({name: 'Usage: ', value: `${guild.commandPrefix}${this.name}`});
-        return res;
     }
 }

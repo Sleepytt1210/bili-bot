@@ -1,37 +1,28 @@
-import {BaseCommand, CommandException} from "../base-command";
+import {CommandException, SubCommand} from "../base-command";
 import {CommandType} from "../command-type";
 import {GuildManager} from "../../app/guild";
-import {Message, EmbedBuilder} from "discord.js";
+import {EmbedBuilder, CacheType, ChatInputCommandInteraction, CommandInteractionOptionResolver, GuildMember} from "discord.js";
 import {helpTemplate} from "../../utils/utils";
 
-export class PromoteCommand extends BaseCommand {
+interface OptionType {
+    index: number;
+}
 
-    public name: CommandType = CommandType.PROMOTE;
+export class PromoteCommand extends SubCommand<OptionType> {
 
     public constructor() {
-        super(['pm']);
+        super(CommandType.PROMOTE, CommandType.QUEUE);
     }
 
-    public async executeHandler(member: GuildMember, guild: GuildManager, args: Omit<CommandInteractionOptionResolver<CacheType>, "getMessage" | "getFocused">, interaction: ChatInputCommandInteraction): Promise<void> {
+    public async run(member: GuildMember, guild: GuildManager, args: OptionType, interaction: ChatInputCommandInteraction): Promise<void> {
         guild.checkMemberInChannel(member);
-        if (args.length === 0) {
-            throw CommandException.UserPresentable('', this.helpMessage(guild))
+        const index = args.index;
+        if (index) {
+            throw CommandException.UserPresentable('Please specify an index!')
         }
 
-        let index = parseInt(args.shift());
-        if (!Number.isInteger(index)) {
-            throw CommandException.UserPresentable('', this.helpMessage(guild))
-        }
-        index--;
-
-        const song = guild.queueManager.promoteSong(index);
+        const song = guild.queueManager.promoteSong(index-1);
 
         guild.printEvent(`${song.title} has been promoted to top of the playlist`);
-    }
-
-    public helpMessage(guild: GuildManager): EmbedBuilder {
-        const res = helpTemplate(this);
-        res.addFields({name: 'Usage: ', value: `${guild.commandPrefix}${this.name} <index>`});
-        return res;
     }
 }
