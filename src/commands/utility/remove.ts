@@ -1,8 +1,7 @@
-import {BaseCommand, CommandException, SubCommand} from "../base-command";
+import {CommandException, SubCommand} from "../base-command";
 import {CommandType} from "../command-type";
 import {GuildManager} from "../../app/guild";
-import {EmbedBuilder, CacheType, ChatInputCommandInteraction, CommandInteractionOptionResolver, GuildMember} from "discord.js";
-import {helpTemplate, isNum} from "../../utils/utils";
+import {ChatInputCommandInteraction, GuildMember} from "discord.js";
 
 interface OptionType {
     index: number;
