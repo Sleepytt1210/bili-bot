@@ -1,18 +1,21 @@
-import {BaseCommand, CommandException} from "../base-command";
+import {BaseCommand, CommandException, SubCommand} from "../base-command";
 import {CommandType} from "../command-type";
 import {GuildManager} from "../../app/guild";
 import {EmbedBuilder, CacheType, ChatInputCommandInteraction, CommandInteractionOptionResolver, GuildMember} from "discord.js";
 import {helpTemplate, isNum} from "../../utils/utils";
 
-export class RemoveCommand extends BaseCommand {
+interface OptionType {
+    index: number;
+}
+export class RemoveCommand extends SubCommand<OptionType> {
 
     public constructor() {
-        super(['rm'], CommandType.REMOVE);
+        super(CommandType.REMOVE, CommandType.QUEUE);
         this.addIntegerOption((option) => option.setName("index").setDescription("Index of song in the queue.").setRequired(true))
     }
 
-    public async executeHandler(_: GuildMember, guild: GuildManager, args: Omit<CommandInteractionOptionResolver<CacheType>, "getMessage" | "getFocused">, interaction: ChatInputCommandInteraction): Promise<void> {
-        const index = args.getInteger("index");
+    public async run(_: GuildMember, guild: GuildManager, args: OptionType, __: ChatInputCommandInteraction): Promise<void> {
+        const index = args["index"];
         if (index) {
             const queue = guild.queueManager.queue;
 
